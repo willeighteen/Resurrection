@@ -1,0 +1,31 @@
+in instrument 43 set:
+
+        gi1aEnvPhase = 3        ; phase of envelope to be subjected to
+        gi2aEnvPhase = 6        ; terrain modelling
+        gi1aterrainFn = 0
+        gi2aterrainFn = 0
+        gi1aTerrainMode = 0
+        gi2aTerrainMode = 0
+
+Copy the *Params files to the relevant data/<instr> directory.
+
+Run csound:
+
+csound -W -o sound/test.wav resurrection.orc scores/test.sco 2>output
+
+There is no harmonic modelling, just different frequency amplitude
+modelling applied to separate note phases, the decay and sustain. This is
+simply an example of note phase selection, illustrating the point that
+successive terrain layers can be applied to the formation of the note.
+
+The available phase codes are:
+
+0       ; (default) whole note
+1       ; attack
+2       ; decline or decaycy+sustain+release
+        ; if giusrdclphs is set:
+3       ; decay
+4       ; sustain
+5       ; release
+6       ; decay+sustain
+7       ; sustain+release
