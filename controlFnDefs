@@ -1,0 +1,14 @@
+; envelope shape functions
+#define	lini		# 201 #		; increasing linear
+#define	lind		# 211 #		; decreasing linear
+#define	expi		# 202 #		; exponential
+#define	expd	# 212 #
+#define	sini		# 203 #		; sine
+#define	cosd	# 213 #
+#define	sigi		# 204 #		; sigmoid
+#define	sigd		# 214 #
+
+; misc. utility functions
+#define	zero		# 246 #		; always returns 0
+#define	unity	# 247 #		; always returns 1
+

@@ -1,0 +1,58 @@
+#!/bin/bash
+
+cd utils
+tar xzvf hetconvert-1.6.1.tar.gz
+#cd hetconvert
+#make
+#mv hetcnv ..
+#cd ..
+#build makeFtables
+make
+#
+# make the Viola instrument, MIDI number 41
+instr="Viola.pizz.sulA"
+inum="41"
+harmonics="10"
+basetbl="400"
+./makeFtables $instr $inum $harmonics $basetbl \
+ppA4 ppG6 ffA4 ffG6
+#
+# make the Cello-arco-reference-1st instrument, MIDI number 43
+instr="Cello-arco-reference-1st"
+inum="43"
+harmonics="10"
+basetbl="500"
+./makeFtables $instr $inum $harmonics $basetbl \
+arco-ppC2 arco-ppG5 arco-ffC2 arco-ffG5
+#
+# make the Clarinet-Bb instrument, MIDI number 71
+instr="Clarinet-Bb"
+inum="71"
+harmonics="15"
+basetbl="600"
+./makeFtables $instr $inum $harmonics $basetbl \
+ppD3 ppG6 ffD3 ffG6
+#
+# make the Alto Flute instrument, MIDI number 73
+instr="AltoFlute"
+inum="73"
+harmonics="10"
+basetbl="740"
+./makeFtables $instr $inum $harmonics $basetbl \
+ppA3 ppG5 ffA3 ffF6
+#
+# make the alternate Cello.arco.sulC instrument, MIDI number 143
+instr="Cello.arco.sulC"
+inum="143"
+harmonics="15"
+basetbl="840"
+./makeFtables $instr $inum $harmonics $basetbl \
+ppC2 ppD5 ffC2 ffB3
+#
+cd ../data
+for x in Viola.pizz.sulA Cello-arco-reference-1st Clarinet-Bb AltoFlute Cello.arco.sulC
+do
+rm -f $x/*.asc
+done
+cd ..
+unset instr inum harmonics basetbl
