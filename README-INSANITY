@@ -1,0 +1,10 @@
+In order to avoid this...
+
+1)	one of the 3 available amp terrains is commented in macro 'terrainA'.
+
+2)	the macro 'terrainF' is commented - this is completely untested.
+
+3)	the call to terrainF in the macro 'comosccode' is commented.
+
+Resurrection _will_ run without these, but all-in, rendering a 1-second note takes
+about 235 seconds on my 8-core 4 GHz Athlon processor. You have been warned.
