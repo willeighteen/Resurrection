@@ -1,0 +1,73 @@
+; Fate intervened whilst testing noise generation.
+; Bb Clarinet noise definitions
+; format
+; have to use table numbers since names not def'd here
+;
+; number of noise components in note
+1
+; first noise
+; <noise persistence>
+;	1 = through-note
+0
+; <envelope params.>
+;	attack t scalar (fraction of note attack)
+0.3
+;	dcl flag: decline scalar of (0) note attack, (1) note decline
+0
+;	decline t scalar
+1
+;	attack function
+201
+;	decline function
+211
+; noise type
+1
+; noise type 1 params
+; kbeta init
+0.8
+; kbeta term
+0.8
+; kbeta fn
+247
+;
+; noise level
+0.002
+;
+; processes for this noise
+3
+;
+; process type
+3
+; band-limited noise
+; bw function
+247
+; centre frq flag (0 = harmonic frq, 1 = partial frq)
+0
+;
+; process type
+2
+; <2: flanged noise>
+; lfo rate init
+0.2
+; lfo rate term
+0.6
+; rate change fn
+201
+; max delay (ms)
+0.6
+; flanger function
+201
+;
+; process type
+1
+; <1: pitched/fixed noise>
+; note centre freq. scalar (positive integer factor of f0)
+2
+; bw init
+200
+; bw term
+20
+; bw fn: bw = fn val*(bwterm-bwinit)+bwinit
+211
+; nskip	; 0 = pitched, 1 = skip
+0
