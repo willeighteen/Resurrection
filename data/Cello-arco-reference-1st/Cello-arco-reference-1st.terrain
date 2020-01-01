@@ -1,0 +1,23 @@
+; Cello terrain parameter table declarations
+
+f584    0       128      -23     "data/Cello-arco-reference-1st/x1aOFparams"                                  
+;f585    0       128      -23     "data/Cello-arco-reference-1st/y1aOFparams"
+
+f588    0       128      -23     "data/Cello-arco-reference-1st/x2aOFparams"
+f589    0       128      -23     "data/Cello-arco-reference-1st/y2aOFparams"
+;f590    0       128      -23     "data/Cello-arco-reference-1st/y2aOFparams"
+;f591    0       128      -23     "data/Cello-arco-reference-1st/y2aOFparams"
+
+;  assorted default parameters
+
+; ripples test
+;f584    0       128      -23     "data/default/ripples/xLayer1AmpOrbitFormParams"
+;f585    0       128      -23     "data/default/ripples/yLayer1AmpOrbitFormParams"
+;f586    0       128      -23     "data/default/ripples/xLayer2AmpOrbitFormParams"
+;f587    0       128      -23     "data/default/ripples/yLayer2AmpOrbitFormParams"
+
+; 2Tone test
+;f584    0       128      -23     "data/default/2Tone/xLayer1AmpOrbitFormParams"
+;f585    0       128      -23     "data/default/2Tone/yLayer1AmpOrbitFormParams"
+;f586    0       128      -23     "data/default/2Tone/xLayer2AmpOrbitFormParams"
+;f587    0       128      -23     "data/default/2Tone/yLayer2AmpOrbitFormParams"

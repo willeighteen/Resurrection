@@ -1,0 +1,214 @@
+; Fate intervened whilst testing noise generation.
+; Bb Clarinet noise definitions
+; format
+; have to use table numbers since names not def'd here
+;
+; number of noise components in note
+3               
+; first noise
+; <noise persistence>
+;	1 = through-note
+0
+; <envelope params.>
+;	attack t scalar (fraction of note attack)
+1
+;	dcl flag	; 0 = decline scalar of note attack, 1 = decline scalar of note decline
+0
+;	decline t scalar
+1
+;	attack function
+201
+;	decline function
+211
+; noise type
+1
+; for noise type 1 extra parameters are required - omit otherwise
+;
+; noise type 1 params
+; kbeta init
+0.1
+; kbeta term
+0.9
+; kbeta fn
+201
+;
+; noise level
+0.5
+; num _processes_ for this noise!
+3	;inprocs
+; for each 1 of inprocs...
+;
+; process type
+;
+3
+; band-limited noise
+; bw function
+247
+;
+; centre frq flag (0 = harmonic frq, 1 = partial frq)
+1
+;
+; process type
+;
+2
+; <2: flanged noise>
+; lfo rate init
+1
+; lfo rate term
+3
+; rate change fn
+201
+; max delay (ms)
+5
+; flanger function
+201
+; <duration (internal - will be intak+indcl)>
+; process type
+;
+1
+; <1: pitched/fixed noise>
+; note centre freq. scalar (positive integer factor of f0)
+2
+; bw init
+20
+; bw term
+20
+; bw fn: bw = fn val*(bwterm-bwinit)+bwinit
+247	; ?
+; nskip	; 0 = pitched, 1 = skip
+0
+;
+; process type
+;
+;3
+; band-limited noise
+; bw function
+;247
+;
+; centre frq (0 = harmonic frq, 1 = partial frq)
+;1
+;
+; second noise
+; <noise persistence>
+;	1 = through-note
+0
+; <envelope params.>
+;	attack t scalar (fraction of note attack)
+1
+;	dcl flag	; 0 = decline scalar of note attack, 1 = decline scalar of note decline
+1
+;	decline t scalar
+1
+;	attack function
+202
+;	decline function
+212
+; noise type
+1
+; for noise type 1 extra parameters are required - omit otherwise
+;
+; noise type 1 params
+; kbeta init
+0.1
+; kbeta term
+0.9
+; kbeta fn
+201
+;
+; noise level
+0.5
+; num _processes_ for this noise!
+3	;inprocs
+; for each 1 of inprocs...
+;
+; process type
+;
+1
+; <1: pitched/fixed noise>
+; note centre freq. scalar (multiple of f0)
+2
+; bw init
+20
+; bw term
+20
+; bw fn: bw = fn val*(bwterm-bwinit)+bwinit
+247	; ?
+; nskip	; 0 = pitched, 1 = skip
+0
+;
+; process type
+;
+3
+; band-limited noise
+; bw function
+201
+;
+; centre frq (0 = harmonic frq, 1 = partial frq)
+0
+;
+;
+; process type
+;
+2
+; <2: flanged noise>
+; lfo rate init
+1
+; lfo rate term
+3
+; rate change fn
+201
+; max delay (ms)
+5
+; flanger function
+201
+; <duration (internal - will be intak+indcl)>
+;
+; third noise
+;
+; <noise persistence>
+;	1 = through-note
+1
+; <envelope params.>
+;	attack t scalar (fraction of note attack)
+1
+;	dcl flag	; 0 = decline scalar of note attack, 1 = decline scalar of note decline
+1
+;	decline t scalar
+1
+;	attack function
+202
+;	decline function
+212
+; noise type
+3
+; noise level
+0.5
+; num _processes_ for this noise!
+2	;inprocs
+; for each 1 of inprocs...
+;
+; process type
+;
+3
+; band-limited noise
+; bw function
+247
+;
+; centre frq flag (0 = harmonic frq, 1 = partial frq)
+1
+;
+; process type
+;
+1
+; <1: pitched/fixed noise>
+; note centre freq. scalar (positive integer factor of f0)
+1
+; bw init
+20000
+; bw term
+1000
+; bw fn: bw = fn val*(bwterm-bwinit)+bwinit
+211	; ?
+; nskip	; 0 = pitched, 1 = skip
+0
+;
