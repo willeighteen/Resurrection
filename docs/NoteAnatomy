@@ -1,0 +1,27 @@
+Anatomy of a note.
+
+A note is what happens when some quantity of material has energy imparted to it
+over a defined period (the attack phase) and releases at least some of it in
+audio range over some subsequent defined period (the decline phase).
+
+The decline phase is typically longer than the attack phase, but depends on the
+type of material.
+
+The attack phase has a simple shape (exp., linear, etc); the decline phase may
+(and usually does) have a complex shape which may be broadly separated into
+decay, sustain and release sub-phases, not all of which may be identifiable or
+present.
+
+The attack phase has complex frequency components, is perhaps chaotic, and
+usually contains a significant or even dominant amount of noise which typically
+reduces with both increasing distance from the nominal note fundamental and
+passage of time through the phase.
+
+The decline phase has simple frequency components, particularly during the
+sustain sub-phase where spectral decomposition shows nearly steady-state
+relative harmonic strengths.
+
+In summary, therefore, a note typically consists of two sections: a simple
+attack shape with a complex spectral content and a complex decline shape with a
+relatively simple spectral content.
+

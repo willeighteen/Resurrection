@@ -1,0 +1,201 @@
+Resurrection-4.0 TerrainControlSystem
+
+Terrain control file format
+
+
+WARNING: DO NOT STICK COMMENTS in the terrain control files: csound will hang.
+		DO NOT USE SPACES either - typically results in an 'invalid table' error.
+
+Sections:
+
+Group	Control target			Parameter ID 'p'
+
+0		surface / function		See 'surface parameters' below
+
+1		magnitude			mag
+2		offset				off
+3		index magnitude		ixmag
+4		index offset			ixoff
+5		index scan period		ixsp
+
+6		index dynamic link
+		group 0				ix
+		groups 1-5			Parameter ID groups 1-5 above
+		
+	ixsp positive is interpreted as a scan period of ixsp/notephasedur
+	ixsp negative is interpreted as the absolute value of ixsp in Hz.
+	ixsp zero is interpreted as indirect index control
+	
+
+Subsidiary groups (1- 5)
+ 
+group <n> <p> 
+	Three sections to each group (1-5):
+
+	a)
+		i)	<p> table scalar,					<p>mag
+		ii)	<p> offset to table value			<p>off
+		iii)	<p> table						<p>tbl
+
+	b)
+		i)	<p> index table scalar				<p>ixmag
+		ii)	<p> offset to index table value		<p>ixoff
+		iii)	<p> index table 					<p>ixtbl
+		iv)	<p> index table phase				<p>ixphase
+
+	c)
+		i)	<p> table offset					<p>toff
+		ii)	<p> table wrap					<p>twrap
+		iii)	<p> index table scan period			<p>ixsp
+		iv)	<p> index table scan period flag		<p>spflag
+		
+	n = group number, p = parameter (sections 1-5 'Parameter ID' above).
+
+	The index generated in b) references a(iii)
+	
+	The scan period flag, if set to 1, gives the product of the scan frequency
+	(if the scan period is specified as <0) and note frequency; otherwise the
+	negative value signifies a fixed frequency in Hz. A positive scan period
+	value is a scalar of the reciprocal of the note duration.
+
+
+Subsidiary groups (6)
+
+group <n> <p>
+	One section to each group (0-6)
+
+		i)	index link type					<p>TDCflag
+		ii)	index amplitude/frequency scalar	<p>AFTDC
+		iii)	index amp/frq scalar offset		<p>AFTDCoff
+		iii)	index harmonic number scalar		<p>HTDC
+		iv)	index operation type			TDCOP<p>
+
+	n = group number, p = parameter (see 'Parameter ID' above).
+	
+	The group 0 parameters link to the surface / function index generated
+	by the parameters specified in groups 1-5.
+	
+	The group <n> parameters (groups 1 to 5) link to the index generated
+	in that group by the parameters specified in b), i-iv and c), iii.
+
+	Five parameters to each group (0-6)
+	
+	Link value		link		amp/frq scalar	amp/frq scalar offset	harmonic scalar	opType
+	0			none	<irrelevant>	<irrelevant>			<irrelevant>		<0/1>
+	1			amp		<n>			<n>					<n>				<0/1>
+	2			frq		<n>			<n>					<n>				<0/1>
+	3			iafix		<n>			<n>					<n>				<0/1>
+	4			1-amp	<n>			<n>					<n>				<0/1>
+	5			1-frq		<n>			<n>					<n>				<0/1>
+
+	n = nonzero group index parameter scalar; a zero value turns the link off.
+	iafix = composite amp/frq index generated in i90.
+
+The harmonic number scalar, if nonzero, links to the product of the harmonic
+number scalar, harmonic number and the amp/frq scalar. If the amp/frq scalar
+value is zero, only harmonic number linking is used (providing the link type is
+nonzero: the actual value is irrelevant if only harmonic number linking is required).
+
+
+	By default the link flags are zero, indicating the associated variables
+	are not dynamically linked, i.e. the terrain is a static modifier of the harmonics,
+	each harmonic receiving the same modulation as dictated by the terrain. Thus
+	all harmonics vary at the same rate and by the same amount. The use of the
+	link flags to determine dynamic parameter reference is described in a
+	subsequent section [insert Section Ref.]
+
+Note that use of TDCflag 3, AFTDC nonzero and HTDC nonzero does _not_
+result in a vector formed from amplitude, frequency and harmonic number since
+this would  involve further status tests (slow) inside the terrain code. Instead it
+uses the HTDC as an amp/frq vector scalar. This is inconsistent and unsatisfactory.
+
+Note also that the default settings of TDC flag, HTDC and AFTDC zero results in a
+scaling of 1 in the appropriate subsection.
+
+	The TDCOP opType flag controls the interaction between AFTDC and HTDC: if zero,
+	these are additive, else multiplicative:
+	
+	0:	harmonic*HTDC+(AFTDC+AFTDCoffset)
+	1:	harmonic*HTDC*(AFTDC+AFTDCoffset)
+
+	
+Surface / function (0)
+	This defines an axis component of the terrain. The terrain parameter files
+	are in pairs, one each for the x and y axis functions which, when multiplied,
+	generate the required terrain surface. The functions should ideally have an
+	offset of 1, so the function variation is about this level. The terrain surface
+	values (the 'height' of the terrain) are used to modulate a predefined
+	harmonic of some multiple of the fundamental frequency f0 (f<n> = 1,2,...),
+	so if the terrain height value is zero, the harmonic in question has zero
+	amplitude and does not appear in the output.
+	
+	Functions may start and end with a zero height - this is in fact desirable for
+	terrain tesselation, when the index may be a multiple of the allowed range
+	[0,1]. An offset should be applied, as above.
+	
+	There are five surface parameters (group 0):
+
+		Parameter					Value(s)	Parameter ID
+		
+		a) surface table				<n>		tbl
+		b) surface index table			<n>		ixtbl
+		c) surface index table phase		<n>		ixphase
+		d) surface table offset			<n>		toff
+		e) surface table wrap			<0/1>	twrap
+ 
+	surface table: the number of a table; a range of defaults exists in
+	the file 'header.sco'.
+	
+	surface index table: another table number; points to the position in the
+	surface axis function (above) whose value is to be used as the amplitude
+	modulation axis component value for some harmonic(s).
+	
+	surface Index table phase: an offset into the index table, range [0,1] (cycle). This
+	allows the table read to be started at some fraction of a cycle from its
+	inital phase. The default is 0.
+	
+	surface table offset: used to begin surface table value lookup at some
+	predetermined point.
+	
+	surface table wrap: if the range of the index exceeds that of the surface
+	table ([0,1]) then the index is wrapped to the opposite end of the table, i.e.
+	if the wrap mode is on, value 1, an index value of 1.1 would indicate the
+	surface value at index 0.1; if the index were -0.1, the value at index 0.9
+	would be referenced. By default the wrap is off.
+
+	surface function: the number of an internally defined function generating a
+	z (terrain height) from input x and y index values. Specification of a function
+	number for a terrain x/y axis component pair in the intrument setup overrides
+	any surface table specified (which is ignored).
+	If an internal function is defined as the target of the index, then the group 0
+	table entry is unused. The function output is scaled by the group 1 x
+	magnitude and the group 2 x offset is added. This output is then sub-
+	sequently rescaled by the group 1 y magnitude and the group 2 y offset is
+	added. This allows for scaling and offset of functions whose values which may
+	not be within the desired range.
+
+
+	
+Terrain Control System: schematic.
+
+0:
+	<p> off + mag * TDC0 * [(ixoff + ixmag * [-n, n]), [n] IXTBL IXPHASE, ixsp] TBL, TOFF, TWRAP
+
+		(2)	   (1)		(4)	      (3)						   (5)
+1-5:
+	<p> OFF + MAG * TDCn * [(IXOFF +IXMAG * [-n, n]), [n] IXTBL IXPHASE, IXSP] TBL, TOFF, TWRAP
+
+These are best understood right to left. A parameter <p> is obtained from a
+scaled and offset wrapped or unwrapped, offset, table value which is returned by
+an index generated by an oscillator whose output is the scaled and offset
+value of an index table determined by its scan period and by a specified phase
+(default zero).
+
+The parameters in both cases are indentical excepting case: lower-case
+parameters are variables; upper-case ones are constants (excepting TDC values,
+which are dynamic link scalars).
+
+Thus at toplevel (0) the harmonic modulation value is obtained from evaluation
+of section 0, the lower-case quantities being determined from the appropriate
+sub-section 1 to 5 in the parameter file specification.
+

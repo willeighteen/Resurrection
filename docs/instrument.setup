@@ -3,60 +3,45 @@
 2) Pure sample-derived
 
 3) Composite: lower harmonics from sampled instrument, upper synthetic
- 
+
 
 do 1 & 2 later, the most common use will probably be 3.
 
 3)
 Having obtained the structural information (samples, runHetro, makeFtables)...
 
-Set the instrument section number in i1, set the default case extreme values (va
-rious) then using mass gimass = 1 and resonance gires = 1 run the test
+Set the instrument section number in i1, set the default case extreme values (various) then using mass gimass = 1 and resonance gires = 1 run the test
 score (construction of which will be explained previously).
 
-Change the gimass value until an attack somewhere near what is desired is obtain
-ed.
+Change the gimass value until an attack somewhere near what is desired is obtained.
 
-Resurrection assumes the default mass and resonance values of 1 represent an 'av
-erage' mass whose material neither extends nor truncates the emitted sound,
+Resurrection assumes the default mass and resonance values of 1 represent an 'average' mass whose material neither extends nor truncates the emitted sound,
 hence the default release phase is the same as the attack duration.
-Compare the output values of inoteADt (the proportion allocated to attack and de
-cline in the i1 insrument setup (by visual reference to the actual samples used)
- to IADdur, the proportion of the synthesised note similarly allocated. They sho
-uld be approximately in the same range. adjust mass and res to fit. This ensures
- the s-harmonics attack and decline phase for the individual note is in the regi
-on specified for the p-harmonics (so modulation of the user phase between is the
- same for p-harmonics as s-harmonics.
 
-Various choices for mass and resonance can be chosen to give this correspondence
-; the difference in choice determines the behaviour of the attack and decline wi
-th change of frequency and amplitude, typically the rate at which the vary with
-amplitude and frequency. Larger mass and smaller resonance produce less change i
-n attack and decline with change of amplitude and frequency.
+Compare the output values of inoteADt (the proportion allocated to attack and decline in the i1 insrument setup (by visual reference to the actual samples used) to IADdur, the proportion of the synthesised note similarly allocated. They should be approximately in the same range. adjust mass and res to fit. This ensures the s-harmonics attack and decline phase for the individual note is in the region specified for the p-harmonics (so modulation of the user phase between is the same for p-harmonics as s-harmonics.
+
+Various choices for mass and resonance can be chosen to give this correspondence; the difference in choice determines the behaviour of the attack and decline with change of frequency and amplitude, typically the rate at which the vary with amplitude and frequency. Larger mass and smaller resonance produce less change in attack and decline with change of amplitude and frequency.
 
 The actual attack and decline are modified by user-level scalings.
 
+
 Terrain System
 
-1) table numbers should follow on fom the last data/<instrument name>/*-hmag.dat
-a table number (if hybrid p/s instruments are used). Otherwise
+1) table numbers should follow on fom the last data/<instrument name>/*-hmag.data table number (if hybrid p/s instruments are used). Otherwise
 just keep clear of any table number defined in the top-level header.sco.
 
 terrain tables are declared as
 gitbl<layerNum n><terrainType a/f><axis x/y><orbitType OF/OP>
 
 3 amp layers are defaulted and 1 frq layer.
-a = amplitude, f = frequency, x = x-axis, y= y-axis, OF = orbit form OP = orbit
-path
+a = amplitude, f = frequency, x = x-axis, y= y-axis, OF = orbit form OP = orbit path
 
 2) Various examples exist in the data/default directory.
 
-3) in order to use terrains you have to explicitly state the number of terrain l
-ayers in the i1 instrument setup: giaUseTerrains = <n>, n in [0, 3] currently. A
- zero value simply skips the terrain modelling.
+3) in order to use terrains you have to explicitly state the number of terrain layers in the i1 instrument setup: giaUseTerrains = <n>, n in [0, 3] currently. A zero value simply skips the terrain modelling.
 
-4) the terrains need to be inserted in the instrument header file after the last
- default '#include data/<instrumentName>-hmag.data', e.g.
+4) the terrains need to be inserted in the instrument header file after the last default '#include data/<instrumentName>-hmag.data', e.g.
+
 #include "data/<instrumentName>/<instrumentName>.terrain"
 
 and before the i1 definition defining the number of the instrument:
@@ -66,90 +51,54 @@ i1      0       0       <instrumentNumber>
 The first 128 instruments are reserved for MIDI standard instruments, e.g. '1'
 is acoustic piano. The number '0' is is not a valid instrument number.
 
-5) The <instrumentName>-terrain file should include the definitions for the tabl
-es used . The terrain table numbers should be from the first free table number;
-the last used is the final entry in the
+5) The <instrumentName>-terrain file should include the definitions for the tables used . The terrain table numbers should be from the first free table number; the last used is the final entry in the 
 data/<instrumentName/<instrumentName>-hmag.data table
 
-6) There are four files describing the characteristics of each terrain layer. Th
-ese can be arbitrarily named but by default reference the x and y axis form and
-path parameters.
+6) There are four files describing the characteristics of each terrain layer. These can be arbitrarily named but by default reference the x and y axis form and path parameters.
 
 7) Default parameter files are in the data/default directory:
 
 defaultTerrainAmpOrbitFormParams
 defaultTerrainAmpOrbitPathParams
 
-each of these should be renamed when copied for the x and y components of the te
-rrain, e.g. <x/y>Layer1AmpOrbitFormParams, and so for the path parameters.
+each of these should be renamed when copied for the x and y components of the terrain, e.g. <x/y>Layer1AmpOrbitFormParams, and so for the path parameters.
 
 The file names are optional.
 
-Example terrain parameter files are in the 2Tone and ripples directories under d
-ata/default.
+Example terrain parameter files are in the 2Tone and ripples directories under data/default.
 
 
 8) Example terrain header file.
 
-Terrain header files can have any name provided it is included in the instrument
- header file. The terrain header file specifies the table numbers used for the c
-ontrol files for that table, and should follow on from the last table number use
-d in the instrument's harmonic data magnitude table in the '*-hmag.data' file, o
-r from the '*.data' file for the instrument if p-harmonic (sampled) data exists.
-  Failing these, any table numbers which do not conflict with those already decl
-ared in the top-level header ('header.sco') may be used.
+Terrain header files can have any name provided it is included in the instrument header file. The terrain header file specifies the table numbers used for the control files for that table, and should follow on from the last table number used in the instrument's harmonic data magnitude table in the '*-hmag.data' file, or from the '*.data' file for the instrument if p-harmonic (sampled) data exists.  Failing these, any table numbers which do not conflict with those already declared in the top-level header ('header.sco') may be used.
 
 For the instrument no. 43, a cello implementation, we might have
 
 #include "Cello-arco-reference-1st.terrain"
-and this file would contain the table numbers and names of the files used to det
-ermine the terrain surface and associated orbit.
+	
+and this file would contain the table numbers and names of the files used to determine the terrain surface and associated orbit.
 
-Since there is a harmonic magnitude table for the instrument, noting that the la
-st table used here is no. 583 (assuming the existence of 10 harmonics derived fr
-om sample analysis by the 'hetro' script in the data/<instrument> directory), we
- might set
+Since there is a harmonic magnitude table for the instrument, noting that the last table used here is no. 583 (assuming the existence of 10 harmonics derived from sample analysis by the 'hetro' script in the data/<instrument> directory), we might set
 
 f584    0       128      -23     "data/default/defaultTerrainAmpOrbitFormParams"
 f585    0       128      -23     "data/default/defaultTerrainAmpOrbitFormParams"
 f586    0       128      -23     "data/default/defaultTerrainAmpOrbitPathParams"
 f587    0       128      -23     "data/default/defaultTerrainAmpOrbitPathParams"
 
-which would load these default x and y axis control files for the first amp terr
-ain layer orbit form and path. They are simply set to produce scalings of 1 and
-offsets of 0 and so have no effect on the final output. Other files in the data/
-default directory have comments which may be useful.
+which would load these default x and y axis control files for the first amp terrain layer orbit form and path. They are simply set to produce scalings of 1 and offsets of 0 and so have no effect on the final output. Other files in the data/default directory have comments which may be useful.
 
+Since the paths are essentially scalings and offsets applied to the orbit form we can default these by not specifying them and concentrate on the behaviour of the orbit form.
 
-Since the paths are essentially scalings and offsets applied to the orbit form w
-e can default these by not specifying them and concentrate on the behaviour of t
-he orbit form.
+Note that the '0       128      -23' values specified in the orbit parameter files should not be changed. The ftable numbers and names are user-defined.
 
-Note that the '0       128      -23' values specified in the orbit parameter fil
-es should not be changed. The ftable numbers and names are user-defined.
+To simplify the visualisation of the terrain on the output sound, it is advisable to set gioscs=1 and the envelopes to unity (so there is no superimposed envelope)
+by putting giatktbl=$unity, gidcytbl=$unity and gidcltbl=$unity in the instrument setup in i1. A constant sustain should be set: gisuslvlctl=1. If sample-derived (p-) harmonics exist, then gitblbase and gihmagtblbase should both be set to zero to avoid any contribution from the sample-derived data.
 
-To simplify the visualisation of the terrain on the output sound, it is advisabl
-e to set gioscs=1 and the envelopes to unity (so there is no superimposed envelo
-pe)
-by putting giatktbl=$unity, gidcytbl=$unity and gidcltbl=$unity in the instrumen
-t setup in i1. A constant sustain should be set: gisuslvlctl=1. If sample-derive
-d (p-) harmonics exist, then gitblbase and gihmagtblbase should both be set to z
-ero to avoid any contribution from the sample-derived data.
+The harmonic produced will be a straight line at the score-specified note frequency. Thus terrain modulations are made evident. Note that the flag giUseAllH<layerNum><terrainType> should be '1' or there may be no modulation evident if p-harmonics are present unless gioscs is set to a larger number than the maximum number of p-harmonics used.
 
-The harmonic produced will be a straight line at the score-specified note freque
-ncy. Thus terrain modulations are made evident. Note that the flag giUseAllH<lay
-erNum><terrainType> should be '1' or there may be no modulation evident if p-har
-monics are present unless gioscs is set to a larger number than the maximum numb
-er of p-harmonics used.
-
-A further point is that the decay envelope used will give discontinuities when n
-o envelope is specified, and therefore for test purposes gidcylenctl ahould be s
-et to zero. The discontinuity is resolved if a proper (non-unity or non-zero!) e
-nvelope is used.
+A further point is that the decay envelope used will give discontinuities when no envelope is specified, and therefore for test purposes gidcylenctl ahould be set to zero. The discontinuity is resolved if a proper (non-unity or non-zero!) envelope is used.
 
 
 9) Example terrain control files
 
-See the files 'data/Cello-arco-reference-1st/Cello-terrain-parameters' and 'docs
-/TerrainParameterFile-schematic.jpg' for an actual terrain implementation and vi
-sual representation of its operation. Note that this is incomplete and in progre
+See the files 'data/Cello-arco-reference-1st/Cello-terrain-parameters' and 'docs/TerrainParameterFile-schematic.jpg' for an actual terrain implementation and visual representation of its operation. Note that this is incomplete and in progress.

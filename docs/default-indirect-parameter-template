@@ -1,0 +1,56 @@
+; Resurrection-4.0
+
+;Extended index variables: default parameter file template.
+;Return values are scalar 1 and offset 0
+
+
+; <p> tbl		<p> ix tbl		<p> tbl ix phase	<p> tbl off	<p> tbl wrap
+201			201			0				0			0
+;
+; <p> mag mag		<p> mag off		<p> mag tbl
+1					0				247
+; <p> mag ix mag		<p> mag ix off		<p> mag ix tbl		 <p> mag ix phase
+0					0				246				0
+; <p> mag tbl off		<p> mag tbl wrap	<p> mag ix tbl scan period
+0					0				0
+;	
+; <p> off mag			<p> off off		<p> off tbl
+0					0				246
+; <p> off ix mag		<p> off ix off		<p> off ix tbl		<p> off ix phase
+0					0				246				0
+; <p> off tbl off		<p> off tbl wrap	<p> off ix tbl scan period
+0					0				0
+;	
+; <p> ixmag mag		<p> ixmag  off		<p> ixmag tbl
+0					0				246
+; <p> ixmag ix mag		<p> ixmag ix off	<p> ixmag ix tbl	<p>ixmag ix phase
+0					0				246				0
+; <p> ixmag tbl off		<p> ixmag tbl wrap	<p> ixmag ix tbl scan period
+0					0				0
+;
+; <p> ixoff mag		<p> ixoff ixoff		<p> ixoff tbl
+0					0				246
+; <p> ixoff ix mag		<p> ixoff ix ixoff	<p> ixoff ix tbl 	<p> ixoff ix phase
+0					0				246				0
+; <p> ixoff tbl ixoff		<p> ixoff tbl wrap	<p> ixoff ix tbl scan period
+0					0				0
+;
+; <p> ixsp mag		<p> ixsp off		<p> ixsp tbl
+0					0				246
+; <p> ixsp ix mag		<p> ixsp ix off		<p> ixsp ix tbl		<p>ixsp ix phase
+0					0				246				0
+; <p> ixsp tbl off		<p> ixsp tbl wrap	<p> ix tbl scan period
+0					0				0
+;
+; <p> ixTDC flag	<p> ix AFTDC		<p> ixHTDC		<p> ixTDCop flag
+0				0				0
+; <p> magTDC flag	<p> mag AFTDC	<p> magHTDC		<p> magTDCop flag
+0				0				0
+; <p> offTDC flag	<p> off AFTDC		<p> offHTDC		<p> offTDCop flag
+0				0				0
+; <p> ixmagTDC flag	<p> ixmag AFTDC	<p> ixmagHTDC	<p> ixmagTDCop flag
+0				0				0
+; <p> ixoffTDC flag	<p> ixoff AFTDC	<p> ixoffHTDC		<p> ixoffTDCop flag
+0				0				0
+; <p> ixspTDC flag	<p> ixsp AFTDC	<p> ixspHTDC		<p> ixspTDCop flag
+0				0				0
