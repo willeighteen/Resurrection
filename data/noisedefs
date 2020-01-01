@@ -1,0 +1,111 @@
+; noisedefs
+; default noise definitions file
+;
+; WARNING! arguments must be placed on a line _on their own_ but comments
+; may be introduced between them as normal
+; use table numbers since names not def'd here
+;
+; number of noise components in note
+; inoises
+0
+;
+; first noise
+; noise persistence
+; inpersistent	(1 = through-note on tie)
+0
+;
+; envelope params.
+;
+; attack t scalar (fraction of note attack)
+1
+; decline phase flag: 0 = scalar of note attack, 1 = scalar of note decline
+0
+; decline t scalar
+1
+; attack function
+201
+; decline function
+211
+;
+; noise specification
+; noise type
+1
+; for noise type 1 extra parameters are required - omit otherwise
+;
+; noise type 1 params
+; kbeta init
+0.1
+; kbeta term
+0.9
+; kbeta fn
+201
+;
+; noise level
+1
+;
+; num _processes_ for this noise
+; max. 3 processes
+0
+;
+; for each noise specify processes in order of processing
+;
+;
+; process type: band-limited noise
+3
+;
+; process parameters
+;
+; bw function
+247
+;
+; centre frq flag (0 = harmonics, 1 = partials)
+1
+;
+;
+; process type: flanged noise
+2
+;
+; process parameters
+;
+; lfo rate init
+1
+;
+; lfo rate term
+3
+;
+; rate change fn
+201
+;
+; max delay (ms)
+5
+;
+; flanger function
+201
+;
+;
+; process type: ; pitched/fixed noise
+1
+;
+; process parameters
+;
+; centre freq. scalar (positive integer factor of f0, negative fixed freq )
+2
+;
+; bw init (Hz.)
+20
+;
+; bw term (Hz.)
+20
+;
+; bw fn
+247
+;
+; skip	; 0 = pitched, 1 = fixed
+0
+;
+;
+; second noise
+; repeat the above sections under first noise as required; up to 3 noises may
+; be specified. Processes are applied in order, e.g. 3,2,1 in the above
+; example, (inoperative here since the number of noise processes is specified
+; as zero).
