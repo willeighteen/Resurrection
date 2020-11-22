@@ -1,10 +1,5 @@
-; resurrection-17.2.9.orc
-
-; attempt to synchronise global amp envelope and terrain
-; works now via env phase system
-; but requires capability of user override
-
-; 30/1/2020
+; resurrection-17.3.2.orc
+; 14/11/2020
 
 ; Resurrection - a csound sound rendering engine
 
@@ -13,7 +8,7 @@
 ; eighteenwill@gmail.com
 ; license: GPL3
 
-; currently developed with Csound-6.13 beta
+; currently developed with Csound-6.14 (double samples)
 
 ;                   ###############################
 ;                   ########### Resurrection ###########
@@ -22,8 +17,8 @@
 #include "controlFnDefs"	; some useful labels
 
 sr = 96000
-kr = 960		; default change rate ~1 msec at 96 kHz sr
-ksmps = 100
+kr = 19200		; default change rate ~0.1 msec at 96 kHz sr
+ksmps = 5
 
 nchnls = 1
 
@@ -50,11 +45,11 @@ nchnls = 1
 #define RosegardenBaseLevel	# 20 #	; db
 
 ; Global parameters
-	giEnableEnvelopeKludge	init	1
+	giEnableEnvelopeKludge	init	0
 
 	; terrain control
 	; giTerrainExclude<layerN><terrainT>	<terrain ftable number>
-	giTerrainExcludeScl	init	1
+	giTerrainExcludeScl	init	1	; ?
 	; exclude specified terrain layer files (one pair for each layer required)
 	giterrainxexclude1a	init	0	; default include file
 	giterrainyexclude1a	init	0
@@ -88,7 +83,7 @@ nchnls = 1
 	giterrainFn1a	init	0			; default 0 use table axis fn defn
 	giterrainFn2a	init	0			; 1 Sombrero function
 	giterrainFn3a	init	0			; 2 Rosenbrock function
-	giterrainFn1f	init	0
+	giterrainFn1f	init	0			; 3 Henon map (under development)
 
 	; harmonic type applicability
 	; giUseAllH<layerN><terrainT>	init	n	; default 0: apply amp terrain <n> path values  to s-harmonics  only
@@ -98,7 +93,6 @@ nchnls = 1
 	giUseAllH1f	init	0
 
 	; giTerrainMode<layerN><terrainT>	init	n	; 0 additive, 1 multiplicative
-giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitude, else additive
 	giTerrainMode1a					init	1
 	giTerrainMode2a					init	1	; subsequent layer is multiplicative on this layer
 	giTerrainMode3a					init	1
@@ -238,6 +232,7 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 
 	; user controls
 	; score envelope timing
+	giforcenotedur	init	0		; force note dur. = default AD dur.
 	giduradj		init	0		; true: autoscale to fit note length
 	giusrdclphs	init	0		; default is AD envelope
 	giuatkscl		init 	1		; i4 user attack/decline scaling - simple
@@ -311,10 +306,11 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 	khrq = khfrq*ifrqscale
 	kpartpch = 0
 	$comosccode(p'khn)
-	aosc	oscili	kamp, kfrq, gisgenfn, inotephase
+	aosc	oscili	kamp*kzap, kfrq, gisgenfn, inotephase
 	$hpcode(p'khn)
-	aosc = (giTerrainMode0a==0 ? aosc+kamp*kzap : aosc*kzap)
-;	aosc = aosc*kzap
+;printks"p khn %d kamp %d\n", 0.1*idur, khn, kamp
+;aposc = (giTerrainMode0a==0 ? aosc+kamp*kzap : aosc*kzap)
+
 	aoscp = aoscp+aosc+aoscpt
 	ktrk = ktrk+1	; next amplitude table index increment
 #
@@ -347,10 +343,11 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 	kpartpch = 0
 	khfrq = 0	; no contribution from p-harmonic frq diffs
 	$comosccode(s'khn)
-	aosc	oscili	kamp, kfrq, gisgenfn, inotephase
+	aosc	oscili	kamp*kzas, kfrq, gisgenfn, inotephase
 	$hpcode(s'khn)
-	aosc = (giTerrainMode0a==0 ? aosc+kamp*kzas: aosc*kzas)
-;	aosc = aosc*kzas
+;printks"s khn %d kamp %d\n", 0.1*idur, khn, kamp
+;asosc = (giTerrainMode0a==0 ? aosc+kamp*kzas : aosc*kzas)
+
 	aoscs = aoscs+aosc+aoscpt
 	ktrk = ktrk+2
 #
@@ -389,9 +386,13 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 	khNum = khn+1	; <a/f> regardless, this index is given by osc calls
 	$terrainLayer(1'$terrainType'$eTime'khNum)	; returns harmonic modifier kz
 	kmod = kz$terrainType$eTime
-	$terrainLayer(2'$terrainType'$eTime'khNum)
+;printks "khn %d kz %f\n", 0.01*idur, khn, kz$terrainType$eTime
+;display kmod, idur
+;	$terrainLayer(2'$terrainType'$eTime'khNum)
 	; remove offset if additive!
-	kmod = (giTerrainMode1$terrainType==0 ? kmod+kz$terrainType$eTime : kmod*kz$terrainType$eTime)
+;	kmod = (giTerrainMode1$terrainType==0 ? kmod+kz$terrainType$eTime : kmod*kz$terrainType$eTime)
+;display kmod, idur
+
 ;	$terrainLayer(3'$terrainType'$eTime'khNum)
 ;	kmod = (giTerrainMode2$terrainType==0 ? kmod+kz$terrainType$eTime : kmod*kz$terrainType$eTime)
 	; Horner-Ayers contiguous group synthesis (modified)
@@ -399,6 +400,7 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 	; could experimentally use power of khn
 	kmod	pow		kmod, khpow*giaxrptflag+1
 	kz$terrainType$eTime = kmod
+;printks "khn %d kz %f\n", 0.01*idur, khn, kz$terrainType$eTime
 #
 
 
@@ -413,9 +415,13 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 #define makeTerrainLayerOrbit(baseName'xaxis'yaxis'OP'OF'eTime)
 #
 	kxOS	tablei	kix$baseName$xaxis$OF$eTime+k$baseName$xaxis$OP$eTime, itbl$baseName$xaxis$OF, 1, itoff$baseName$xaxis$OF, itwrap$baseName$xaxis$OF
+;printks "kxOS %f kmag %f\n", 0.01*idur, kxOS, kmag$baseName$xaxis$OF$eTime
 	kxOS$baseName$xaxis$eTime = kxOS*kmag$baseName$xaxis$OF$eTime+koff$baseName$xaxis$OF$eTime	; kxOS is final output
 	kyOS	tablei	kix$baseName$yaxis$OF$eTime+k$baseName$yaxis$OP$eTime, itbl$baseName$yaxis$OF, 1, itoff$baseName$yaxis$OF, itwrap$baseName$yaxis$OF
 	kyOS$baseName$yaxis$eTime = kyOS*kmag$baseName$yaxis$OF$eTime+koff$baseName$yaxis$OF$eTime	; kyOS is final output
+display kxOS$baseName$xaxis$eTime, idur
+display kyOS$baseName$yaxis$eTime, idur
+;printks "mTLO khn %d xkix %f kxOS %f\n", 0.01*idur, khn, kix$baseName$xaxis$OF$eTime, kxOS$baseName$xaxis$eTime
 #
 
 
@@ -432,10 +438,16 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 ; the indices don't change just durations (encoded in phases) - they reference the variables loaded from control file
 	kharmonic = $khNum
 	khNumTDC = (iTDCOP$vName$baseName$axis$orbitType==0 ? i$HTDC$baseName$axis$orbitType*kharmonic+i$AFTDC$baseName$axis$orbitType : i$HTDC$baseName$axis$orbitType*kharmonic*i$AFTDC$baseName$axis$orbitType)
+;printks "mkkv khn %d TDC %f type %d AFTDC %f\n", 0.01*idur, kharmonic, khNumTDC, iTDCOP$vName$baseName$axis$orbitType, i$AFTDC$baseName$axis$orbitType
 	kndx	oscili	i$v1$baseName$axis$orbitType, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
+;print i$v1$baseName$axis$orbitType, i$v2$baseName$axis$orbitType, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
+;printks "khn %d kndx %f\n", 0.01*idur, khn, kndx
 	kndx = (kndx+i$v5$baseName$axis$orbitType)*khNumTDC
+;printks "khn %d kndx %f\n", 0.01*idur, kharmonic, kndx
 	k$vName$baseName$axis$orbitType	tablei	kndx, i$v6$baseName$axis$orbitType, 1, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
 	k$vName$baseName$axis$orbitType$eTime = k$vName$baseName$axis$orbitType*i$v9$baseName$axis$orbitType+i$v10$baseName$axis$orbitType
+;printks "khn %d  k$vName$baseName$axis$orbitType$eTime %f\n", 0.01*idur, khn, k$vName$baseName$axis$orbitType$eTime
+;display k$vName$baseName$axis$orbitType$eTime, idur
 #
 
 #define makespkvars(baseName'axis'orbitType'v1'v2'v3'v4'v5'v6'v7'v8'v9'v10'HTDC'AFTDC'vName'eTime'khNum)
@@ -443,10 +455,15 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 ; the indices don't change just durations (encoded in phases) - they reference the variables loaded from control file
 	kharmonic = $khNum
 	khNumTDC = (iTDCOP$vName$baseName$axis$orbitType==0 ? i$HTDC$baseName$axis$orbitType*kharmonic+i$AFTDC$baseName$axis$orbitType : i$HTDC$baseName$axis$orbitType*kharmonic*i$AFTDC$baseName$axis$orbitType)
-	kndx	oscili	i$v1$baseName$axis$orbitType$eTime, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
-	kndx = (kndx+i$v5$baseName$axis$orbitType)*khNumTDC
-	k$vName$baseName$axis$orbitType	tablei	kndx, i$v6$baseName$axis$orbitType, 1, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
+;printks "mkspv khn %d TDC %f type %d\n", 0.01*idur, kharmonic, khNumTDC, iTDCOP$vName$baseName$axis$orbitType
+kixspix	oscili	i$v1$baseName$axis$orbitType$eTime, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
+	kixspix = (kixspix+i$v5$baseName$axis$orbitType)*khNumTDC
+display kixspix, idur
+;printks "Scan period index (kixspix) : khn %d kixspix %f\n", 0.01*idur, khn, kixspix
+	k$vName$baseName$axis$orbitType	tablei	kixspix, i$v6$baseName$axis$orbitType, 1, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
 	k$vName$baseName$axis$orbitType$eTime = k$vName$baseName$axis$orbitType*i$v9$baseName$axis$orbitType$eTime+i$v10$baseName$axis$orbitType
+display k$vName$baseName$axis$orbitType$eTime, idur
+;printks "Index scan period (kixsp): khn %d  k$vName$baseName$axis$orbitType$eTime %f\n", 0.01*idur, khn, k$vName$baseName$axis$orbitType$eTime
 #
 
 #define makekindices(baseName'axis'orbitType'eTime'khNum)
@@ -465,13 +482,18 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 	$makespkvars($baseName'$axis'$orbitType'ixspixmag'ixspixsp'ixspixtbl'ixspixphase'ixspixoff'ixsptbl'ixsptoff'ixsptwrap'ixspmag'ixspoff'ixspHTDC'ixspAFTDCscl'ixsp'$eTime'khNum)
 	; 0
 	; top-level indexing with k-rate indices above - this varies with what we have, combines OP and OF components
+
 	kndx	oscili	kixmag$baseName$axis$orbitType$eTime, kixsp$baseName$axis$orbitType$eTime, iixtbl$baseName$axis$orbitType, iixphase$baseName$axis$orbitType
 	kix$baseName$axis$orbitType$eTime = (kndx+kixoff$baseName$axis$orbitType$eTime)*khNumTDC0
+display kix$baseName$axis$orbitType$eTime, idur
+;printks "Index (kix): khn %d kix$baseName$axis$orbitType$eTime %f\n", 0.01*idur, kix$baseName$axis$orbitType$eTime
 #
 
 
 #define terrainLayer(layerNum'terrainType'eTime'khNum)
 #
+;iTerrain$layerNum = $layerNum
+;print iTerrain$layerNum
 	; the eTime <p/s> is obtained from the calling code, p or s-h
 	$makekindices($layerNum$terrainType'x'OF'$eTime'khNum)
 	$makekindices($layerNum$terrainType'y'OF'$eTime'khNum)
@@ -480,30 +502,82 @@ giTerrainMode0a					init	1	; final z-value is multiplicative on harmonic amplitu
 	$makekindices($layerNum$terrainType'y'OP'$eTime'khNum)
 	$makeOrbitPathComponent($layerNum$terrainType'y'OP'$eTime'k$layerNum$$terrainType'y'OP'$eTime)
 	$makeTerrainLayerOrbit($layerNum$terrainType'x'y'OP'OF'$eTime)
-;	$altitude($layerNum$terrainType'x'y''OP'OF'$eTime)
-$altitude($layerNum'$terrainType'x'y''OP'OF'$eTime)
+	$altitude($layerNum'$terrainType'x'y''OP'OF'$eTime)
 	kz$terrainType$eTime = kz
 #
 
 #define altitude(layerNum'terrainType'x'y''OP'OF'eTime)	; this gets the kz value, terrain surface altitude
 #
-	kx = kix$layerNum$terrainType$x$OF$eTime+k$layerNum$terrainType$x$OP$eTime	; kix...xOF, k...xOP
-	ky = kix$layerNum$terrainType$y$OF$eTime+k$layerNum$terrainType$y$OP$eTime	; kix...yOF, k...yOP
-	kx = (kx==0 ? $minTFuncVal : kx)
-	ky = (ky==0 ? $minTFuncVal : ky)
 	kxOS$layerNum$terrainType$x$eTime = ((itie==1 || iheld==1) && giTerrainMode$layerNum$terrainType==0 && giterrainxexclude$layerNum$terrainType>0 ? 0 : kxOS$layerNum$terrainType$x$eTime)
 	kyOS$layerNum$terrainType$y$eTime = ((itie==1 || iheld==1) && giTerrainMode$layerNum$terrainType==0 && giterrainyexclude$layerNum$terrainType>0 ? 0 : kyOS$layerNum$terrainType$y$eTime)
 	kxOS$layerNum$terrainType$x$eTime = ((itie==1 || iheld==1) && giTerrainMode$layerNum$terrainType==1 && giterrainxexclude$layerNum$terrainType>0 ? giTerrainExcludeScl : kxOS$layerNum$terrainType$x$eTime)
 	kyOS$layerNum$terrainType$y$eTime = ((itie==1 || iheld==1) && giTerrainMode$layerNum$terrainType==1 && giterrainyexclude$layerNum$terrainType>0 ? giTerrainExcludeScl : kyOS$layerNum$terrainType$y$eTime)
+
 	kz = kxOS$layerNum$terrainType$x$eTime*kyOS$layerNum$terrainType$y$eTime	; default output is from tables specified by control structure
 	; embedded functions overwrite terrain table generated kz
+	; reallocate for magnitudes
+	kx = kxOS$layerNum$terrainType$x$eTime
+	ky = kyOS$layerNum$terrainType$y$eTime
+;printks "Surface/indices x, y: khn %d kx %f ky %f\n", 0.01*idur, khn, kx, ky
+;printks "\n", 0.01*idur
+
 	; 1: 'Sombrero'
-	kz = (giterrainFn$layerNum$terrainType==1? kmag$layerNum$terrainType$x$OF$eTime*(sin(sqrt(kx*kx+ky*ky))/sqrt(kx*kx+ky*ky))+koff$layerNum$terrainType$x$OF$eTime : kz)
-	;; 2: Rosenbrock function
-	;; silly brackets to force precedence
-	kz = (giterrainFn$layerNum$terrainType==2? kmag$layerNum$terrainType$x$OF$eTime*log((((1-kx)^2)+(100*((ky-(kx^2))^2))))+koff$layerNum$terrainType$x$OF$eTime  : kz)
+	kz = (giterrainFn$layerNum$terrainType==1? (sin(sqrt(kx*kx+ky*ky))/sqrt(kx*kx+ky*ky))+koff$layerNum$terrainType$x$OF$eTime : kz)
+	; 2: Rosenbrock function
+	; silly brackets to force precedence
+	kz = (giterrainFn$layerNum$terrainType==2? log(((1-kx)^2)+(100*((ky-(kx^2))^2)))+koff$layerNum$terrainType$x$OF$eTime  : kz)
+
+;if giterrainFn$layerNum$terrainType > 3 goto IterDone
+;$Henon(kx'ky)
+;IterDone:
+;printks "Iterated surface x, y: khn %d kx %f ky %f\n", 0.01*idur, khn, kx, ky
+;printks "\n", 0.01*idur
+
 	kz = kz*klvlctl$layerNum$terrainType$eTime+klvlctlmask$layerNum$terrainType$eTime
 	kz = ((giUseAllH$layerNum$terrainType==0 && khn<inposcs && inposcs>0) ? 1 : kz)
+#
+
+; the Henon mapping is experimental and under development
+#define Henon(a'b)
+#
+;printks "testIter %f %f\n", 0.01*idur, $a, $b
+kxstart = $a
+kystart = $b
+;printks "init x %f y %f\n", 0.001*idur, kx, ky
+; 'iteration' 1
+;knewxstart = kystart+1.0-(1.4*kxstart*kxstart)
+;kystart = 0.3*kxstart
+;kxstart = knewxstart
+
+$IterateHenon(kxstart'kystart'1.4'0.3)
+;printks "endx %f endy%f\n", 0.01*idur, kxstart, kystart
+kx = kxstart
+ky = kystart
+;kz = kxstart*kystart
+#
+
+#define IterateHenon(a'b'c'd)
+#
+$repeatHenonMap($a'$b'$c'$d)
+$repeatHenonMap($a'$b'$c'$d)
+$repeatHenonMap($a'$b'$c'$d)
+$repeatHenonMap($a'$b'$c'$d)
+$repeatHenonMap($a'$b'$c'$d)
+
+
+;kz = kxstart*kystart
+;printks "newx %f newy%f\n", 0.01*idur, kxstart, kystart
+;knewxstart = $b+1-($c*$a*$a)
+;kystart = $d*$a
+;kxstart = knewxstart
+#
+
+#define repeatHenonMap(a'b'c'd)
+#
+;printks "xstart %f ystart%f\n", 0.01*idur, $a, $b
+knewxstart = $b+1-($c*$a*$a)
+kystart = $d*$a
+kxstart = knewxstart
 #
 
 #define initBetaNoise(noiseNum'indefsix)
@@ -696,6 +770,7 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 #
 	iterraintbl = gitbl$baseName$axis$orbitType
 	
+	; 0
 	itbl$baseName$axis$orbitType			table	0, iterraintbl
 	iixtbl$baseName$axis$orbitType			table	1, iterraintbl
 	iixphase$baseName$axis$orbitType		table	2, iterraintbl
@@ -714,7 +789,7 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	imagtwrap$baseName$axis$orbitType		table	13, iterraintbl
 	imagixsp$baseName$axis$orbitType		table	14, iterraintbl
 	imagixspflag$baseName$axis$orbitType		table	15, iterraintbl
-	
+
 	; 2
 	ioffmag$baseName$axis$orbitType			table	16, iterraintbl
 	ioffoff$baseName$axis$orbitType			table	17, iterraintbl
@@ -766,7 +841,7 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	iixsptwrap$baseName$axis$orbitType		table	57, iterraintbl
 	iixspixsp$baseName$axis$orbitType		table	58, iterraintbl
 	iixspixspflag$baseName$axis$orbitType		table	59, iterraintbl
-	
+
 	; 0
 	iixTDCflag$baseName$axis$orbitType		table	60, iterraintbl
 	iixAFTDC$baseName$axis$orbitType		table	61, iterraintbl
@@ -787,7 +862,7 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	ioffAFTDCoff$baseName$axis$orbitType		table	72, iterraintbl
 	ioffHTDC$baseName$axis$orbitType		table	73, iterraintbl
 	iTDCOPoff$baseName$axis$orbitType		table	74, iterraintbl
-	
+
 	; 3
 	iixmagTDCflag$baseName$axis$orbitType	table	75, iterraintbl
 	iixmagAFTDC$baseName$axis$orbitType		table	76, iterraintbl
@@ -813,7 +888,6 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 
 #define setLayerTiming(layerNum'terrainType'eTime)
 #
-; n.b. env phase S and E unused in this version
 ienvphase = giEnvPhase$terrainType$layerNum
 ; the terrain duration is wrong for tied or held notes
 
@@ -821,53 +895,34 @@ ienvphase = giEnvPhase$terrainType$layerNum
 ; no offset, phase correct at note start
 ; does not allow for atk dly and dcl adv
 iTerrainDur$layerNum$terrainType$eTime = itime$eTime
-iEnvPhaseS$layerNum$terrainType$eTime = 0
-iEnvPhaseE$layerNum$terrainType$eTime = itime$eTime
 
 ; attack phase
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==1 ? ieattack$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime = (ienvphase==1 ? 0 : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==1 ? ieattack$terrainType$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
 
 ; post-attack phase
 ; either dcl or dcy+sus+rls
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==2 ? iTerrainDur$layerNum$terrainType$eTime-ieattack$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime = (ienvphase==2 ? ieattack$terrainType$eTime : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==2 ? itime$eTime : iEnvPhaseE$layerNum$terrainType$eTime )
 
 ; there is no phase greater than 2 in the default AD env so we can set test to some dummy value
 ienvPhase = (giusrdclphs==0 ? 0 : ienvphase)	; we're done with this... fail further tests
 
 ; decay phase
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==3 ? iedecay$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime =(ienvphase==3 ? ieattack$terrainType$eTime : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==3 ? ieattack$terrainType$eTime+iedecay$terrainType$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
 
 ; sustain phase
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==4 ? iesustain$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime = (ienvphase==4 ? ieattack$terrainType$eTime+iedecay$terrainType$eTime+$mindur : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==4 ? itime$eTime-iedecay$terrainType$eTime-ierelease$terrainType$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
-;iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==4 ? itime$eTime-ierelease$terrainType$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
 
 ; release phase
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==5 ? ierelease$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime =(ienvphase==5 ? itime$eTime-ierelease$terrainType$eTime : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==5 ? itime$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
 
 ; decay+sustain phases
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==6 ? iedecay$terrainType$eTime+iesustain$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime = (ienvphase==6 ? ieattack$terrainType$eTime : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==6 ? itime$eTime-ierelease$terrainType$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
 
 ; sustain+release phases
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==7 ? iesustain$terrainType$eTime+ierelease$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime = (ienvphase==7 ? ieattack$terrainType$eTime+iedecay$terrainType$eTime : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==7 ? itime$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
 
 ; decay+sustain+release phases
 iTerrainDur$layerNum$terrainType$eTime = (ienvphase==8 ? ieattack$terrainType$eTime+iesustain$terrainType$eTime : iTerrainDur$layerNum$terrainType$eTime)
-iEnvPhaseS$layerNum$terrainType$eTime = (ienvphase==8 ? ieattack$terrainType$eTime : iEnvPhaseS$layerNum$terrainType$eTime)
-iEnvPhaseE$layerNum$terrainType$eTime = (ienvphase==8 ? itime$eTime : iEnvPhaseE$layerNum$terrainType$eTime)
 #
 
 
@@ -917,27 +972,88 @@ iixspAFTDCscl$baseName = (iixspTDCflag$baseName==$testValue ? iixspAFTDC$baseNam
 #define setScanTiming(baseName'axis'orbitType'eTime)
 #
 iTerrainDur = (iTerrainDur$baseName$eTime>0 ? iTerrainDur$baseName$eTime : -1)	; dummy value avoids failure
-imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && imagixsp$baseName$axis$orbitType<0 ? imagixsp$baseName$axis$orbitType*inotefrq : imagixsp$baseName$axis$orbitType)
+imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && imagixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : imagixsp$baseName$axis$orbitType)
+imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && imagixsp$baseName$axis$orbitType>0 ? iTerrainDur : imagixsp$baseName$axis$orbitType$eTime)
+
+imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && imagixsp$baseName$axis$orbitType<0 ? 1/imagixsp$baseName$axis$orbitType : imagixsp$baseName$axis$orbitType$eTime)
+
+imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && imagixsp$baseName$axis$orbitType<0 ? imagixsp$baseName$axis$orbitType*inotefrq : imagixsp$baseName$axis$orbitType$eTime)
 imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && imagixsp$baseName$axis$orbitType>0 ? imagixsp$baseName$axis$orbitType/iTerrainDur : imagixsp$baseName$axis$orbitType$eTime)
+
 imagixsp$baseName$axis$orbitType$eTime = abs(imagixsp$baseName$axis$orbitType$eTime)
-ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && ioffixsp$baseName$axis$orbitType<0 ? ioffixsp$baseName$axis$orbitType*inotefrq : ioffixsp$baseName$axis$orbitType)
+
+
+ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && ioffixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : ioffixsp$baseName$axis$orbitType)
+ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && ioffixsp$baseName$axis$orbitType>0 ? iTerrainDur : ioffixsp$baseName$axis$orbitType$eTime)
+
+ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && ioffixsp$baseName$axis$orbitType<0 ? 1/ioffixsp$baseName$axis$orbitType : ioffixsp$baseName$axis$orbitType$eTime)
+
+ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && ioffixsp$baseName$axis$orbitType<0 ? ioffixsp$baseName$axis$orbitType*inotefrq : ioffixsp$baseName$axis$orbitType$eTime)
 ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && ioffixsp$baseName$axis$orbitType>0 ? ioffixsp$baseName$axis$orbitType/iTerrainDur : ioffixsp$baseName$axis$orbitType$eTime)
+
 ioffixsp$baseName$axis$orbitType$eTime = abs(ioffixsp$baseName$axis$orbitType$eTime)
-iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixmagixsp$baseName$axis$orbitType<0 ? iixmagixsp$baseName$axis$orbitType*inotefrq : iixmagixsp$baseName$axis$orbitType)
+
+
+iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixmagixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixmagixsp$baseName$axis$orbitType)
+iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixmagixsp$baseName$axis$orbitType>0 ? iTerrainDur : iixmagixsp$baseName$axis$orbitType$eTime)
+
+iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixmagixsp$baseName$axis$orbitType<0 ? 1/iixmagixsp$baseName$axis$orbitType : iixmagixsp$baseName$axis$orbitType$eTime)
+
+iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixmagixsp$baseName$axis$orbitType<0 ? iixmagixsp$baseName$axis$orbitType*inotefrq : iixmagixsp$baseName$axis$orbitType$eTime)
 iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixmagixsp$baseName$axis$orbitType>0 ? iixmagixsp$baseName$axis$orbitType/iTerrainDur : iixmagixsp$baseName$axis$orbitType$eTime)
+
 iixmagixsp$baseName$axis$orbitType$eTime = abs(iixmagixsp$baseName$axis$orbitType$eTime)
-iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixoffixsp$baseName$axis$orbitType<0 ? iixoffixsp$baseName$axis$orbitType*inotefrq : iixoffixsp$baseName$axis$orbitType)
+
+
+iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixoffixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixoffixsp$baseName$axis$orbitType)
+iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixoffixsp$baseName$axis$orbitType<0 ? iTerrainDur : iixoffixsp$baseName$axis$orbitType$eTime)
+
+iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixoffixsp$baseName$axis$orbitType<0 ? 1/iixoffixsp$baseName$axis$orbitType : iixoffixsp$baseName$axis$orbitType$eTime)
+
+iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixoffixsp$baseName$axis$orbitType<0 ? iixoffixsp$baseName$axis$orbitType*inotefrq : iixoffixsp$baseName$axis$orbitType$eTime)
 iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixoffixsp$baseName$axis$orbitType>0 ? iixoffixsp$baseName$axis$orbitType/iTerrainDur : iixoffixsp$baseName$axis$orbitType$eTime)
+
 iixoffixsp$baseName$axis$orbitType$eTime = abs(iixoffixsp$baseName$axis$orbitType$eTime)
-iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixsp$baseName$axis$orbitType<0 ? iixspixsp$baseName$axis$orbitType*inotefrq : iixspixsp$baseName$axis$orbitType)
+
+
+iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixsp$baseName$axis$orbitType<0 ?1/iTerrainDur : iixspixsp$baseName$axis$orbitType)
+iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixsp$baseName$axis$orbitType<0 ?iTerrainDur : iixspixsp$baseName$axis$orbitType$eTime)
+
+iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixspixsp$baseName$axis$orbitType<0 ?1/iixspixsp$baseName$axis$orbitType : iixspixsp$baseName$axis$orbitType$eTime)
+
+iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixsp$baseName$axis$orbitType<0 ? iixspixsp$baseName$axis$orbitType*inotefrq : iixspixsp$baseName$axis$orbitType$eTime)
 iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixsp$baseName$axis$orbitType>0 ? iixspixsp$baseName$axis$orbitType/iTerrainDur : iixspixsp$baseName$axis$orbitType$eTime)
+
 iixspixsp$baseName$axis$orbitType$eTime = abs(iixspixsp$baseName$axis$orbitType$eTime)
-iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspmag$baseName$axis$orbitType<0 ? iixspmag$baseName$axis$orbitType*inotefrq : iixspmag$baseName$axis$orbitType)
+
+
+iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspmag$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixspmag$baseName$axis$orbitType)
+iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspmag$baseName$axis$orbitType>0 ? iTerrainDur : iixspmag$baseName$axis$orbitType$eTime)
+
+iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixspmag$baseName$axis$orbitType<0 ? 1/iixspmag$baseName$axis$orbitType : iixspmag$baseName$axis$orbitType$eTime)
+
+iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspmag$baseName$axis$orbitType<0 ? iixspmag$baseName$axis$orbitType*inotefrq : iixspmag$baseName$axis$orbitType$eTime)
 iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspmag$baseName$axis$orbitType>0 ? iixspmag$baseName$axis$orbitType/iTerrainDur : iixspmag$baseName$axis$orbitType$eTime)
+
 iixspmag$baseName$axis$orbitType$eTime = abs(iixspmag$baseName$axis$orbitType$eTime)
-iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixmag$baseName$axis$orbitType<0 ? iixspixmag$baseName$axis$orbitType*inotefrq : iixspixmag$baseName$axis$orbitType)
+
+
+iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixmag$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixspixmag$baseName$axis$orbitType)
+iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixmag$baseName$axis$orbitType<0 ? iTerrainDur : iixspixmag$baseName$axis$orbitType$eTime)
+
+iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixspixmag$baseName$axis$orbitType<0 ? 1/iixspixmag$baseName$axis$orbitType : iixspixmag$baseName$axis$orbitType$eTime)
+
+iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixmag$baseName$axis$orbitType<0 ? iixspixmag$baseName$axis$orbitType*inotefrq : iixspixmag$baseName$axis$orbitType$eTime)
 iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixmag$baseName$axis$orbitType>0 ? iixspixmag$baseName$axis$orbitType/iTerrainDur : iixspixmag$baseName$axis$orbitType$eTime)
 iixspixmag$baseName$axis$orbitType$eTime = abs(iixspixmag$baseName$axis$orbitType$eTime)
+
+;print imagixsp$baseName$axis$orbitType$eTime
+;print ioffixsp$baseName$axis$orbitType$eTime
+;print iixmagixsp$baseName$axis$orbitType$eTime
+;print iixoffixsp$baseName$axis$orbitType$eTime
+;print iixspixsp$baseName$axis$orbitType$eTime
+;print iixspmag$baseName$axis$orbitType$eTime
+;print iixspixmag$baseName$axis$orbitType$eTime
 
 ; defensive
 imagixsp$baseName$axis$orbitType$eTime = (iTerrainDur==-1 ? 0 : imagixsp$baseName$axis$orbitType$eTime)
@@ -1063,22 +1179,74 @@ $setScanTiming($layerNum$terrainType'y'OP's)
 	itotaldur = iaeattack+iaedecline
 	iusrphsdur = 0; default
 
-	if itotaldur>inotedur igoto adjtiming	; we need to do something
+; none of this works properly
+print iaeattack, iaedecline, itotaldur
+;	if itotaldur>inotedur igoto adjtiming	; we need to do something
+;;if (itotaldur>inotedur && giduradj==1) igoto adjtiming	; we need to do something
+;	inotedur = ((giforcenotedur==1 && giduradj==0) ? itotaldur : inotedur);
+;	iusrphsdur = inotedur-itotaldur
+;	igoto timingdone
+;
+;	adjtiming:
+;	if giduradj == 0 igoto timingdone
+;	itotaldur = itotaldur+inotedur	; now rescale to inotedur
+;	itscl = (giusrdclphs==0 ? inotedur : inotedur/itotaldur)
+;	iaeattack = iaeattack*itscl
+;	iaedecline = iaedecline*itscl
+;	iusrphsdur = inotedur-iaeattack-iaedecline
+;
+;	timingdone:
+
+;giforcenotedur = 0
+
+; by default the mass/resonance calculated AD timings are used
+; the score dur is ignored.
+; if the score dur is required then there are 2 cases, <notedur and >notedur
+; the duradj flag s/b used
+; 1) if set and < then AD must be extended to fit OR if forcenotedur set usrphsdur
+; inserted
+; 2) if set and > then AD must be scaled down unless forcenotedur set (overrides)
+; and there is no usrphsdur
+
+	itscl = inotedur/itotaldur
+
+; if score dur not required and forcenotedur set then just pass default AD
+	if (giforcenotedur==1 && giduradj==0) igoto timingdone
+;	if (giforcenotedur==0 && giusrdclphs==0) igoto timingdone
+; else use the score note dur
+	if (giduradj==1 && itotaldur<inotedur) igoto extendnote
+	if (giduradj==1 && itotaldur>inotedur) igoto reducenote
+	iaeattack = iaeattack*itscl
+	iaedecline = iaedecline*itscl
+	igoto timingdone
+	
+	extendnote:
+	; case 1
+	if giforcenotedur==0 igoto insertusrphs
+;	itscl = inotedur/itotaldur
+	iaeattack = iaeattack*itscl
+	iaedecline = iaedecline * itscl
+inotedur = itotaldur
+	igoto timingdone
+	insertusrphs:
 	iusrphsdur = inotedur-itotaldur
 	igoto timingdone
 
-	adjtiming:
-	if giduradj == 0 igoto timingdone
-	itotaldur = itotaldur+inotedur	; now rescale to inotedur
-	itscl = (giusrdclphs==0 ? inotedur : inotedur/itotaldur)
-	iaeattack = iaeattack*itscl
-	iaedecline = iaedecline*itscl
-	iusrphsdur = inotedur-iaeattack-iaedecline
+	reducenote:
+	if giforcenotedur==0 igoto reducedefault
 	igoto timingdone
 
+	reducedefault:
+	iaeattack = iaeattack*itscl
+	iaedecline = iaedecline * itscl
+
 	timingdone:
-	inotedur = (itotaldur>inotedur ? itotaldur : inotedur)
+
+
+print iusrphsdur	; shouldn't be -ve
+iusrphsdur = (iusrphsdur<0 ? 0 : iusrphsdur)
 	iaerelease = iaedecline	; default
+;iaerelease = (giusrdclphs<0 ? iaedecline+iusrphsdur : iaedecline)
 
 	if giusrdclphs==0 igoto endusrphs
 	; not tied, held - no release
@@ -1316,9 +1484,9 @@ print itimes, itimep
 #
 	$sblockcode
 	$sblockcode
-	$sblockcode
-	$sblockcode
-	$sblockcode
+;	$sblockcode
+;	$sblockcode
+;	$sblockcode
 ;	$sblockcode
 ;	$sblockcode
 ;	$sblockcode
@@ -1328,11 +1496,11 @@ print itimes, itimep
 
 #define allncode
 #
-	$nblockcode
-	$nblockcode
-	$nblockcode
-	$nblockcode
-	$nblockcode
+;	$nblockcode
+;	$nblockcode
+;	$nblockcode
+;	$nblockcode
+;	$nblockcode
 ;	$nblockcode
 ;	$nblockcode
 ;	$nblockcode
@@ -1405,14 +1573,14 @@ instr 1
 	girandtbltype = 1	; must return positive for this instrument
 	iafno ftgen $noisedefs, 0, 261, -23, "data/Cello-arco-reference-1st/Cello.noisedefs"	; noise defs file
 	gihasnoise = 0
-	gimass = 10
-	gires = 1
+	gimass = 100
+	gires = 2
 	giusrdclphs = 1
 	giduradj = 1
 	gisuslvl = 1.8
-	gigain = 0.1
-	giatkdelay = 0.8
-	gidcladvance = 0.56
+	gigain = 0.45
+	giatkdelay = 0.5
+	gidcladvance = 0.1
 	gidcltbl = $expd	; override default
 ;giatktbl = $unity
 ;gisustbl = $unity
@@ -1424,40 +1592,43 @@ instr 1
 	giphfflf = 10	; in note extreme cases. If less further harmonics are
 	giphpphf = 10	; synthesised rather than being table-derived
 	giphffhf = 10
-	gioscs = 50	; max oscs used
+	gioscs = 20	; max oscs used
 gitblbase = 0	;	; uncomment to use only s-harmonics
 ;	gitblbase = 500	; start of cello data fn tables (0=no tables)
 gihmagtblbase = 0		; uncomment if s-harmonics should not use p-h magnitudes
-;	gihmagtblbase = 580	; start of harmonic magnitude data (if present, default 0)
+;	gihmagtblbase = 580	; start of harmonic magnitude data (if present,default 0)
 	; Cello-arco-reference-1st data
 	giminvol = 1700		; data min and max ranges (from original sound)
 	gimaxvol = 3400
 	giminfrq = 65.406	; C2: nominal frequencies of note range (csound book)
 	gimaxfrq = 783.991	; G5
 	; these set the envelope by reference to the original samples
-	gipplft = 0.19		; pplf C2 table atk dur (fraction of note dur.)
-	gipphft = 0.19		; pphf G5
-	gifflft = 0.29		; fflf C2
-	giffhft = 0.19		; ffhf G5
-	girlspplft = 0.41	; pp C2 release start (fraction of note dur.)
-	girlspphft = 0.36
-	girlsfflft = 0.59
-	girlsffhft = 0.44
-;	girlspplft = 0.3	; pp C2 release start (fraction of note dur.)
-;	girlspphft = 0.25
-;	girlsfflft = 0.35
-;	girlsffhft = 0.35
+;	gipplft = 0.39	;0.19		; pplf C2 table atk dur (fraction of note dur.)
+;	gipphft = 0.29		; pphf G5
+;	gifflft = 0.39		; fflf C2
+;	giffhft = 0.35		; ffhf G5
+;	girlspplft = 0.41	; pp C2 release start (fraction of note dur.)
+;	girlspphft = 0.36
+;	girlsfflft = 0.59
+;	girlsffhft = 0.44
+
+	gipplft = 0.1		; ppC2 65.406
+	gipphft = 0.1		; ppG5 783.991
+	gifflft = 0.2		; ffC2 6.00
+	giffhft = 0.2		; ffG5 9.07
+	girlspplft = 0.75
+	girlspphft = 0.6
+	girlsfflft = 0.75
+	girlsffhft = 0.7
 	; end Cello-arco-reference-1st data
 	; terrain table numbers follow the last hmag table (here, 583)
 giUseAllH1a = 1
-giUseAllH2a = 1
-;giTerrainMode0a = 0
-giTerrainMode1a = 0
+;giUseAllH2a = 1
 gitbl1axOF = 584	; define orbit/path from
 gitbl2axOF = 588	; or from those in data/default if not specified here
-;gitbl2ayOF = 589
-;giTerrainExcludeScl = 0.1	; global since we have default magnitude 1
-;giterrainxexclude2a = 588	; don't use this file if tied/held, return dummy z value
+gitbl2ayOF = 589
+giTerrainExcludeScl = 0.25	; global since we have default magnitude 1
+giterrainxexclude2a = 588	; don't use this file if tied/held, return dummy z value
 	igoto instrSetupDone
 
 	inum44:
@@ -1524,32 +1695,57 @@ gitbl2axOF = 588	; or from those in data/default if not specified here
 	; instrument 129 defaults (pure synthetic)
 	inum129:
 	if giinum > 129 igoto inum130
-	gigain = 0.2
-	giusrdclphs = 1
+;	gigain = 0.2
+;	giusrdclphs = 1
 	giatktbl = $unity
 	gisustbl = $unity
 	gidcltbl = $unity
-	gisuslvl = 2
-	gitbl1axOF = 1000	; t-based decline
-	gitbl1ayOF = 1001	; f-based decline
+;	gisuslvl = 2
+;	gitbl1axOF = 1000	; t-based decline
+;	gitbl1ayOF = 1001	; f-based decline
 ;	; these are for the 2Tone test files in data/default
 ;	giterrainFn1a = 1
 ;	giterrainFn2a = 0
-;	giTerrainMode1a = 0
-;	giTerrainMode2a = 1
+;	giTerrainMode1a = 1
+;	giTerrainMode2a = 0
 	igoto instrSetupDone
 	
-	; first user-definable instr (unimplemented)
+	; first user-definable instr
 	inum130:
 	if giinum > 130 igoto inum143
+; test pure synthesis using function to generate dynamic wavetable
+	inum130:
+gisntype = 1	; use Hz in score
+gisgenfn = $unity	; linear 0dBfs
+gigain = 3
+gioscs = 1
+gisuslvlctl = 3.5
+;	giatktbl = $unity
+;	gisustbl = $unity
+;	gidcltbl = $unity
+
+	gimass = 10
+	gires = 0.5
+	giusrdclphs = 1
+;	giduradj = 1
+giatktbl = $sini
+gidcltbl = $cosd
+;giTerrainMode1a = 0	; layer 2 additive on layer 1
+giterrainFn1a = 2	; use rosenbrock fn
+;giterrainFn2a = 2	; use rosenbrock fn
+;giterrainFn1a = 3
+gitbl1axOF = 1000
+gitbl1ayOF = 1001
+;gitbl2axOF = 1002
+;gitbl2ayOF = 1003
 	igoto instrSetupDone
 
 	; alternate cello based on UIOWA Cello.arco.sulC samples
 	inum143:
 	if giinum > 143 igoto instrSetupDone
-	gioscs = 15
+	gioscs = 1
 	gimass = 15
-	gires = 3
+	gires = 10
 	giusrdclphs = 1
 	giduradj = 1
 	gisuslvl = 1
@@ -1560,6 +1756,8 @@ gitbl2axOF = 588	; or from those in data/default if not specified here
 	giphffhf = 15
 	gitblbase = 840;	start of cello data fn tables (0=no tables)
 	gihmagtblbase = 960	; start of harmonic magnitude data (if present)
+;gitblbase = 0
+;gihmagtblbase = 0
 	; Cello.arco.sulC data
 	giminvol = 1500		; data min and max ranges (from original sound)
 	gimaxvol = 3500
@@ -1574,6 +1772,7 @@ gitbl2axOF = 588	; or from those in data/default if not specified here
 	girlspphft = 0.33
 	girlsfflft = 0.58
 	girlsffhft = 0.47
+;giTerrainMode0a = 0
 	; end Cello.arco.sulC data
 	igoto instrSetupDone
 
@@ -1777,7 +1976,6 @@ instr 90
 	ioctpchi = iocti
 	iampi = iampi/$maxai
 	iocti = iocti/$maxfi
-
 
 	iampix = (inotevol-giminvol)/(gimaxvol-giminvol)
 	iampix = (iampix<0 ? 0 : iampix)
@@ -2319,6 +2517,7 @@ print iampix, ifrqix, iafix
 
 
 	asig = (giforcenoiseampenv==0 ? aoscp+kenv*(aoscs+aoscpt)+anout : aoscp+kenv*(aoscs+aoscpt+anout))
+;asig    dcblock2  asig
 	; add amplitude deviance
 	asig = asig*(1+kadev)
 	; apply tremolo envelope
