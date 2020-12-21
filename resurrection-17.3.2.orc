@@ -1,5 +1,5 @@
-; resurrection-17.3.2.orc
-; 14/11/2020
+; resurrection-17.3.3.orc
+; 09/12/2020
 
 ; Resurrection - a csound sound rendering engine
 
@@ -417,8 +417,10 @@ nchnls = 1
 	kxOS	tablei	kix$baseName$xaxis$OF$eTime+k$baseName$xaxis$OP$eTime, itbl$baseName$xaxis$OF, 1, itoff$baseName$xaxis$OF, itwrap$baseName$xaxis$OF
 ;printks "kxOS %f kmag %f\n", 0.01*idur, kxOS, kmag$baseName$xaxis$OF$eTime
 	kxOS$baseName$xaxis$eTime = kxOS*kmag$baseName$xaxis$OF$eTime+koff$baseName$xaxis$OF$eTime	; kxOS is final output
+;printks "xkmag %f xkoff %f\n", 0.01*idur, kmag$baseName$xaxis$OF$eTime, koff$baseName$xaxis$OF$eTime
 	kyOS	tablei	kix$baseName$yaxis$OF$eTime+k$baseName$yaxis$OP$eTime, itbl$baseName$yaxis$OF, 1, itoff$baseName$yaxis$OF, itwrap$baseName$yaxis$OF
 	kyOS$baseName$yaxis$eTime = kyOS*kmag$baseName$yaxis$OF$eTime+koff$baseName$yaxis$OF$eTime	; kyOS is final output
+;printks "ykmag %f ykoff %f\n", 0.01*idur, kmag$baseName$yaxis$OF$eTime, koff$baseName$yaxis$OF$eTime
 display kxOS$baseName$xaxis$eTime, idur
 display kyOS$baseName$yaxis$eTime, idur
 ;printks "mTLO khn %d xkix %f kxOS %f\n", 0.01*idur, khn, kix$baseName$xaxis$OF$eTime, kxOS$baseName$xaxis$eTime
@@ -440,13 +442,18 @@ display kyOS$baseName$yaxis$eTime, idur
 	khNumTDC = (iTDCOP$vName$baseName$axis$orbitType==0 ? i$HTDC$baseName$axis$orbitType*kharmonic+i$AFTDC$baseName$axis$orbitType : i$HTDC$baseName$axis$orbitType*kharmonic*i$AFTDC$baseName$axis$orbitType)
 ;printks "mkkv khn %d TDC %f type %d AFTDC %f\n", 0.01*idur, kharmonic, khNumTDC, iTDCOP$vName$baseName$axis$orbitType, i$AFTDC$baseName$axis$orbitType
 	kndx	oscili	i$v1$baseName$axis$orbitType, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
-;print i$v1$baseName$axis$orbitType, i$v2$baseName$axis$orbitType, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
+print i$v1$baseName$axis$orbitType, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
+;printks "mkkv1 khn %d kndx %f\n", 0.01*idur, kharmonic, kndx
 ;printks "khn %d kndx %f\n", 0.01*idur, khn, kndx
+;print i$v5$baseName$axis$orbitType
+;print i$v6$baseName$axis$orbitType, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
+;print , i$v9$baseName$axis$orbitType, i$v10$baseName$axis$orbitType
+;print
 	kndx = (kndx+i$v5$baseName$axis$orbitType)*khNumTDC
-;printks "khn %d kndx %f\n", 0.01*idur, kharmonic, kndx
+;printks "mkkv2 khn %d kndx %f\n", 0.01*idur, kharmonic, kndx
 	k$vName$baseName$axis$orbitType	tablei	kndx, i$v6$baseName$axis$orbitType, 1, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
 	k$vName$baseName$axis$orbitType$eTime = k$vName$baseName$axis$orbitType*i$v9$baseName$axis$orbitType+i$v10$baseName$axis$orbitType
-;printks "khn %d  k$vName$baseName$axis$orbitType$eTime %f\n", 0.01*idur, khn, k$vName$baseName$axis$orbitType$eTime
+printks "mkkv khn %d  k$vName$baseName$axis$orbitType$eTime %f\n", 0.01*idur, khn, k$vName$baseName$axis$orbitType$eTime
 ;display k$vName$baseName$axis$orbitType$eTime, idur
 #
 
@@ -455,19 +462,27 @@ display kyOS$baseName$yaxis$eTime, idur
 ; the indices don't change just durations (encoded in phases) - they reference the variables loaded from control file
 	kharmonic = $khNum
 	khNumTDC = (iTDCOP$vName$baseName$axis$orbitType==0 ? i$HTDC$baseName$axis$orbitType*kharmonic+i$AFTDC$baseName$axis$orbitType : i$HTDC$baseName$axis$orbitType*kharmonic*i$AFTDC$baseName$axis$orbitType)
+;print
+;print i$v1$baseName$axis$orbitType$eTime, i$v2$baseName$axis$orbitType$eTime
+;print i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
 ;printks "mkspv khn %d TDC %f type %d\n", 0.01*idur, kharmonic, khNumTDC, iTDCOP$vName$baseName$axis$orbitType
 kixspix	oscili	i$v1$baseName$axis$orbitType$eTime, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
 	kixspix = (kixspix+i$v5$baseName$axis$orbitType)*khNumTDC
 display kixspix, idur
-;printks "Scan period index (kixspix) : khn %d kixspix %f\n", 0.01*idur, khn, kixspix
+;printks "mkspv scan period index : khn %d kixspix %f\n", 0.01*idur, khn, kixspix
+;print i$v5$baseName$axis$orbitType
+;print i$v6$baseName$axis$orbitType, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
+;print i$v9$baseName$axis$orbitType, i$v10$baseName$axis$orbitType
 	k$vName$baseName$axis$orbitType	tablei	kixspix, i$v6$baseName$axis$orbitType, 1, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
 	k$vName$baseName$axis$orbitType$eTime = k$vName$baseName$axis$orbitType*i$v9$baseName$axis$orbitType$eTime+i$v10$baseName$axis$orbitType
 display k$vName$baseName$axis$orbitType$eTime, idur
-;printks "Index scan period (kixsp): khn %d  k$vName$baseName$axis$orbitType$eTime %f\n", 0.01*idur, khn, k$vName$baseName$axis$orbitType$eTime
+;printks "mkspv sp khn %d k$vName$baseName$axis$orbitType$eTime %f\n", 0.01*idur, khn, k$vName$baseName$axis$orbitType$eTime
+;printks "\n", 0.01*idur
 #
 
 #define makekindices(baseName'axis'orbitType'eTime'khNum)
 #
+printks "\n", 0.01*idur
 	khNumTDC0 = (iTDCOPix$baseName$axis$orbitType==0 ? iixHTDC$baseName$axis$orbitType*khNum+iixAFTDCscl$baseName$axis$orbitType : iixHTDC$baseName$axis$orbitType*khNum*iixAFTDCscl$baseName$axis$orbitType)
 	; generate sectional sub-indices, one for each substituted variable
 	; 1
@@ -492,8 +507,6 @@ display kix$baseName$axis$orbitType$eTime, idur
 
 #define terrainLayer(layerNum'terrainType'eTime'khNum)
 #
-;iTerrain$layerNum = $layerNum
-;print iTerrain$layerNum
 	; the eTime <p/s> is obtained from the calling code, p or s-h
 	$makekindices($layerNum$terrainType'x'OF'$eTime'khNum)
 	$makekindices($layerNum$terrainType'y'OF'$eTime'khNum)
@@ -563,13 +576,6 @@ $repeatHenonMap($a'$b'$c'$d)
 $repeatHenonMap($a'$b'$c'$d)
 $repeatHenonMap($a'$b'$c'$d)
 $repeatHenonMap($a'$b'$c'$d)
-
-
-;kz = kxstart*kystart
-;printks "newx %f newy%f\n", 0.01*idur, kxstart, kystart
-;knewxstart = $b+1-($c*$a*$a)
-;kystart = $d*$a
-;kxstart = knewxstart
 #
 
 #define repeatHenonMap(a'b'c'd)
@@ -790,6 +796,7 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	imagixsp$baseName$axis$orbitType		table	14, iterraintbl
 	imagixspflag$baseName$axis$orbitType		table	15, iterraintbl
 
+print 2, imagixsp$baseName$axis$orbitType, imagixspflag$baseName$axis$orbitType
 	; 2
 	ioffmag$baseName$axis$orbitType			table	16, iterraintbl
 	ioffoff$baseName$axis$orbitType			table	17, iterraintbl
@@ -971,89 +978,63 @@ iixspAFTDCscl$baseName = (iixspTDCflag$baseName==$testValue ? iixspAFTDC$baseNam
 
 #define setScanTiming(baseName'axis'orbitType'eTime)
 #
+; scan period flag nameing error!!! WARNING!!!
 iTerrainDur = (iTerrainDur$baseName$eTime>0 ? iTerrainDur$baseName$eTime : -1)	; dummy value avoids failure
-imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && imagixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : imagixsp$baseName$axis$orbitType)
-imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && imagixsp$baseName$axis$orbitType>0 ? iTerrainDur : imagixsp$baseName$axis$orbitType$eTime)
-
-imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && imagixsp$baseName$axis$orbitType<0 ? 1/imagixsp$baseName$axis$orbitType : imagixsp$baseName$axis$orbitType$eTime)
-
-imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && imagixsp$baseName$axis$orbitType<0 ? imagixsp$baseName$axis$orbitType*inotefrq : imagixsp$baseName$axis$orbitType$eTime)
-imagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && imagixsp$baseName$axis$orbitType>0 ? imagixsp$baseName$axis$orbitType/iTerrainDur : imagixsp$baseName$axis$orbitType$eTime)
-
+print 0, imagixsp$baseName$axis$orbitType
+imagixsp$baseName$axis$orbitType$eTime = (imagixspflag$baseName$axis$orbitType==-1 && imagixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : imagixsp$baseName$axis$orbitType)
+imagixsp$baseName$axis$orbitType$eTime = (imagixspflag$baseName$axis$orbitType==-1 && imagixsp$baseName$axis$orbitType>0 ? iTerrainDur : imagixsp$baseName$axis$orbitType$eTime)
+imagixsp$baseName$axis$orbitType$eTime = (imagixspflag$baseName$axis$orbitType==0 && imagixsp$baseName$axis$orbitType<0 ? 1/imagixsp$baseName$axis$orbitType : imagixsp$baseName$axis$orbitType$eTime)
+imagixsp$baseName$axis$orbitType$eTime = (imagixspflag$baseName$axis$orbitType==1 && imagixsp$baseName$axis$orbitType<0 ? imagixsp$baseName$axis$orbitType*inotefrq : imagixsp$baseName$axis$orbitType$eTime)
+imagixsp$baseName$axis$orbitType$eTime = (imagixspflag$baseName$axis$orbitType==1 && imagixsp$baseName$axis$orbitType>0 ? imagixsp$baseName$axis$orbitType/iTerrainDur : imagixsp$baseName$axis$orbitType$eTime)
 imagixsp$baseName$axis$orbitType$eTime = abs(imagixsp$baseName$axis$orbitType$eTime)
-
-
-ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && ioffixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : ioffixsp$baseName$axis$orbitType)
-ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && ioffixsp$baseName$axis$orbitType>0 ? iTerrainDur : ioffixsp$baseName$axis$orbitType$eTime)
-
-ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && ioffixsp$baseName$axis$orbitType<0 ? 1/ioffixsp$baseName$axis$orbitType : ioffixsp$baseName$axis$orbitType$eTime)
-
-ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && ioffixsp$baseName$axis$orbitType<0 ? ioffixsp$baseName$axis$orbitType*inotefrq : ioffixsp$baseName$axis$orbitType$eTime)
-ioffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && ioffixsp$baseName$axis$orbitType>0 ? ioffixsp$baseName$axis$orbitType/iTerrainDur : ioffixsp$baseName$axis$orbitType$eTime)
-
+print 1, imagixsp$baseName$axis$orbitType$eTime
+ioffixsp$baseName$axis$orbitType$eTime = (ioffixspflag$baseName$axis$orbitType==-1 && ioffixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : ioffixsp$baseName$axis$orbitType)
+ioffixsp$baseName$axis$orbitType$eTime = (ioffixspflag$baseName$axis$orbitType==-1 && ioffixsp$baseName$axis$orbitType>0 ? iTerrainDur : ioffixsp$baseName$axis$orbitType$eTime)
+ioffixsp$baseName$axis$orbitType$eTime = (ioffixspflag$baseName$axis$orbitType==0 && ioffixsp$baseName$axis$orbitType<0 ? 1/ioffixsp$baseName$axis$orbitType : ioffixsp$baseName$axis$orbitType$eTime)
+ioffixsp$baseName$axis$orbitType$eTime = (ioffixspflag$baseName$axis$orbitType==1 && ioffixsp$baseName$axis$orbitType<0 ? ioffixsp$baseName$axis$orbitType*inotefrq : ioffixsp$baseName$axis$orbitType$eTime)
+ioffixsp$baseName$axis$orbitType$eTime = (ioffixspflag$baseName$axis$orbitType==1 && ioffixsp$baseName$axis$orbitType>0 ? ioffixsp$baseName$axis$orbitType/iTerrainDur : ioffixsp$baseName$axis$orbitType$eTime)
 ioffixsp$baseName$axis$orbitType$eTime = abs(ioffixsp$baseName$axis$orbitType$eTime)
 
-
-iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixmagixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixmagixsp$baseName$axis$orbitType)
-iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixmagixsp$baseName$axis$orbitType>0 ? iTerrainDur : iixmagixsp$baseName$axis$orbitType$eTime)
-
-iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixmagixsp$baseName$axis$orbitType<0 ? 1/iixmagixsp$baseName$axis$orbitType : iixmagixsp$baseName$axis$orbitType$eTime)
-
-iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixmagixsp$baseName$axis$orbitType<0 ? iixmagixsp$baseName$axis$orbitType*inotefrq : iixmagixsp$baseName$axis$orbitType$eTime)
-iixmagixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixmagixsp$baseName$axis$orbitType>0 ? iixmagixsp$baseName$axis$orbitType/iTerrainDur : iixmagixsp$baseName$axis$orbitType$eTime)
-
+iixmagixsp$baseName$axis$orbitType$eTime = (iixmagixspflag$baseName$axis$orbitType==-1 && iixmagixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixmagixsp$baseName$axis$orbitType)
+iixmagixsp$baseName$axis$orbitType$eTime = (iixmagixspflag$baseName$axis$orbitType==-1 && iixmagixsp$baseName$axis$orbitType>0 ? iTerrainDur : iixmagixsp$baseName$axis$orbitType$eTime)
+iixmagixsp$baseName$axis$orbitType$eTime = (iixmagixspflag$baseName$axis$orbitType==0 && iixmagixsp$baseName$axis$orbitType<0 ? 1/iixmagixsp$baseName$axis$orbitType : iixmagixsp$baseName$axis$orbitType$eTime)
+iixmagixsp$baseName$axis$orbitType$eTime = (iixmagixspflag$baseName$axis$orbitType==1 && iixmagixsp$baseName$axis$orbitType<0 ? iixmagixsp$baseName$axis$orbitType*inotefrq : iixmagixsp$baseName$axis$orbitType$eTime)
+iixmagixsp$baseName$axis$orbitType$eTime = (iixmagixspflag$baseName$axis$orbitType==1 && iixmagixsp$baseName$axis$orbitType>0 ? iixmagixsp$baseName$axis$orbitType/iTerrainDur : iixmagixsp$baseName$axis$orbitType$eTime)
 iixmagixsp$baseName$axis$orbitType$eTime = abs(iixmagixsp$baseName$axis$orbitType$eTime)
 
-
-iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixoffixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixoffixsp$baseName$axis$orbitType)
-iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixoffixsp$baseName$axis$orbitType<0 ? iTerrainDur : iixoffixsp$baseName$axis$orbitType$eTime)
-
-iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixoffixsp$baseName$axis$orbitType<0 ? 1/iixoffixsp$baseName$axis$orbitType : iixoffixsp$baseName$axis$orbitType$eTime)
-
-iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixoffixsp$baseName$axis$orbitType<0 ? iixoffixsp$baseName$axis$orbitType*inotefrq : iixoffixsp$baseName$axis$orbitType$eTime)
-iixoffixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixoffixsp$baseName$axis$orbitType>0 ? iixoffixsp$baseName$axis$orbitType/iTerrainDur : iixoffixsp$baseName$axis$orbitType$eTime)
-
+iixoffixsp$baseName$axis$orbitType$eTime = (iixoffixspflag$baseName$axis$orbitType==-1 && iixoffixsp$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixoffixsp$baseName$axis$orbitType)
+iixoffixsp$baseName$axis$orbitType$eTime = (iixoffixspflag$baseName$axis$orbitType==-1 && iixoffixsp$baseName$axis$orbitType<0 ? iTerrainDur : iixoffixsp$baseName$axis$orbitType$eTime)
+iixoffixsp$baseName$axis$orbitType$eTime = (iixoffixspflag$baseName$axis$orbitType==0 && iixoffixsp$baseName$axis$orbitType<0 ? 1/iixoffixsp$baseName$axis$orbitType : iixoffixsp$baseName$axis$orbitType$eTime)
+iixoffixsp$baseName$axis$orbitType$eTime = (iixoffixspflag$baseName$axis$orbitType==1 && iixoffixsp$baseName$axis$orbitType<0 ? iixoffixsp$baseName$axis$orbitType*inotefrq : iixoffixsp$baseName$axis$orbitType$eTime)
+iixoffixsp$baseName$axis$orbitType$eTime = (iixoffixspflag$baseName$axis$orbitType==1 && iixoffixsp$baseName$axis$orbitType>0 ? iixoffixsp$baseName$axis$orbitType/iTerrainDur : iixoffixsp$baseName$axis$orbitType$eTime)
 iixoffixsp$baseName$axis$orbitType$eTime = abs(iixoffixsp$baseName$axis$orbitType$eTime)
-
 
 iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixsp$baseName$axis$orbitType<0 ?1/iTerrainDur : iixspixsp$baseName$axis$orbitType)
 iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixsp$baseName$axis$orbitType<0 ?iTerrainDur : iixspixsp$baseName$axis$orbitType$eTime)
-
 iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixspixsp$baseName$axis$orbitType<0 ?1/iixspixsp$baseName$axis$orbitType : iixspixsp$baseName$axis$orbitType$eTime)
-
 iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixsp$baseName$axis$orbitType<0 ? iixspixsp$baseName$axis$orbitType*inotefrq : iixspixsp$baseName$axis$orbitType$eTime)
 iixspixsp$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixsp$baseName$axis$orbitType>0 ? iixspixsp$baseName$axis$orbitType/iTerrainDur : iixspixsp$baseName$axis$orbitType$eTime)
-
 iixspixsp$baseName$axis$orbitType$eTime = abs(iixspixsp$baseName$axis$orbitType$eTime)
-
 
 iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspmag$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixspmag$baseName$axis$orbitType)
 iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspmag$baseName$axis$orbitType>0 ? iTerrainDur : iixspmag$baseName$axis$orbitType$eTime)
-
 iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixspmag$baseName$axis$orbitType<0 ? 1/iixspmag$baseName$axis$orbitType : iixspmag$baseName$axis$orbitType$eTime)
-
 iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspmag$baseName$axis$orbitType<0 ? iixspmag$baseName$axis$orbitType*inotefrq : iixspmag$baseName$axis$orbitType$eTime)
 iixspmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspmag$baseName$axis$orbitType>0 ? iixspmag$baseName$axis$orbitType/iTerrainDur : iixspmag$baseName$axis$orbitType$eTime)
-
 iixspmag$baseName$axis$orbitType$eTime = abs(iixspmag$baseName$axis$orbitType$eTime)
-
 
 iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixmag$baseName$axis$orbitType<0 ? 1/iTerrainDur : iixspixmag$baseName$axis$orbitType)
 iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==-1 && iixspixmag$baseName$axis$orbitType<0 ? iTerrainDur : iixspixmag$baseName$axis$orbitType$eTime)
-
 iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==0 && iixspixmag$baseName$axis$orbitType<0 ? 1/iixspixmag$baseName$axis$orbitType : iixspixmag$baseName$axis$orbitType$eTime)
-
 iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixmag$baseName$axis$orbitType<0 ? iixspixmag$baseName$axis$orbitType*inotefrq : iixspixmag$baseName$axis$orbitType$eTime)
 iixspixmag$baseName$axis$orbitType$eTime = (iixspixspflag$baseName$axis$orbitType==1 && iixspixmag$baseName$axis$orbitType>0 ? iixspixmag$baseName$axis$orbitType/iTerrainDur : iixspixmag$baseName$axis$orbitType$eTime)
 iixspixmag$baseName$axis$orbitType$eTime = abs(iixspixmag$baseName$axis$orbitType$eTime)
 
-;print imagixsp$baseName$axis$orbitType$eTime
+
+;print 1, imagixsp$baseName$axis$orbitType$eTime
 ;print ioffixsp$baseName$axis$orbitType$eTime
 ;print iixmagixsp$baseName$axis$orbitType$eTime
 ;print iixoffixsp$baseName$axis$orbitType$eTime
-;print iixspixsp$baseName$axis$orbitType$eTime
-;print iixspmag$baseName$axis$orbitType$eTime
-;print iixspixmag$baseName$axis$orbitType$eTime
 
 ; defensive
 imagixsp$baseName$axis$orbitType$eTime = (iTerrainDur==-1 ? 0 : imagixsp$baseName$axis$orbitType$eTime)
@@ -1063,6 +1044,10 @@ iixoffixsp$baseName$axis$orbitType$eTime = (iTerrainDur==-1 ? 0 : iixoffixsp$bas
 iixspixsp$baseName$axis$orbitType$eTime = (iTerrainDur==-1 ? 0 : iixspixsp$baseName$axis$orbitType$eTime)
 iixspmag$baseName$axis$orbitType$eTime = (iTerrainDur==-1 ? 0 : iixspmag$baseName$axis$orbitType$eTime)
 iixspixmag$baseName$axis$orbitType$eTime = (iTerrainDur==-1 ? 0 : iixspixmag$baseName$axis$orbitType$eTime)
+
+;print iixspmag$baseName$axis$orbitType$eTime
+;print iixspixmag$baseName$axis$orbitType$eTime
+;print iixspixsp$baseName$axis$orbitType$eTime
 #
 
 
@@ -1717,19 +1702,19 @@ giterrainxexclude2a = 588	; don't use this file if tied/held, return dummy z val
 	inum130:
 gisntype = 1	; use Hz in score
 gisgenfn = $unity	; linear 0dBfs
-gigain = 3
+gigain = 0.1
 gioscs = 1
-gisuslvlctl = 3.5
-;	giatktbl = $unity
-;	gisustbl = $unity
-;	gidcltbl = $unity
+;gisuslvlctl = 2.5
+	giatktbl = $unity
+	gisustbl = $unity
+	gidcltbl = $unity
 
-	gimass = 10
-	gires = 0.5
-	giusrdclphs = 1
+;	gimass = 0.1
+;	gires = 0.1
+;	giusrdclphs = 1
 ;	giduradj = 1
-giatktbl = $sini
-gidcltbl = $cosd
+;giatktbl = $inv_exp
+;gidcltbl = $cosd
 ;giTerrainMode1a = 0	; layer 2 additive on layer 1
 giterrainFn1a = 2	; use rosenbrock fn
 ;giterrainFn2a = 2	; use rosenbrock fn
