@@ -5,6 +5,7 @@ Terrain control file format
 
 WARNING: DO NOT STICK COMMENTS in the terrain control files: csound will hang.
 		DO NOT USE SPACES either - typically results in an 'invalid table' error.
+		Note: this problem seems corrected in more recent releases.
 
 Sections:
 
@@ -50,10 +51,11 @@ group <n> <p>
 	The index generated in b) references a(iii)
 
 	Scan period control:
-		sp flag	sp	table <n>bi rpt frq, Hz.
+		sp flag	sp	table <n>bi scan frequency
 		1		>0	sp/terraindur
 		1		<0	sp*notefrq
 		0		>0	sp
+		0		0	1
 		0		<0	1/sp
 		-1		>0	terraindur
 		-1		<0	1/terraindur
@@ -65,11 +67,6 @@ group <n> <p>
 	The terraindur by default is the note duration but may be set to some part
 	of this. The giEnvPhase<terrainType><terrainNum> variable refers.
 
-	Note that, in the case of group 5, the index scan period, that the operation
-	of the magnitude 5ai and index magnitude 5bi are also subject to the scan
-	period flag 5civ setting.
-
-
 Subsidiary groups (6)
 
 group <n> <p>
@@ -78,8 +75,8 @@ group <n> <p>
 	i)	index link value				<p>TDCflag
 	ii)	index amplitude/frequency scalar	<p>AFTDC
 	iii)	index amp/frq scalar offset		<p>AFTDCoff
-	iii)	index harmonic number scalar		<p>HTDC
-	iv)	index operation type			TDCOP<p>
+	iv)	index harmonic number scalar		<p>HTDC
+	v)	index operation type			TDCOP<p>
 
 	n = group number, p = parameter (see 'Parameter ID' above).
 	
@@ -178,8 +175,8 @@ Surface / function (0)
 	surface function: the number of an internally defined function generating a
 	z (terrain height) from input x and y index values. Specification of a function
 	number for a terrain x/y axis component pair in the intrument setup overrides
-	any surface table specified (since the output of this is interpreted as an
-	argument to the function specified).
+	any surface table specified (since the x, y outputs of this are interpreted as
+	arguments to the function specified).
 
 	
 Terrain Control System: schematic.
