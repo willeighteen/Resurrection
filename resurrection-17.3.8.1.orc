@@ -1624,17 +1624,15 @@ giterrainFn1a = 2	; use rosenbrock fn
 	inum133:
 	if giinum > 133 igoto inum143
 	; bass range D2-D4, 6.02-8.02, amplitude 1000 -> 10000
-gisntype = 1
 	gioscs = 20	; override default 10 oscillators (f0 - f9)
 	gigain = 10
 	giminvol = 1000	; data min and max ranges
 	gimaxvol = 12000	; ensure indices iampix, ifrqix are in ]0,1]
 	giminfrq = 73.5	; or required subinterval to obtain desired range
 	gimaxfrq = 300	; of attack and release times for case extremes
-;	gimass = 0.03
-;	gires = 15
-;	giatktbl = $expi
-giatktbl = $sini
+	gimass = 0.03
+	gires = 15
+	giatktbl = $expi
 	gidcltbl = $expd
 	giEnvPhasea2 = 2	; dcl phase only: don't vibrate string during attack!
 	gitbl1axOF = 1000	; arbitrary terrain table numbers
