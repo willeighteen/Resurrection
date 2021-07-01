@@ -1,0 +1,78 @@
+Cello-arco-reference-1st model
+
+
+file: x1aOFparams-new
+This implements a general low-pass filter emulation, the technical details of which
+can be found in the file Res-4.0-lpfilter-params. The version used here is a
+specific implementation developed for the Cello-arco-reference-1st samples and
+ensures harmonics above about 7 kHz are strongly attenuated.
+
+
+Note: use of index offset -0.025 in 201 and scalar 0.05 with TDC4 1*harmonic gives a softer sound since f1, 3, ... are attenuated relative to f0, 2, ...
+
+
+file: x2aOFparams
+Layer 2 is additive on previous layer, giTerrainMode1a = 0.
+f244 describes a hump, indexed by f201. The scan rate of 201 is determined by sec.5 scan period 1 and scan period flag 1 with index mag 1. This describes one pass through the 201 index table for each note regardless odff its duration.
+
+Sec. 3 index mag 4 means index is scanned once in 1/4 of note. The hump appears once in this period. Its position in the note is determined by sec 4 ix offset: a negative value shifts the hump forward in the note until the offset equals  1-index mag
+
+This however since terrain is *ve means anything outside the hump is attenuated.
+The humo itself needs to be offset. Instead of output mag 1 with no offset. Hence the terrain mode is additive on the previous layer
+
+Regarding the real instrument the peak is at the start of the note but as louidness and harmonic number increase it stretches further through the note.
+The main part of the peak, its max. rise, seems coincident across amp and frq.
+
+
+
+
+
+The magnitude of the harmonics rises and falls determined by the harmonic
+number and frequency. A flag value of 4 selects a decreasing index value with
+increase of amplitude.
+
+The TDC parameters for group 1 (magnitude) are such that when the sum of their values is 0.25 the product with the group 1 magnitude index offset 1bii (value 1) is 0.25 the indexed table 1aii (f230) returns 0.5 which is used as an index into the group 0 index table f201 referencing the group 0 'surface' table 244.
+
+Since the product of TDC and magnitude index offset (0.25) is the index into f230 (a 'triangle' function with central value 1 returned by an index of 0.5) this returns an index of 0.5 into the group 0 index table f201, which being increasing linear over the range [0,1] returns an index of 0.5 into the group 0 'surface' table f244, a spline curve with a central peak at index value 0.5.
+
+An additional factor of 0.1 of the AFTDC index value (range [1,0] for the specified control value of 4 in group 6, parameter 1i, offsets the peak so it actually occurs near harmonic 4 (f3).
+
+The effect is to produce a peak magnitude at a harmonic specified by the
+product of its number h (f0 = harmonic number 1) and the scalar 0.05 with the
+addition of a factor of the product of the index value (decreasing with increasing
+amplitude) and the scalar 0.1.
+
+The result is to accentuate the harmonic designated by the section 6 parameters controlling the group 1 TDC:
+
+	0.05h+0.1i-0.5 = 0
+
+where index i = [1,0] from pp to ff. For a note with amplitude in the centre of the amplitude range dictated by the instr. 43 parameters (inum43), [1700, 3400], as would be expected, the peak harmonic is the 4th. (f3).
+
+With the values given above, the peak shifts from f2 at pp to f4 at ff.
+
+The sound is generally more mellow at lower amplitudes and sharper at higher
+ones. The effect is more pronounced at lf than hf.
+
+There is no wrap set on the magnitude table f230 (parameter 1cii is zero) so once the peak has passed and the index reaches the end of the surface table 0a (f244) further harmonics are unaffected. Since by itself the magnitude of the unaffected harmonics would be zero (the value of the magnitude table f244 at either end is zero), a base level needs to be set so further harmonics do not entirely disappear (parameter 1bii is non-zero, which dictates a default magnitude for all harmonics).
+
+The magnitude of the peak is determined by the value of 1ai.
+
+//// change for -ve index offset to delay harmonic?
+
+group 4
+
+-0.1	0	201
+0	1	246	0
+0	0	0	0
+
+if the table is 211 the lower harmonics are delayed instead of the upper ones.
+
+This emphasis is offset by the use of section 2 values (magnitude offset) which allows for harmonic*0.31 to index a linear table (f201) post-scaled by 0.5 and indexed via a random number table whose output is post-scaled by 0.01, which is added to the magnitude produced by section 1. There is thus a random variation in magnitude generated which is per-harmonic but the overall pattern of emphasis conferred by the section 1 (magnitude) values is preserved. The particular harmonics emphasised are changed in accordance with this, so some harmonics are more prominent than others, rather than there being a fixed peak in accordance with the section 1 magnitude table f230. Note that the magnitude offset table is wrapped (group 2, parameter 2cii) since the number of harmonics and value specified for the TDC factor in section 6 for group 2 produces an index exceeding the index range of the random table ([0,1]).
+The magnitude value of 0.5 (parameter 2ai) is chosen so that it does not significantly change the default harmonic magnitudes of group 1 (1aii).
+
+A further feature is the use of section 3 values (index magnitude) to allow some variation in the indexing into the top-level index table (group 0, f201) by use of the same random number table as in group 2, but whose per-harmonic indexing differs, so that instead of a steady progression of index 201 into the 'surface' table in group 0 (f244, a spline curve with a single peak) there is a random displacement. Note that this table is also wrapped (group 3, parameter 2cii), since again the index range of the random table is exceeded. This results in the spline curve being shifted forward by a varying amount depending on harmonic number and value indexed in the random table 3aii. The peaks of the curves for each harmonic therefore no longer coincide, being relatively displaced.
+
+In order to allow for a consistent application of the spline curve to notes of varying duration, the group 5 (index scan period) index scan period flag 5civ is set to 1 and the index scan period itself (5ciii) is also set to 1. When the flag is set, a positive value for the index scan period results in a table scan of the product of the scan period value and note duration. In this instance the table is scanned once over the note duration regardless of the magnitude of the latter.
+A further point to note is the modification of the magnitude of the index scan period 5ai to 0.99. This is necessary since there are two different timings involved in a hybrid instrument, with separate values for the ftable-prescribed (p-) and purely sythetic (s-) harmonics. Since in the case of layer 2 of the terrain the flag giUseAllH2a is set, then an inappropriate timing is used since only one of the two timing values possible is used for all harmonics. This is necessary for both p- and s-harmonics to be modulated by the same terrain file, but results in a glitch which occurs at the end of the note. This is trimmed off by changing the value of the scan period magnitude so its index never quite reaches the value 1, otherwise it would be exceeded and the scanning would repeat for a short duration. The related scan period table 5aiii (f247) returns constant unity, so the scan duration is constant.
+
+A final magnitude modification is introduced by allowing a random perturbation of the magnitude indexing into the magnitude table 1aii (f230) by setting the magnitude index table to be random (1biii, f256) and returning a value from this controlled by the note frequency. The scan period is set to 0.003 of the actual note frequency by setting the magnitude index scan period flag to 1 (1civ) and the magnitude index scan period to -0.003 (1ciii). The negative value causes an association between note frequency and scan period, where a positiv value would associate note duration and scan period). The random tabler is thus scanned at a frequency of 0.003*notefrq, post-scaled by 0.1, and the product of this index value and the associated TDC for group 1 is applied to the magnitude table controlling the output magnitude of the surface table 0a (f244). Thus the scan period of the individual harmonics is changed throught the duration of the harmonic and thus its magnitude varies. This effect needs to be kept to a reasonable minimum or the changes in harmonic amplitude will be a significant proportion of that harmonic's base amplitude, introducing a 'raggedness' to the timbre. The higher the frequency of the harmonic, the more rapid the changes in its amplitude. Since the table affected (f230) is not wrapped, the changes are only applied to those harmonics over which the table applies.

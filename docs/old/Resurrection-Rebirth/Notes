@@ -1,0 +1,13 @@
+If Resurrection.orc is a link to null.sco then the synth operates for the 
+duration specified in lifetime.opts.
+
+If Resurrection.sco is a link to an an actual score file then the score 
+statements will be executed. The synth will then hang after note 
+generation unless instr 99 is called after the last note is completed 
+(with some nominal duration to allow for a system call, e.g. 1s). This 
+is a 'self-destruct' instrument forcing the csound instance to be killed 
+and control returned to the shell.
+
+Feb 2012
+Noise: use a comb filter? control ilpt (loop time) to get peaks 
+distrobuted at note freq intervals? Noise terrain then filter?

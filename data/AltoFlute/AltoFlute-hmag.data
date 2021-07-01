@@ -1,0 +1,96 @@
+; source file ../data/AltoFlute/ppA3.het
+; via ../data/AltoFlute/ppA3.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f820	0	16	-2
+23016
+1934
+5709
+1173
+1347
+985
+422
+374
+339
+325
+0
+0
+0
+0
+0
+0
+
+; source file ../data/AltoFlute/ppG5.het
+; via ../data/AltoFlute/ppG5.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f821	0	16	-2
+21895
+8926
+2733
+498
+801
+220
+254
+212
+207
+185
+0
+0
+0
+0
+0
+0
+
+; source file ../data/AltoFlute/ffA3.het
+; via ../data/AltoFlute/ffA3.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f822	0	16	-2
+9861
+9185
+8797
+7247
+3856
+3687
+1243
+1215
+557
+473
+0
+0
+0
+0
+0
+0
+
+; source file ../data/AltoFlute/ffF6.het
+; via ../data/AltoFlute/ffF6.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f823	0	16	-2
+28724
+3236
+1119
+492
+414
+213
+339
+346
+227
+147
+0
+0
+0
+0
+0
+0
+

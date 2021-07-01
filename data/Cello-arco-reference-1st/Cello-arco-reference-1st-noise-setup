@@ -1,0 +1,152 @@
+Cello-arco-reference-1st noise definition instrument flags
+
+
+#define blnoise
+#
+; note - could use resony
+;	kcfoff = kpramp*inroff
+;	knbw = kpramp*2*inratio
+; if inroff is 0 use this to blank partials output
+; else partials are  summed * inratio
+; 
+; this is the max bw
+;	kncf = kpramp*khn-kcfoff
+;ihpgain = (gihaspt==0 ? 0 : ihp*gihpgain)
+;ipratio = (ihp==0.5 ? 0.5 : 1/3)	; 1 or 2 partials
+;ihp1off = (gihaspt==0 ? 0 : ipratio)
+;ihp2off = (gihaspt==0 ? 0 :1-ipratio)
+;kp1fincr = kpramp*ihp1off
+;kp2fincr = kpramp*ihp2off
+;	kpartpch = -kp1fincr
+;	$comosccode(s'khn)
+;	ap1	oscili	kamp, kfrq, gisgenfn, inotephase
+;	kpartpch = -kp2fincr
+;	$comosccode(s'khn)
+;	ap2	oscili	kamp, kfrq, gisgenfn, inotephase
+;	ktestValue = (khn==0 ? 0 : 1)
+;	aoscpt = (ap1+ap2)*ihpgain*ktestValue
+;	aoscpt = (giTerrainMode0a==0 ? aoscpt+kamp*kz : aoscpt*kz)
+
+knfrq = kpramp*khn
+knbw = 2*kpramp*(1/(gihaspt+1))
+knbw = knblbwmod*knbw
+kncf = knfrq	; base harmonic
+; call filtblnoise
+$filtblnoise(kncf'knbw)
+; returns ablnoise
+; store as anoise0? no we just add to it, converted in calling macro
+;anoise0 = anoise0+ablnoise
+; if gihaspt 0 or inblcf$noiseNum 0 then there are no partials
+kncf = knfrq-kp1fincr	; first partial
+; bw is set from inroff
+$filtblnoise(kncf'knbw)
+;anoise0 = anoise0+ablnoise
+kncf = knfrq-kp2fincr	; second partial
+$filtblnoise(kncf'knbw)
+;anoise0 = anoise0+ablnoise
+
+; if there is 1 partial then sum each and scale 0.5 (since we have 2 copies)
+
+; otherwise just some pariials (they are different)
+; add to harmonic noise
+; but then magnitudes are x1 (no partials), x2 (1 partial) or x3 (2 partials)
+; inroff 1,, 1/2, 1/3
+; bw is 2*inroff*kpramp
+; _all_ cases are sum of 3 oparts, just they may not be identical
+; harmonic then p1, p1 or p1, p2
+; alternatively use ihpgain to null if needed for case of just harmonic
+
+print ihpgain, ihp1off, ihp2off
+;printks "kp1fincr %.3f kp2fincr %.3f\n", idur*0.1, kp1fincr, kp2fincr
+;printks "kpramp %.3f khn %d Kcfoff %.3f kncf %.3f knbw %.3f\n", idur*0.1, kpramp, khn, kcfoff, kncf, knbw
+;	knbw = knblbwmod*knbw
+; need to call this next 3 x to include partials with some factor which nulls
+; the ones that aren't there... i.e. cf must be either 1 at *1.5 or 2 at 1.3r and 1.6r
+; basic frq+frq/2 or frq+frq/3, +2*frq/3
+
+; bw is twice fundamental for no partials
+; and since the harmonics are equidistant, multiples of f0
+; for 1 partial, bw is f0
+;
+;$filtblnoise
+;	abnoise butterbp anoise, kncf, knbw
+;	abnoise butterbp abnoise, kncf, knbw
+;	abnoise butterbp abnoise, kncf, knbw
+;	abnoise	balance	abnoise, anoise
+;	ablnoise = (khn>=inoscs ? ablnoise : ablnoise+abnoise)
+;	ablnoise	balance	ablnoise, anoise
+;	ktestValue = (khn==0 ? 0 : 1)
+;	ablnoise = (abl1+abl2)*inratio*ktestValue
+;anoise0 = anoise0+ablnoise
+	khn = khn+1
+#
+
+#define filtblnoise(cf'bw)
+#
+printks "khn %d cf %.3f bw %.3f\n", idur*0.1, khn, $cf, $bw
+	abnoise butterbp anoise, $cf, $bw
+	abnoise butterbp abnoise, $cf, $bw
+	abnoise butterbp abnoise, $cf, $bw
+	abnoise	balance	abnoise, anoise
+	ablnoise = (khn>=inoscs ? ablnoise : ablnoise+abnoise)
+	ablnoise	balance	ablnoise, anoise
+anoise0 = anoise0+ablnoise
+#
+
+
+The instrument config:
+
+
+	; instrument 43 defaults (Cello-arco-reference-1st)
+	inum43:
+	if giinum > 43 igoto inum44
+	girandtbltype = 1	; must return positive for this instrument
+	iafno ftgen $noisedefs, 0, 261, -23, "data/Cello-arco-reference-1st/Cello.noisedefs"	; noise defs file
+	gihasnoise = 1
+	gimass = 10
+	gires = 1
+	giusrdclphs = 1
+	giduradj = 1
+	gisuslvl = 1.8
+	gigain = 0.2
+	giatkdelay = 0.9
+	gidcladvance = 0.5
+	gidcltbl = $expd	; override default
+;giatktbl = $unity
+;gisustbl = $unity
+;gidcltbl = $unity
+	gihaspt = 1		; default (control) range [0.2]
+	gihpgain = 0.5
+	giphmagscl = 0.5
+	giphpplf = 10	; maximum value: number of ftable-prescribed harmonics
+	giphfflf = 10	; in note extreme cases. If less further harmonics are
+	giphpphf = 10	; synthesised rather than being table-derived
+	giphffhf = 10
+	gioscs = 50	; max oscs used
+;gitblbase = 0	;	; uncomment to use only s-harmonics
+	gitblbase = 500	; start of cello data fn tables (0=no tables)
+;gihmagtblbase = 0		; uncomment if s-harmonics should not use p-h magnitudes
+	gihmagtblbase = 580	; start of harmonic magnitude data (if present)
+	; Cello-arco-reference-1st data
+	giminvol = 1700		; data min and max ranges (from original sound)
+	gimaxvol = 3400
+	giminfrq = 65.406	; C2: nominal frequencies of note range (csound book)
+	gimaxfrq = 783.991	; G5
+	; these set the envelope by reference to the original samples
+	gipplft = 0.19		; pplf C2 table atk dur (fraction of note dur.)
+	gipphft = 0.19		; pphf G5
+	gifflft = 0.29		; fflf C2
+	giffhft = 0.19		; ffhf G5
+	girlspplft = 0.41	; pp C2 release start (fraction of note dur.)
+	girlspphft = 0.36
+	girlsfflft = 0.59
+	girlsffhft = 0.44
+	; end Cello-arco-reference-1st data
+	; terrain table numbers follow the last hmag table (here, 583)
+giUseAllH1a = 1
+giUseAllH2a = 1
+giTerrainMode1a = 0
+gitbl1axOF = 584	; define orbit/path from
+gitbl1ayOF = 585	; parameter files in data/<instr>
+gitbl2axOF = 588	; or from those in data/default if not specified here
+;gitbl2ayOF = 589

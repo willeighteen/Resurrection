@@ -1,0 +1,15 @@
+Using higher analysis sample rate to achieve detail in atk/dcl whilst removing majority of sustain phase.
+
+ffA3
+Make copy of atk region, find max sample value 0.542494s, cut thereafter from after next zero-crossing.
+atk dur 0.545601s
+
+Make copy of dcl region after note vibrato subsides, find maxamp location, cut to zero before this.
+dcl dur 0.493968s
+
+composite AltoFlute.ff.A3.AD
+
+there is now a disjuncture in amplitude levels
+
+max vol 3k (should these be normalised?
+

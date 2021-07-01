@@ -1,0 +1,1428 @@
+Ancient, redundant - see 'Absolutely new' below.
+
+Timbre/envelope
+We require amp and frq domain transfer functions acting on inputs to achieve
+90% variation in isw with useable frq range. fort our instrument we have
+(limits. index values, breakpoints)
+
+Clarinet model notes
+
+Sustain part of the sound (if present) should be steady level; remove amplitude
+fuctuations first or tied notes will exhibit volume discontinuities.
+
+sample sound and extract info with csound's 'hetro' opcode. The full commands
+used are in the data/Clarinet.Bb directory, 'README'. Note that the actual
+*.het files are derived from amplitude-balanced versions of the UIOWA EMS (2)
+samples .
+
+The csound ftables are automatically built using 'makeFtables' in the utils
+directory.
+
+We find the following (attack and release times are in percentage duration):
+
+case	attack	release		duration (s)	source
+
+pplf	16		85			2.198			maxamp, visual
+pphf	11		90			1.868			visual, visual
+fflf	11		88			2.203			maxamp, visual
+ffhf	4		94			1.879			maxamp, visual
+
+Typical test notes were chosen for the instrument's extremes of range: pp B3,
+pp G6, ff D3 and ff G6. These were analysed using the csound heterodyne
+analysis program 'hetro'as indicated in the data/Clarinet.Bb/README file.
+
+A test score was set up encoding these notes:
+
+	#include "header.sco"
+
+	i1	0	0		72
+
+	; clarinet range test notes (durations from clarinet data file)
+	i90	0		2.198	700		7.11	; pp B3
+	i90	4		1.868	700		10.07	; pp G6
+	i90 6.5		2.203	6000	7.02	; ff D3
+	i90 10		1.879	6000	10.07	; ff G6
+
+	e
+
+Note minimum and maximum volumes and frequencies, the latter from the Csound
+Book tables (1), the former from visual inspection of the samples, were
+specified in the Clarinet section of instrument 1, together with a
+specification of the number of harmonics used in analysis of each of the
+limiting cases.
+
+The number of harmonics used to re-create the note from the data tables must
+also be specified, as given by data/Clarinet.Bb/README (the '-h' parameter).
+
+The instrument specification is therefore
+
+	giphpplf = 20	; number of harmonic tables for limiting cases
+	giphpphf = 14
+	giphfflf = 30
+	giphffhf = 14
+	gitblbase = 1000;	start of data fn tables
+	giminvol = 700		; data min and max ranges (from samples)
+	gimaxvol = 6000
+	giminfrq = 146.832	; D3: nominal frequencies of note range (csound book)
+	gimaxfrq = 1567.982	; G6
+	gipplft = 0.16
+	gipphft = 0.11
+	gifflft = 0.11
+	giffhft = 0.04
+	girlspplft = 0.85
+	girlspphft = 0.90
+	girlsfflft = 0.88
+	girlsffhft = 0.94
+
+We further specify the maximum number of oscillators to be used to the maximum
+number of harmonics used in analysis of the instrument:
+
+	gioscs = 30
+
+and turn off the s-harmonic contribution with
+
+	gioscgoff = 0 
+
+The test score above was run with the DebugEnvTiming flag set; the following
+results were obtained:
+
+			Attack/s			Decline/s
+			lf		hf			lf		hf
+	pp		0.901	0.263		0.067	0.031
+	ff		0.783	0.223		0.177	0.081
+
+We obtain for the real instrument (from note data above)
+
+			Attack/s			Release/s
+			lf		hf			lf		hf
+	pp		0.352	0.206		0.330	0.187
+	ff		0.242	0.076		0.264	0.113
+
+The attack phase duration is a function of the variable gimass; the default is
+unity. The decline phase duration is a function of the variable gires; the
+default is unity.
+
+Relevant envelope scaling factors ies are
+
+			lf		hf
+	pp		0.735	0.397
+	ff		0.643	0.334
+
+The default value of gimass (1) produces attack durations which are too long.
+Experimentally we reduce it. A vaue 0f 0.7 was found to give a range more
+closely resembling that of the rela instrument. We set
+
+gimass = 0.7
+
+The test score produced
+	
+			Attack/s
+			lf		hf
+	pp		0.442	0.129
+	ff		0.384	0.109
+
+The durations the release (decline) phase are too low;
+with some experiment, a value of 1.7 for gires was found
+adequate. This yielded
+
+			Decline/s
+			lf		hf
+	pp		0.152	0.070
+	ff		0.402	0.183
+
+We obtain a scaling factor for the attack phase using the utility 'linsolve' in
+the utils directory. We select the extremes of range for ies, corresponding to
+the pplf and ffhf cases:
+
+Using the utility 'linsolve' in the utils directory:
+
+linsolve pplf-r-atk pplf-g-atk ffhf-r-atk ffhf-g-atk pplf-ies pphf-ies
+
+where r = real instrument, g = genInstr-generated
+
+linsolve 0.352 0.442 0.076 0.109 0.735 0.334
+
+We obtain the output
+
+raw index:  scale 0.063286, offset 0.157358
+
+so
+	giatkscl = 0.063
+	giatkoff = 0.157
+
+The score was run again with these values, giving the following attack
+durations:
+			Attack/s
+			lf		hf
+	pp		0.351	0.092
+	ff		0.296	0.076
+
+Notes in the pphf/fflf regions have shorter attacks than the corresponding
+region of the real instrument. These may be corrected by a score user attack
+scalar (i4.p4), giuatkscl.
+
+The release phase durations are adjusted for the case extremes as for the
+attack:
+
+linsolve 0.330 0.152 0.113 0.183 0.735 0.334
+
+raw index:  scale 0.991802, offset -0.173185
+
+hence
+
+	gidclscl = 0.992
+	gidcloff = -0.173
+
+producing
+
+			Decline/s
+			lf		hf
+	pp		0.331	0.060
+	ff		0.730	0.114
+
+
+The fflf case release time is too long and the pphf case too short; again,
+this can be score-corrected using i4.p5.
+
+
+Amplitude balance
+The notes generated have roughly the same amplitude in both pp and ff cases,
+numerically, in 16-bit wav format terms, around 25000 for the pp cases, about
+20000 for the ff ones.. The original
+samples have values of. The gain of an i90 instrument is a factor of spectral
+width, isw. The values of this parameter for the case extremes are found by
+setting the DebugSynth flag to 1 (the DebugEnvTiming flag may be set to zero to
+suppress timing information).
+
+The score was run again, yielding the following data:
+
+			spectral width (isw)
+			lf			hf
+	pp		0.689		0.877
+	ff		0.466		0.730
+
+	amp		6000	+        *      *
+					|
+					|          
+					|
+			700	    +             *     *
+					|
+					-----+-----+-----+----+--
+						0.25  0.5   0.75  1  isw
+
+From the above diag., the best that can be achieved is a transition for
+amplitude 6000 at isw (0.466+0.73)/2 to 2000 at isw (0.689+0.877)/2, ie between
+isw values of 0.598 to 0.783. However, due to the linear linkage of isw to
+factor table, the result will be a much smaller amplitude for isw < 0.598 and
+much greater for isw > 0.783. In practice, the gain (igain) falls to zero at
+the fflf extreme. The fflf case is also not loud enough. The relevant gain
+factors are 2000/25000 = 0.08  and 6000/20000 = 0.3.
+
+We use the utility linsolve2 to obtain values for the gain control parameters
+
+linsolve2 gain1 gain2 isw1 isw2
+
+linsolve2 0.08 0.3 0.783 0.598
+
+normalised: scale -0.001189, offset 0.001011
+
+(see above comments as to the result of using these values).
+
+We try gains 0 x0.2 and 0.4
+
+normalised: scale -0.001081, offset 0.001046
+
+so we set
+
+gigainscl = -0.001081
+gigainoff = 0.001046
+
+This is a little better, although it leaves the pplf note too loud, requiring
+score correction with i5:
+
+i5	0	0	-1	0	-1 0 0	0.5 0.5
+i5	4	0	-1	0	-1 0 0	1 	1
+i5	10	0	-1	0	-1 0 0	2	2
+
+declared in the score  gives these case extremes roughly the correct relative
+amplitudes. Note that simply changing the score note amplitudes will also
+affect the timbre.
+
+We now require to model synthetic harmonics to extend the frequency range,
+since only a few basic harmonics are provided for in the data tables. Note that
+we do not include the i5 lines in the score (above).
+
+We enable the default synthesised harmonic (s-harmonic) gain by removing the
+'gioscgoff = 0' line.
+
+We set gioscs = 100 and giusrdclphs = 1. We further select a
+sigmoid attack envelope, no decay, linear sustain and sigmoid release.
+
+	giusrdclphs = 1
+	giatktbl = 204
+	gisustbl = $unity
+	gidcltbl = 214
+	gidcylenctl = 0
+
+We re-run the test score and examie the harmonic levels
+
+The defaiult s-harmonic gain (ioscgain) is unity. The fflf case shows the first
+s-harmonic has gain of about 50x that of the last p-harmonic. In the pplf case
+the last p-harmonic has negligible amplitude, making compariuson with the first
+s-harmonic difficult, but the gain factor is clearlyu at least 10x too large,
+as in the fflf case. We use a fixed harmonic gain of 0.1, achieved with an
+index of 0.0001 into the factor table:
+
+gioscgoff = 0.0001
+
+The pplf harmonics now match; those of the fflf case are still slightly too
+hig; we reduce the gain fivefold (gioscgoff = 0.00005), the gain is still too
+high; reducing it further to x0.03 gives a good match (gioscgoff = 0.00003)
+
+therefore rewuire gain 0.1 at isw 0.689 and gain 0.03 at isw 0.466. However,
+this means that the gain at pphf (0.877) will be considerably higher than 0.1
+(which matters little since higher harmonics are largely absent at these
+frequencies) and considerably lower than 0.03 in the ffhf case with isw 0.730.
+We usr the utility 'linsolve2' to obtain a scaling and offset giving a linear
+relation between the gains and isw values:
+
+linsolve2 0.05 0.1 0.689 0.466
+
+returns
+
+normalised: scale 0.000314, offset -0.000116
+
+so we put
+
+gioscgscl = 0.000314
+gioscgoff = -0.000116
+
+and run the test score again. We note that the pphf harmonic gain is 0.159 and
+that of ffhf 0.113. The results are judged acceptable.
+
+It remains to set the harmonic decline end-point value. In the lf cases this is
+too small; very few of the s-harmonics contribute significantly to the sound
+compared to the real instrument.
+
+There are more harmonics in the ff cases than pp ones, so we require the
+decline to be less at ff than pp. The decline value is isw-linked via the
+parameters gihdclscl and gihdcloff. Since the default scale value is zero, we
+experiment with various values of offset to give a fixed final harmonic
+magnitude scalar ihdclval. We set DebugH to 1 to obtain the scaling values: in
+allcases the final decline value ihdclval is zero. We need to raise this
+end-point value so the exponential decline is less steep. It was found that a
+harmonic decline offset gihdcloff of 0.0005 (an ihdcl scale value of x1) giving
+a final decline magnitude scalar of ihdclval = 0.059 (final harmonic scalar)
+was sufficient to model the higher harmonics in the fflf case. A final value of
+zero (the default) ensures the higher harmonics contribute less as isw deviates
+away from the fflf case; this also affects the harmonics present in the pplf
+note, but there are few higher harmonics in the real instrument in this part of
+the range anyway.
+
+using thse factors,
+
+linsolve2 0.5 0 0.511 0.759
+
+yields
+
+normalised: scale -0.002016, offset 0.001530
+
+so
+
+	gihdclscl = -0.002016
+	gihdcloff = 0.00153
+
+It was noted the s-harmonics persist slightly longer then the p-harmonics. This
+was adjusted using a decline modification function gihdclfn1 which scales the
+harmonic values as time progresses. This scaling is applied equally to all
+harmonics. The decline function is chosen to be an exponentisl decline, indexed
+by an expnentially increasing index function. The decline function is accessed
+progressively faster as time passes, so that the majority of the reduction in
+amplitude is concentrated towards the end of the note. The decline function
+scalar itself is applied to a rolloff function, default zero, so there is no
+effect unless we set the rolloff function to unity (see the diagram in README).
+The rolloff table output itself is scaled by a rolloff rate, default zero, so
+we set this to a fixed value of unity with girlfroff = 0.001. This causes the
+s-harmonics to diminish much earlier than the p-harmonics. A much better fir is
+obtained with a rolloff rate of 0.25, although this is at the expense of some
+distortion of the release phase shape. Since the harmonic decline is most
+needed at lf, we use the fact that that the rolloff rate is isw-linked to only
+invoke this reduction at lower values of isw. Using factors x1 and x0.25
+
+linsolve2 0.25 0 0.511 0.759
+
+ normalised: scale -0.001008, offset 0.000765
+
+	girlfrscl = -0.001008
+	girlfroff = 0.000765
+
+which makes the rolloff rate negligible except for values of isw tending
+towards 0.5
+
+Finally, since the reduction begins to
+occur towards the latter part of the sustain phase, we compensate by raising
+the end sustain level from its default value of 0 to 0.25:
+
+gihdixfn1 = 202		; index is increasingly larger as time progresses
+gihdclfn1 = 212		; so decline fn scalar reduction rate is increased
+girlftbl = $unity	; or index kdpix scales default zero
+girlfrscl = -0.001008
+girlfroff = 0.000765
+gisuslvl = 0.25		; increase end sustain level
+
+NOTE: we don't use these since the s-harmonic modification leads to shortened
+notes compared to the nominal note duration, resulting in premature truncation
+of tied note sequences (try setting giph<case> = 0 and run
+clarinet-Dobson.sco with the above settings).
+
+
+We now determine amplitude and frequency modulation patterns for the notes
+
+Very little frq deviation, mostly initial. Magnitude of frq dev info in files
+much too high, reduce. 2 harmonic seriews, x1 and x0.5?
+Partials evident at pplf, some at pphf, none in ff cases.
+Frq deviation most evident at ff (atk phase) and rises with h frq.
+
+The fflf cello even harmonics  (f0,2...) tend to peak amplitude roughly in the
+centre of the sustain (probably performer-related). The odd harmonics
+(f1,3,...) have a peak near the attack and decline linearly, rather than
+being the positive half-sine curve of the even ones. Further, the magnitude of
+f<n+1> is appreciably less than f<n>, n = 0,2,.., the difference diminishing
+as n->6, both even and odd harmonics becoming weaker at the same rate as
+frequency rises.
+
+A natural tremolo effect appears on the pphf note, at about 2/3 sec. period.
+There is a frequency drift at the beginning and end of the notes, a steady
+variation being noted at hf.
+
+
+We model the odd/even harmnic series decline with a wrapped 2-entry function
+table for the s-harmonics:
+
+f1156	0	2	2	; pplf
+1
+0.01
+
+f1157	0	2	2	; fflf
+1
+0.5
+
+f1158	0	2	2	; fflf
+1
+0.5
+
+f115	0	2	2	; ffhf
+1
+1
+
+We ignore the frequency variation since little effect is contributed by the
+upper harmonics. The frequency variation of the p-harmonics is excessive, so
+this is reduced:
+
+	gihflvl = 0.15
+
+Amplitude modulation requires orbit of a surface which is half-sine in one
+region and linear decline (2-phase?first shorter than 2nd) in another. We
+require the orbit to jump from one section to another as h no. increases, and
+offset being applied to force the shift. WHat combination of fns x,y produces
+this terrain? Soln (crude) lies in only part-indexing one fn for the full
+extent of the other. The product id then fairly predictable.
+
+We need to control the _orbit amplitudes_ so that on even harmonics f0,2,.. the
+x fn index has range [0,1] (scanning the x half-sine fn) whilst the y fn index
+is constant zero (returning 1 from the y decline fn) and for f1,3,.. the x
+index has range constant 0.5 so the centre of the half-sine fn is accessed
+)constant unity), the scalar of the linear decline fn y whose index varies
+between 0 and 1. THus f0,2,.. have a half-sine modulation and f1,3,... a linear
+decline. This is hardly terrain synthesis but the approach works.
+
+giaxtrnscl = $tblsize/2
+; with table 302 this generates successive index osc. amplitudes of 1 and 0
+giaxahscl = 1
+giaxafn = $zero	; we used fixed values for amplitude dependent on harmonic
+giaxahfn = 302
+giaxixfn = 201
+giaxixflag = -1 ; use val/idur
+giaxixfscl = 0
+giaxixfoff = 0.001
+giaytfn = $unity
+giaytrnscl = $tblsize	; with tbl 301, values of 0 and 1 are returned
+giayahscl = 1
+giayafn = $zero	; we used fixed values for amplitude dependent on harmonic
+giayahfn = 301
+giayixfn = 201
+giayixflag = -1 ; use val/idur
+giayixfscl = 0
+giayixfoff = 0.001
+giaxfn = 238
+giayfn = 211
+
+With these values, using the fundamental and first three harmonics as an
+example, for the x function (half-sine) index:
+
+khn 0 kaxix 0.033 kaxamp 1.000 kaxtrans 0.000
+khn 1 kaxix 0.500 kaxamp 0.000 kaxtrans 0.500
+khn 2 kaxix 0.033 kaxamp 1.000 kaxtrans 1.000
+khn 3 kaxix 0.500 kaxamp 0.000 kaxtrans 1.500
+khn 0 kaxix 0.067 kaxamp 1.000 kaxtrans 0.000
+khn 1 kaxix 0.500 kaxamp 0.000 kaxtrans 0.500
+khn 2 kaxix 0.067 kaxamp 1.000 kaxtrans 1.000
+khn 3 kaxix 0.500 kaxamp 0.000 kaxtrans 1.500
+khn 0 kaxix 0.100 kaxamp 1.000 kaxtrans 0.000
+khn 1 kaxix 0.500 kaxamp 0.000 kaxtrans 0.500
+khn 2 kaxix 0.100 kaxamp 1.000 kaxtrans 1.000
+khn 3 kaxix 0.500 kaxamp 0.000 kaxtrans 1.500
+
+harmonic series f0,2,... has an index oscillator amplitude of 1 and an index
+function which is increasing linear  on [0,1]. No x translation is added to the
+x index, so it takes successive values in this range as the note progresses,
+indexing the half-sine to produce the x component of the terrain (a half-sine),.
+Meanwhile, for harmonic series f1,3,... referencing y function 211 (a linear
+decline in the range [1,0]) the x index is solely produced by the constant
+translation value 0.5 (the half-sine midpoint) returning constant 1. This scales
+the half-sine x component of the terrain.
+
+for the y function (decreasing linear) index:
+
+khn 0 kayix 0.000 kayamp 0.000 kaytrans 1.000
+khn 1 kayix 0.033 kayamp 1.000 kaytrans 2.000
+khn 2 kayix 0.000 kayamp 0.000 kaytrans 3.000
+khn 3 kayix 0.033 kayamp 1.000 kaytrans 4.000
+khn 0 kayix 0.000 kayamp 0.000 kaytrans 1.000
+khn 1 kayix 0.067 kayamp 1.000 kaytrans 2.000
+khn 2 kayix 0.000 kayamp 0.000 kaytrans 3.000
+khn 3 kayix 0.067 kayamp 1.000 kaytrans 4.000
+khn 0 kayix 0.000 kayamp 0.000 kaytrans 1.000
+khn 1 kayix 0.100 kayamp 1.000 kaytrans 2.000
+khn 2 kayix 0.000 kayamp 0.000 kaytrans 3.000
+khn 3 kayix 0.100 kayamp 1.000 kaytrans 4.000
+
+Here, harmonic series f0,2,...has index 0, returning constant 1 from function
+211 (the leftmost value). For series f1,3,... the index increases linearly as
+the note progressess in accordance with the y index function 201 (increasing
+linear in [0,1]). Consequently, the y function 211 is read as the x index
+increases, so the 'terrain' for these harmonics is decreasing linear, scaled by
+the x 'terrain' constant unity.
+
+The terrain amplitude modulation thus alternates between half-sine and
+decreasing linear as the harmonic number increases. A small fraction of this is
+applied to the note envelope via gimal<scl/off>.
+
+bNote: the timbre evolves better through the note if the amplitude y index
+function is increasing rather than decreasing: we set
+
+giayixfn = 211
+
+
+secondary amplitude modulation
+There is a natural tremolo to the sound, an amplitude variation of about 4
+cycles
+over an approx 2 sec. note
+being noticeable in the pphf case, the same freq but much less pronounced in
+the pplf case. At ff, both lf and hf exhibit much higher tremolo rate, about 15
+cycles over approx 2s., but in the fflf case this only applies to even f<n>;
+odd harmonics seem unaffected.
+
+Thus the amplitude is required to be higher at pphf (isw 0.877) and lower at
+pplf (isw 0.689). We also require the amplitude variation in the fflf case to
+be less than that of the ffhf case (isw 0.466 and 0.730 respecrtively)
+
+Setting a bound for the pphf case also determines the maximum effect at ffhf,
+which will be intermediate between the pplf and pphf levels. If the lower bound
+at pplf is set too low, there will be negligible effect at fflf (isw 0.466). So
+it is etter to use the isw extremes and settle for more amplitude at pplf and
+ffhf than required.
+
+We note that the amplitude deviation is around 15% of the max amplitude at
+pphf, but probably less than 1/5 of this at fflf. We therefore use factors of
+0.15 at pphf and 0.05 at fflf
+
+linsolve2 0.15 0.05 0.877 0.466
+normalised: scale 0.000243, offset -0.000063
+gima2lscl = 0.000243
+gima2loff = -0.000063
+
+nope we need 50% at fllf to get the harmonics right...
+(these set the modulation amplitude level imodamplvl for terrain 2)
+The default index osc link is to isw; we need to change this to
+amplitude dependence with
+giaxfl2 = 1	; set flag to link to amplitude not spectral width
+giayfl2 = 1
+
+The tremolo rate is amplitude-dependent. We need a rate which is about 0.5 Hz at
+pp and about 2 Hz at ff. The amplitude factors are 0.095 and 0.41 for the pp
+and ff cases. The actual index frequencies used are found by indexing the
+linear factor table, i.e. the spectral width or amplitude acts as an index into
+this table, which returns the required frequency value
+
+The index value returning factor 0.5 is 0.0005; that returning 2 is 0.002. Since
+we require to solve for index values returning scalars and not the actual
+scalars themselves, We use
+the utility hgixsolve to obtain a scaling and offset retuning these indices at
+the given amplitude factors:
+
+hgixsolve 0.0005 0.002 0.095 0.41
+
+retuens
+
+normalised: scale 0.004762, offset 0.000048
+
+so
+
+giax2ixfscl = 0.004762
+giax2ixfoff = 0.000048
+
+and the index freq is now approx. 0.5 Hz. at pp and approx. 2 Hz at ff. as
+required.
+
+########################## old stuff ###############
+The amplitude modulation is modelled as a constant-frequency sinewave with
+period about 2/3 sec.
+
+	giaxixfoff = 0.0015
+
+which index frequency is used to scan a linear increasing index table
+
+	giaxixfn = 201
+
+with an offset which increases for each harmonic. Experimentally
+
+giaxtrnscl = 25
+
+We reduce the effect applied to the p-harmonics since these have some amplitude
+variation aleready table-encoded:
+
+	giphamodscl = 0.5
+
+Since we are not using true terrain modelling, we set the y index and amplitude
+functions to unity:
+
+	giayixfn = $unity
+	giayfn = $unity
+
+finally we use an amplitude modulation level of 20% for the s-harmonics:
+
+	gimaloff = 0.0002
+
+new resurrection-6 terrain modelling
+
+Harmonic modulation of odd harmonics f1, 3,.. is increasing lienar,
+amplitude-linked so that the range of the increase is higher with increasing
+amplitude.
+
+Since the default value of gis1aywrap is unchanged (0), this scheme offers the
+possibility of adjusting the progress through the y function on a per-harmonic
+basis by scaling the harmonic number used for indexing the y index osc ampliude
+function. See ClarinetMOdel.notes for an example. Although the y index is
+modified for even harmonics as well as odd ones, int the case of the x-axis
+function the y value is still 1 as the index increases, since it is off the rhs
+of the function. However, since the index amplitude table for the y axois fn is
+wrapped, the index values for the odd harmonics depend on the harmonic number.
+
+			amplitude factor (iampfactor)
+	pp		0.095
+	ff		0.410
+
+
+We reauire this amp factor range to prduce scaling factors of, arbitrarily, 0
+and 1 which are then used to scale the harmonic number to produce an index into
+the index amplitude table, so the index osc amplitude is modified as the note
+amplitude changes. SInce the linear factor table is accessed to obtain the
+harmonic scalar, which returns unity for an index of 0.001, we find the
+required values from the utility hgixsolve:
+
+hgixsolve 0 0.001 0.095 0.410
+normalised: scale 0.003175, offset -0.000302
+so
+
+gis1ayal = 1	; timbral change with amplitude
+gis1ayixaixscl = 0.003175
+gis1ayixaixoff = -0.000302
+
+and using these values, at minimum amplitude there is no modificatioon of the
+odd harmonics through the note, whilst their level ranges from x0 to x1 as
+amplitude approaches the instrument maximum (it must be remembered that these
+scalars are additive on the basic harmonic amplitude so the final harmonic
+amplitude varies to twice its original level through the note at the amplitude
+extreme).
+
+Note that there is no timbral evolution at the amplitude extremes: there is no
+modification at the lower end and the same modulation applied to all harmonics
+at the higher.
+
+Note 2: we can't pull the same stunt with the x amplitude index scaling as with
+y, sicne we require the x table to wrap and to produce a constant index of 0.5
+when dealing with odd harmonics. The wrap would cause function 'stagger' if a
+scaling of harmonic number other than 1 were used. This means all the peaks
+occur in the same place in the note for even harmonics.
+
+We now attend to the frequency domain.
+
+
+
+Noise
+Occurs inter-harmonic through note, at harmonic with init frq. dev (-ve),
+sometimes carried through-note with +ve frq.dev; bw decreases through noise atk
+phase. Noise also occurs at partial frqs but may be present at other frqs not
+immeditaely derivable from h frq. Dobson uses a fixed noise frq at f1, but
+examination shows a stgrong component at f1-1/3 approx (upper 2nd partial of
+f0),although this is not precise
+
+
+
+###############################################################################
+###############################################################################
+Absolutely new clarinet setup Jan. 2008.
+###############################################################################
+
+sample sound and extract info with csound's 'hetro' opcode. The full commands
+used are in the data/Clarinet.Bb directory, 'README'. Note that the actual
+*.het files are derived from amplitude-balanced versions of the UIOWA EMS (2)
+samples .
+
+The csound ftables are automatically built using 'makeFtables' in the utils
+directory. For the clarinet, the file produced is 'Clarinet.Bb.data' in the
+data directory. This contains ftables numbered 1000-1155.
+
+pp/ff values are typically 500 to 10000. The pp ranges to 4000 at hf, the ff
+from 4000 at lf.
+
+Slight tendecny to a decay phase, most evident in the pplf region. Ignored
+since it is infrequent and performer-related. Where a decay is evident there is
+usually a rising sustain, as if to compensate. A steady level is typical of
+most notes.
+
+Resurrection Bb clarinet.
+Start with a blank instr definition block in instr. 1 in resurrection.orc. Note
+nos. 1-128 are reserved for MIDI instrument numbered definitions. For the
+clarinet, instr. 72, we insert the lines
+
+	; instrument 72 defaults (clarinet)
+	if giinum > 72 igoto inum73:
+	inum72:
+	igoto instrdone
+
+Note that inum<n> is the label representing next lnstrument declared. In the
+case of instr. 72 being the last instrument then this would be replace by
+'igoto instrdone', then end of the instrument definition block. Here the jump
+is to the next MIDI-numbered instrument, itself undeclared, so only the label
+is inserted:
+
+	inum73:
+ Control drops through the instrument definitions until a match is found for
+ the instrument specified in the score defining which instrument is to be used.
+ AFter the instrument setup is complete, control passes to the end of the
+ instrument definition block. The instrument definitions are skipped when a
+ match does not occur due to the 'if giinum > <n> igoto inum<n+1>' lines.
+ 
+The first line in the score file must be the line
+ 
+	#include "header.sco"
+
+followed by the declaration of which instrument is to be used to render the
+score:
+
+	i1	0	0		72
+
+The first three data fields are csound standards: instrument number, start time
+and duration (although the latter two parameters are actually unused).
+
+Once the instrument setup has been completed, additional score lines specify
+the notes to be played, in csound standard format:
+
+	instr.	start	duration	amplitude	pitch
+
+	i90	  	0	  	2		  	1800	 	8.10
+
+for example.
+
+Note the instrument which plays the notes is always i90, regardless of the
+instrument number specified in i1. Instrument 90 is virtual, its character
+being determined by the data contained in the instrument definitions in
+instrument 1. Therefore instrument 1 must be the first call made in the score,
+If no instrument specification matching the score-supplied number is found or
+if i1 is not defined in the score then inbuilt defaults are used, which at low
+frequencies have a  character somewhat like a woodwind.
+
+We first set
+
+	gioscs = 1
+
+so as to use the maximum available oscillators. We then require to determine
+values for mass and resonance (here roughly corresponding to amount and type of
+material) producing notes of the approximate correct attack and release times
+of the instrument.
+
+Set up a test score containing notes of amplitude and pitch with the
+case extremes of amplitude and pitch of the samples (one is already
+provided in scores/clarinet-range.sco) for modelling:
+
+We obtain indexing information with the DebugInit flag set to 1 and running
+this score:
+
+#include "header.sco"
+
+i1	0	0		72
+
+
+i90 0		1	500		7.11	; pp B3
+i90 2		1	4000	10.07	; pp G6
+i90 4		1	4000	7.02	; ff D3
+i90 6		1	10000	10.07	; ff G6
+
+Note we use average values of amplitude, taken from inspection of the samples,
+but precise values of frequency. These correspond to the sample case extremes
+of ppD3, ppG6, ffD3 and ffG6, although the extremes of amplitude have been
+expanded to encompass the amplitude range typical of the sample region of the
+instrument's range.
+
+The relevant index information is tabulated below:
+
+	note	tf amp ix		tf frq ix
+	
+	ppB3	153				141
+	ppG6	204				188
+	ffD3	204				127
+	ffG6	227				188
+
+The amplitude index range is [153, 227] and the frequency range [127, 188]. We
+set up simple linear transfer functions with value 0.05 at the lower extremes and
+value 0.95 at the upper ones. This allocates 90% of the trnasfwer function
+range to the note extremes. An allowance of 5% is made at the upper and lower
+ends of the transfer function to allow for timbral change in notes outside this
+range and to limit the production of sound artefacts when extremes of harmonic
+equalisation may be required (e.g. to force a very low-level harmonic to
+become dominant). Note that the transfer functions do not have to be
+linear but are specified as such here for simplicity.
+
+The amplitude transfer function breakpoints are (0,0), (158,0), (214,1) and
+(256,1); those of the frequency transfer function are (0,0), 127,0), (188,1)
+and (256,1).
+
+In practice it is best to leave some room for lower or higher note amplitudes,
+so the range of the amptf function is restricted to 90% of maximum change over
+the allowed amplitude range, with a %5 variation being allowed to lesser or
+greater amplitudes. With regrd to frequency, the situation is slightly
+different. The lowest note produced is fixed, hence the transfer function must
+have value 0 at this frequency; the Bb clarinet is in fact capable of producing
+a C7 note, which gives a frequency transfer index of 196. The frequency
+transfer function is allowed to reach 95% of its full value here; allowing the
+full range at the frequency extremes sometimes results in artefacts in the
+sound when the harmonic equaliser is used, particulalry where adjacent
+harmonics have large differences in amplitude and the smaller one needs to be
+made dominant (e.g. f1 in some clarinet notes is stronger than f0, although the
+tqo are members of differnet harmonic series with the first having greater
+magnitudes than the second).
+
+We construct linear functions with these values:
+
+	iamptfno ftgen 249, 0, 257, -27, 0, 0, 153, 0.05, 227, 0.95, 256, 1
+	ifrqtfno ftgen 250, 0, 257, -27, 0, 0, 127, 0, 196, 0.95, 256, 1
+
+Set DebugInit to 0.
+
+Internal amplitude and frequency transfer functions operate on the score pitch
+and amplitude to provide the greatest variation of isw values for the default
+note range (most-used amplitude amd pitch ranges). We modify these tables to
+override the defaults (by an unsupported use of ftgen; warning - see the manual
+page for this opcode). The transfer functions are indexed by frequency and
+amplitude. We set the limits according to our sample note range, so that the
+smallest amplitude and frequency used return 0 and the largest 1. This has the
+effect of maximising internal change in the note dynamics over this range.
+Notes outside this range will default to the extremes, i.e. there will be no
+spectral or amplitude change in notes outside these specified when the limit
+values are reached.
+
+Enable envelope timing output: set DebugEnvTiming to 1. The default
+mass and res give the following when used with the clarinet test score having
+1s duration notes at the note extremes:
+
+					instr 72
+
+			Attack/s			Decline/s
+			lf		hf			lf		hf
+
+	pp		0.378	0.112		0.060	0.106
+	ff		0.266	0.059		0.167	0.170
+
+					Bb clarinet
+	
+			Attack/s			Release/s
+			lf		hf			lf		hf
+	pp		0.352	0.206		0.330	0.187
+	ff		0.242	0.076		0.264	0.113
+
+compared to the real instrument note attack and release. A check against the
+reported 'Auto' values for attack and decline show these are the same, i.e. at
+the given mass and resonance the 1s note is long enough to incorporate both
+phases. If the actual attack and release are shorter than the auto-calculated
+values, the score note durations would need to be increased to accomodate them
+to avoid auto-rescaling of the attack and release.
+
+We do not alter the default value of gimass (unity) since the attack durations
+are near those of the real instrument.
+
+We scale the default attack times by comparison with the real instrument using
+the extremes of envelope factor ies:
+
+			instr 72
+
+			env. scalar ies
+			lf		hf
+
+	pp		0.861	0.238
+	ff		0.524	0.104
+
+envsolve pplf-r-atk pplf-R-atk ffhf-r-atk ffhf-R-atk pplf-ies ffhf-ies
+
+where r = real instrument, R = resurrection-generated
+
+envsolve 0.352 0.378 0.076 0.059 0.861 0.104
+
+returns
+
+scale -0.471491, offset 1.337171
+
+so we set
+
+giatkscl = -0.471491
+giatkoff = 1.337171
+
+and on running the score again we observe
+
+			instr 72
+
+			Attack/s
+			lf		hf
+
+	pp		0.352	0.137
+	ff		0.290	0.076
+
+Experimentally we find a value of gires lengthening the release
+appropriately. This value was found to be 1.4. Using gires = 1.4 in the
+instrument setup, we obtain
+
+					instr 72
+
+			Attack/s			Decline/s
+			lf		hf			lf		hf
+
+	pp		0.352	0.137		0.104	0.182
+	ff		0.285	0.113		0.288	0.293
+
+The pplf case is still too short and now the ffhf case too long
+
+We can attempt to rescale the values for decline by using the variables
+gidcl<scl,off> which allow us to compensate the durations on the basis of the
+envelope factor ies.
+
+envsolve 0.33 0.104 0.113 0.293 0.861 0.104
+
+returns
+
+scale 3.682181, offset 0.002719
+
+so
+
+gidclscl = 3.682181
+gidcloff = 0.002719
+
+We now observe
+			Bb clarinet			instr.72
+	
+			Decline/s			Decline/s
+			lf		hf			lf		hf
+	pp		0.330	0.187		0.330	0.160
+	ff		0.264	0.076		0.556	0.113
+
+
+The duration in the fflf region can be compensated by use of instr.4 in the
+score if required,
+
+We now establish a suitable note envelope. The UIOWA samples referenced do not
+show anything much in the way of a decay phase, the attack leading straight
+into a sustain until the release phase.
+
+We insert the following lines in the instr. 72 section of resurrection.orc:
+
+giduradj = 1	; force notes to have score-specified duration
+giusrdclphs = 1	; substitute default attack/decline envelope
+giatktbl = 204	; sigmoid attack
+gidcltbl = 214	; sets the release function - a sigmoid decline
+gidcylenctl = 0	; no decay phase
+
+It was noted the sustain droops significantly
+towards the release. We require it to be held more or less steady by default.
+This can be achieved by raising the end-sustain level with gisuslvl (default
+unity). Experimentally it was found that a value of 2 is adequate.
+
+gisuslvl = 2
+
+An inbuilt tendency for the note to droop is evident at higher score
+amplitudes, it being harder to maintain breath pressure at higher output;
+corercting this by raising gisuslvl will cause lower-amplitude sustains to
+rise through the note.
+
+
+Harmonic structure
+DebugEnvTiming was set to 0, DebugSynth 1.
+There are more harmonics at higher amplitude levels in the hf cases than the lf
+ones, and also more at ff than pp. Analysis (3) showed that the instr. 72 notes
+have no appreciable harmonic difference, the harmonicsin all cases being
+subject to the same rate of exponential decline. By default, harmonics'
+amplitudes decline as frequency increases up to the n'th. harmonic (n = gioscs)
+at which point the final harmonic has a magnitude given by the value of the
+harmonic decline value, ihdclval (by default zero). 
+
+Bb clarinet
+
+Generally, for pp, as frq rises number of conributing harmonics increases (>10%
+of f0, approx.). For ff, as frq rises, number of contributing harmonics drops.
+
+ppB3	Only 2 harmonics evident above f0. Remainder attenuated.
+ppG6	Only 3 harmonics; remainder attenuated, not as muchg as in ppB3 case.
+ffD3	Roughly exp. decline up to about 5 kHz. Note there is evidence of a
+		resonant peak about the 16th harmonic. Perhaps a secondary one about
+		h10.
+ffG6	Attenuated after 4th harmonic above f0, the funsamental.
+
+We now set gioscs = 100 and attempt to find a suitable pattern of harmonic
+decline and harmonic end-point for max. attenuation; in short, a shape which
+coresponds to the real instrument at its extremes. Note that the default gain
+results in out-of range note in the fflf case. 
+
+Since the output is overrange, we temporarily globally adjust
+the gain for all cases with
+
+gioscgoff = 0.5
+
+which reduces the output to 50% of its former level.
+
+Resurrection uses the variable isw to indicate the 'purity' of the produced
+tone, ranging from 0 (pure) to 1 (impure); it is presumed in accordance with
+DObson's article in the CSound Book that a sound is generally purer when loud
+or lower pitch, and here the 'most impure' note is pphf, the 'most pure' fflf.
+
+			isw
+
+		lf		hf
+	pp	0.685	0.639
+	ff	0.231	0.597
+
+
+Concerning an examination of the clarinet samples, the relationship appears
+inverted: the higher values of isw correspond to those
+cases with fewer harmonics, the lesser values to those with more. We therefore
+take the isw extremes of 0.685 and 0.231, taking the former, higher, value to
+be indicative of a purer note and the latter, lower one to indicate a
+more impure note, preserving the number of harmonics evident in the lower
+registers of the ff clarinet notes.
+
+The number of contributing harmonics is governed by harmonic decline harmonic
+number scale ihdclhnscl. We require the higher values of isw to produce at most
+chiefly the fundamental and the lower value to produce about 20, giving an
+effective cutoff to the fflf note of about 2 kHz.
+
+The pphf and ffhf cases only have 13 harmonics within audio range; to reproduce
+only 1 of these requires an ihdclhnscl of 1/13 = 0.077; the fflf case has 100
+harmonics (due to limitation of the number of oscillators), and reproducing 20
+of these therefore requires gihdclhnscl = 0.2.
+
+Note that the pplf case with 88 harmonics within audio range will be subject to
+the same scaling as the pp cases (it has a similar isw) and so 0.077x88 or 7
+harmonics wuill be reproduce instead of 1 as required. It will consequently
+sound too 'buzzy' compared to to smoothness of the original sample which has
+only the fundamental making a significant contribution.
+
+linsolve 0.077 0.2 0.685 0.231
+
+normalised: scale -0.270925, offset 0.262584
+
+so
+
+gihdclhnscl = -0.270925
+gihdclhnoff = 0.262584
+
+The harmonic stucture can be further modified by harmonic decline end-point
+value, the relative magnitude of the last harmonic within audio range compared
+to the fundamental, f0. The default scaling of unity a uniform scaling of 1
+applied to the exponential decline curve. This value may be modified by
+appropriate rescaling.
+
+All but the pplf case haev adequate harmonic structures. The pplf region alone
+requires some modification. Fortunately the isw in this region (0.685) is
+separated some way from the ramining nearest cases, pphf and ffhf, so it is
+possible to reduce the end-point harmonic gain for the pplf case without
+affecting the others too much. If we take the default gain of 1 as adequate in
+the pphf case (isw = 0.639) then the question to be decide is how far to reduce
+this factor in the pplf case. Too low a value here will likely cause to abbrupt
+a transition in reduction of hifgher harmonic magnitude as the pplf extreme is
+reached.
+
+Experimentally we choose end-point values of 0.1 at pplf and 1 at ffhf:
+
+linsolve 0.1 1 0.685 0.639
+
+normalised: scale -19.565216, offset 13.502172
+
+gihdclscl = -19.565216
+gihdcloff = 13.502172
+
+
+Since we only have a linear scaling to operate with, if the default is 1 at
+0.639 then for lesser isw values it will be greater, i.e. the harmonic
+end-point value will be raised in these cases, making the higher harmonics more
+prominent in the two cases whose isw values are less than that of the pphf
+case. The harmonic decline index scaling ihdcl is, in the fflf case, nearly 9
+not unity as required. Consequently the higher harmonics are more prominent
+than required in this note. We cannot reduce thes by lowering ihdcl without
+affecting the position of the unity gain point at the pphf extreme from 1 to
+some lower value, so that the unity point is nearer to the fflf region. This
+will cause loss of harmonic strneght in these hf cases as well.
+
+The fflf case now has harmonics which don't tail ofdf till around 5 kHz instead
+ofa bout 2 kHz as before. So the fflf note is too buzzy at the expense of the
+pplf one.
+
+We resort to a cn adjustment in the harmonic decline harmonic
+number scale, reducing the scvalar of harmonic number from 0.2 to 0.1 in the
+fflf case:
+
+linsolve 0.077 0.1 0.685 0.231
+
+normalised: scale -0.050661, offset 0.111703
+
+and thus
+
+gihdclhnscl = -0.050661
+gihdclhnoff = 0.111703
+
+which brings the situation under better control whilst preserving the
+characteristics of the other case extremes.
+
+
+We model the resonance of the clarinet, noting that a peak appears around f7 in
+the mf anf ff UIOWA note series. This is not specific - the frequency seems to
+shift as low as f5 and as high as f9; also, a secondary peak is sometimes
+observed around f18.
+
+The spectrum may be distorted so that a factor peaking at some harmonic may be
+applied; lesser magnitude increases are conferred on harmonics further away
+from this peak frequency. The harmonic affected is controlled by gireshn, the
+harmonic above the fundamental at which the resonant peak occurs at lf, gipkfactor, a scalar
+of the magnitude of the peak, and gidamp, loosely a factor controlling the
+'spread' of the peak, i.e. how much harmonics either side of the resonant
+harmonic are affected (a larger value means the peak is 'flattened', so its
+effect spreads wider to include neighbouring harmonics). Experimentally we find
+
+
+gireshn1 = 1
+gipkfactor1 = 0.1
+gidamp1 = 2500	; lower damping concentrates peak, reduces bw
+
+
+khn 0 kfrq 146.828 kpkr1 0.095
+khn 1 kfrq 293.656 kpkr1 0.114
+khn 2 kfrq 440.485 kpkr1 0.143
+khn 3 kfrq 587.313 kpkr1 0.190
+khn 4 kfrq 734.141 kpkr1 0.267
+khn 5 kfrq 880.969 kpkr1 0.373
+khn 6 kfrq 1027.798 kpkr1 0.369
+khn 7 kfrq 1174.626 kpkr1 0.263
+khn 8 kfrq 1321.454 kpkr1 0.187
+khn 9 kfrq 1468.282 kpkr1 0.142
+khn 10 kfrq 1615.111 kpkr1 0.114
+khn 11 kfrq 1761.939 kpkr1 0.094
+
+
+gireshn2 = 1.9
+gipkfactor2 = 0.05
+gidamp2 = 1000
+
+
+khn 5 kfrq 880.969 kpkr2 0.052
+khn 6 kfrq 1027.798 kpkr2 0.062
+khn 7 kfrq 1174.626 kpkr2 0.076
+khn 8 kfrq 1321.454 kpkr2 0.098
+khn 9 kfrq 1468.282 kpkr2 0.139
+khn 10 kfrq 1615.111 kpkr2 0.233
+khn 11 kfrq 1761.939 kpkr2 0.528
+khn 12 kfrq 1908.767 kpkr2 0.378
+khn 13 kfrq 2055.595 kpkr2 0.187
+khn 14 kfrq 2202.424 kpkr2 0.121
+khn 15 kfrq 2349.252 kpkr2 0.089
+khn 16 kfrq 2496.080 kpkr2 0.070
+khn 17 kfrq 2642.908 kpkr2 0.058
+khn 18 kfrq 2789.737 kpkr2 0.049
+
+
+gireshn3 = 3
+gipkfactor3 = 0.1
+gidamp3 = 50
+
+
+khn 14 kfrq 2202.424 kpkr3 0.030
+khn 15 kfrq 2349.252 kpkr3 0.038
+khn 16 kfrq 2496.080 kpkr3 0.054
+khn 17 kfrq 2642.908 kpkr3 0.091
+khn 18 kfrq 2789.737 kpkr3 0.296
+khn 19 kfrq 2936.565 kpkr3 0.235
+khn 20 kfrq 3083.393 kpkr3 0.084
+khn 21 kfrq 3230.221 kpkr3 0.051
+khn 22 kfrq 3377.050 kpkr3 0.037
+khn 23 kfrq 3523.878 kpkr3 0.029
+
+The ower frq notes have 2nd harmonic too high, the upper notes 1st harmonic too
+weak. Otherwise acceptable. Can be trimmed with harmonic eq. 
+
+We remove the temporary 'gioscgoff = 0.5' decalaration to restore default note
+amplitudes.
+
+We now determine amplitude and frequency modulation patterns for the note
+range.
+
+Considering the UIOWA EMS Bb clarinet samples, it was noted that there was
+very little frq deviation, mostly initial. Magnitude of frq dev info in files
+much too high, reduce. 2 harmonic seriews, x1 and x0.5?
+Partials evident at pplf, some at pphf, none in ff cases.
+Frq deviation most evident at ff (atk phase) and rises with h frq.
+
+The fflf cello even harmonics  (f0,2...) tend to peak amplitude roughly in the
+centre of the sustain (probably performer-related). The odd harmonics
+(f1,3,...) have a peak near the attack and decline linearly, rather than
+being the positive half-sine curve of the even ones. Further, the magnitude of
+f<n+1> is appreciably less than f<n>, n = 0,2,.., the difference diminishing
+as n->6, both even and odd harmonics becoming weaker at the same rate as
+frequency rises.
+
+A natural tremolo effect appears on the pphf note, at about 2/3 sec. period.
+There is a frequency drift at the beginning and end of the notes, a steady
+variation being noted at hf.
+
+We model the odd/even harmnic series decline with a wrapped 2-entry function
+table. Note that the ftable numbers are contiguous and follow on from the
+ftables in the 'Clarinet.Bb.data' file. Ftables 1156-1159 are contained in a
+separate file 'Clarinet.Bb-hmag.data' and are included in the header file
+'header.sco' in the instr 72 specification.
+
+f1156	0	2	-2	; pplf
+1
+0.01
+
+f1157	0	2	-2	; pphf
+1
+10
+
+f1158	0	2	-2	; fflf
+1
+0.5
+
+f1159	0	2	-2	; ffhf
+1
+5
+
+The variable gihmagtblbase indicates the starting ftable number (here, 1156,
+since the last ftable used for description of real-instrument-derived harmonic
+data is 1155).
+If this variable has the value zero, then no harmonic magnitude data tables
+exist (this is the default). We insert into the instr. 72 definition the line
+
+gihmagtblbase = 1156	; start of harmonic magnitude data
+
+By default the tables are read once: f<n> is allocated the first entry, f<n+1>
+is allocated the second (n = 0). The variable gihmagtblwrap by default is zero,
+indicating that Resurrection expects to find a list of harmonic magnitudes
+specified, one for each harmonic. Here we give it the value 1, so that f<n>
+refers to the first entry (for even harmonics f0, f2, ...) and f<n+1> refers to
+the second (for odd harmonics f1, f3, ...). A further variable, gihmagtblnorm,
+indicates if zero that the harmonic magnitude data is the actual magnitude of
+the harmonic. If gihmagtblnorm has the value 1, then the harmonic magnitude
+data is taken as specifying a fraction of the note amplitude (inotevol), so
+each harmonic is scaled by the value given in the ftable. Since the above
+harmonic magnitudes apecify a fraction of the note amplitude (relative
+magnitude) and not absolute magnitude, we allocate the variable the value 1. We
+therefore include the lines
+
+gihmagtblwrap = 1	; 2 values specified for odd/even h series, in which
+gihmagtblnorm = 1	; case we must scale the normalised values to note level
+
+The note amplitudes require adjustment; the comparison amplitude data is
+tabulated below, together with the note value of isw, using gisuslvl = 1
+temporarily to obtain the 'sustain' level immediately post-attack phase:
+
+		Bb clarinet		instr 72	isw
+
+ppB3		500			600			0.685
+ppG6		4000		4650		0.639
+ffD3		4000		6750		0.231
+ffG6		10000		12750		0.597
+
+We attempt to normalise the gains using the pphf/fflf pair. We find gain
+factors 4000/4650 = 0.86 and 4000/6750 = 0.59. Hence
+
+linsolve 0.86 0.59 0.639 0.231
+normalised: scale 0.661765, offset 0.437132
+
+so
+
+gioscgscl = 0.661765
+gioscgoff = 0.437132
+
+We return the sustain level to 3 with gisuslvl = 3.
+
+
+Terrain modulation.
+
+gis1axfn = 508
+gis1ayfn = 509
+gis1axwrap = 1
+gis1aywrap = 1
+gis1axixtbl = $sine
+gis1ayixtbl = $cosine
+gis1axixascl = 0.05	; small radius orbit
+gis1ayixascl = 0.05
+; arrange to orbit diagonally opposite terrain regions (high/low mag paths)
+; for alternate harmonics f[n], f[n+1]
+gis1axowrap = 1
+gis1ayowrap = 1
+gis1axotbl = 261	; clarinet constants file data
+gis1axooff = 32		; tbl pos: returns value[0]
+gis1axixoixoff = 32	; scale khnix to wrap to data positions [n], [n+32] in f261
+gis1ayotbl = 261	; clarinet constants file data
+gis1ayooff = 1		; tbl pos: returns value[32]
+gis1ayixoixoff = 32	; scale khnix to wrap to data positions [n+32], [n] in f261
+
+The indexing for the x surface position is obtained from the clarinet constants
+file which is read into ftable 261. A fixed index scaling of 32
+(gis1axixoixoff) is appliesd to successive harmonic numbers; a further table
+offset of 32 (gis1axooff) to obtain an index
+of 32 and 0 alterantely, returning the values 0.08 for f0,2,... and 0.76 for
+harmonicsf1,3,... Similarly the y coordinates are found by harmonic indexing
+with fixed scale 32 (gis1ayixoixoff) and table offset 1 (gis1ayooff), returning
+y surface positions of 0.875 for f0,2,... and 0.59 for f1,3,...
+
+Thus for f<n>, n=0,2,... we have an orbit centred on [0.08,0.875]. For n=1,3,... we
+have an orbit centred on [0.76,0.59].
+
+Since these are on opposite diagonals of the terrain, somewhat different
+modulation patterns result. For the odd harmonics this is a gentle undulation
+and for the even ones a more pronounced curve with an approximately central
+peak.
+
+These orbits are fixed; the same terrain modulation is applied to all even or
+odd harmonics. We introduce a translation across the surface.
+
+Can't do this as things stand because the existing offset table is used to
+supply a fixed offset to the amplitude x index. The only other thing available
+is the through-note kndpix-based offset translation. We can't randomise the
+initial position either.
+
+We thus require offsets to be introudced in various ways: 1) random, 2)by
+further increment either fixed or froma  table as before
+
+1) could be solved by product with a random number (range?- need to preserve)
+2) by a fixed increment (simplifies things)
+
+scale indices into random fn to get different offsets for x and y or they're
+the same.
+
+gis1axotbl2 = $random
+gis1axixoscl2 = 0.02 ; scale offset down
+gis1ayotbl = $random
+gis1ayixoscl2 = 0.02 ; scale offset down
+gis1ayixoixoff2 = 2.3
+gis1axowrap2 = 1
+gis1axottbl = $lini
+gis1axixotoff = 0.1	;constant scaling through-note
+
+We use the internally generated random number table to provide a secondary
+offset, allowing the starting position of the orbit to be varied about the
+initial position. The variation is scaled to be in the range [-0.02, 0.02]
+
+; output level
+gimaloff = 1
+
+
+terrain regions
+xixo 0.76, yixo 0.08
+     0.08       0.875
+
+
+; incorporating real data
+use gioscgoff = 0.1 we note pphf is 5000 not 4000 and fflf is 2000 not 4000.
+Balance for tjhese isw extremes to get gain factors 0.8 and 2. Allowing for the
+tenfold reduction already in place (ie global gain is 0.1) we have
+linsolve 0.08 0.2 0.639 0.231
+normalised: scale -0.294118, offset 0.267941
+so
+gigainscl = -0.294118
+gigainoff = 0.267941
+
+which leaves the pplf note too loud and the ffhf note too quiet. Scale in score.
+
+ We must also specify the minimum
+and maximum amplitudes and frequencies of the notes.
+
+giminvol = 600		; data min and max ranges (from original sound)
+gimaxvol = 6000
+giminfrq = 146.828	; D3: nominal frequencies of note range (csound book)
+gimaxfrq = 1567.982	; C6
+
+; 22/6/08
+Adding real data
+use default gigainscl, off. Note isw pplf = 0.672, ffhf = 0.584. Gains are
+500/25000 = 0.02 and 0.4
+
+This prob. isn't going to work without rescaling the compressed samples to the
+right amplitude values :(
+
+utils/linsolve 0.02 0.4 0.672 0.584
+
+makes the fflf case much too high amp (about 30k).
+
+Try for eq'ing the pphf/fflf pair, 
+
+gains are about 22k, 15k on average, i.e. factors (to get amp 4000) of 0.18 and
+0.27 with isw 0.626 and 0.231; doesn't do much good either
+
+postscript
+With reference to the timbre of low-frequency, low-amplitude notes, score
+correction can be applied in this range with i5 and i6:
+
+i5	0	1	1.5	1.5	-1	0			; adjust gain - compensate hnum rolloff
+i5	1	1	1	1	-1	0			; reset
+i6	0	1	0.2	0	-1 	0	-1	0	; skip gain mod envelopes, x hnum
+i6	1	1	1	0	-1	0	-1	0	; reset
+
+
+We run a modified test score, with the pplf note corrected for timbre and the
+fflf note corrected for release duration: The pphf and ffhf notes are modified
+to remove envelope glitches.
+
+	#include "header.sco"
+
+	i1	0	0		72	; define instr. 90 as a clarinet
+
+	i4	4		1	0		0.5	0	0	; halve release time for fflf note
+	i4	6		1	0		1	0	0	; reset release scale for next note
+
+	i5	0	1	1.5	1.5	-1	0			; adjust gain - compensate hnum rolloff
+	i5	1	1	1	1	-1	0			; reset
+
+	i6	0	1	0.2	0	-1 	0	-1	0	; skip gain mod envelopes, x hnum
+	i6	1	1	1	0	-1	0	-1	0	; reset it
+
+	i90 0		1	600		7.11	; pp B3
+	i90 2		1	3970	10.07	; pp G6
+	i90 4		1	4000	7.02	; ffD3
+	i90 6		1	6030	10.07	; ffG6
+
+
+
+Refs.
+1	Csound Book, Pitch Conversion (Appendix 5).
+2	University of Iowa Electronic Music Studios
+3	MiXViews-1.22
+4	Csound Book, 'Designing leato instruments'.
+
+

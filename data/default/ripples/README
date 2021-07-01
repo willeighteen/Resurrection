@@ -9,6 +9,10 @@ in instrument 43 set:
 
 Copy the *Params files to the relevant data/<instr> directory.
 
+Noe: If using a partial envelope phase the output magnitudes may need
+adjusting (parameter 1ai) in the terrain parameter files to avoid amplitude
+discontinuities.
+
 Run csound:
 
 csound -W -o sound/test.wav resurrection.orc scores/test.sco 2>output

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-harmonics=15
-lfpoints=32
-hfpoints=16
+harmonics=10
+lfpoints=128
+hfpoints=64
 
 # pplf:
 hetro -f65.406 -h$harmonics -m0 -n$lfpoints notes/Cello.arco.pp.sulC.C2.wav ppC2.het

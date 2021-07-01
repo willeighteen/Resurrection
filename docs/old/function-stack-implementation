@@ -1,0 +1,202 @@
+Ex genInstr-12.orc: last version in 12b. Subsequently dropped.
+
+instr 1 
+        ; <<< meta-instrument >>>
+; set up freq/ampl tables
+        ; default amplitude and frequency transfer function stack
+        ; creates gisize functions starting at 301
+        ; control function is f300
+        ; after Comanjucosa
+        ; harmonic amplitude function stack
+        ; we must specify a duration to initialise function tables
+        ; all other instruments start times must be offset by this in the score
+        p3 = (p3==0 ? 0.001 : p3)
+        krow    init    0
+        ; fill isize tables of size isize to create the surface
+        ; define y-axis function (frequency)
+;       isect1 = int(gisize*0.34375+0.5)
+;       isect2 = int(gisize*0.421875+0.5)
+isect1 = int(gisize*0.25)
+isect2 = int(gisize*0.45)
+;       iafno ftgen 300, 0, gisize+1, -5, 0.001, isect1, 0.1, isect2, 0.9, gisize-isect1-isect2, 1
+iafno   ftgen   300, 0, gisize+1, 7, 0.001, gisize, 1
+;iafno  ftgen   300, 0, gisize+1, 5, 0.001, gisize, 1
+        loop:
+        irow = i(krow)
+        ; read y-axis table for factor for x-axis function
+        iy      tablei  irow, 300
+        ; allocate table number
+        iftnum = gihfn0+i(krow)
+        ; define x-axis function (amplitude)
+;       isect1 = int(gisize*0.59375+0.5)
+;       isect2 = int(gisize*0.171875+0.5)
+;       isect3 = int(gisize*0.1796875+0.5)
+;isect1 = int(gisize*0.25)
+;isect2 = int(gisize*0.1)
+;isect3 = int(gisize*0.35)
+;       iafno ftgen     iftnum, 0, gisize+1, -5, 0.01*iyval, isect1, 0.1*iyval, isect2, 0.25*iyval, isect3, 0.9*iyval, gisize-isect1-isect2-isect3, iyval
+;iafno ftgen    iftnum, 0, gisize+1, -7, 0.001*iyval, gisize, iyval
+; need to work backwards. suppose gisize<24 ? then what?
+; whatever, we must reach iy after gisize locs
+iafno   ftgen   iftnum, 0, gisize+1, -5, 0.0001*iy, gisize, iy
+;iafno  ftgen   iftnum, 0, gisize+1, -7, 0.001*iy, gisize, iy
+        iadj1 = 0.001
+        iadj2 = 0
+        is1 = 0
+        is2 = 0
+        is3 = 1
+        if gisize<4 igoto endtruncate
+        iadj1 = 1
+        iadj2 = 0.001
+        is1 = 0
+        is2 = 1
+        is3 = 2
+        if gisize<16 igoto endtruncate
+        iadj1 = 1
+        iadj2 = 0.001
+        is1 = 0
+        is2 = 2
+        is3 = 2
+        if gisize<32 igoto endtruncate
+        iadj1 = 1
+        iadj2 = 1
+        is1 = int(gisize/24)
+        is2 = int(2*gisize/24)
+      is3 = int(3*gisize/24)
+        endtruncate:
+        is4 = gisize-4*is1-6*is2-2*is3
+        is4 = (is4<0 ? 0 : is4)
+
+        ; an inv. exp., approx.
+;       iafno   ftgen   iftnum, 0, gisize+1, -7, 0.001*iy, is4, 0.007*iy, is1,\
+;       0.086*iy, is1, 0.174*iy, is1, 0.261*iy, is1, 0.349*iy*iadj2, is2, 0.525*iy, is2,\
+;       0.701*iy, is2, 0.876*iy, is2, 0.971*iy, is2, 0.977*iy, is2, 0.982*iy*iadj1, is3,\
+;       0.99*iy, is3, iy
+        
+        if krow = gisize goto hdone
+        krow = krow+1
+        reinit loop
+        hdone:
+;print is1, is2, is3, is4, gisize
+
+
+
+Extract from genInstr-11.orc, Comanjucosa's method modified
+instr 1
+        ; <<< meta-instrument >>>
+; set up freq/ampl tables
+        ; default amplitude and frequency transfer function stack
+        ; creates gisize functions starting at 301
+        ; control function is f300
+        ; after Comanjucosa
+        ; harmonic amplitude function stack
+        ; we must specify a duration to initialise function tables
+        ; all other instruments start times must be offset by this in the score
+        p3 = (p3==0 ? 0.001 : p3)
+        krow    init    0
+        ; fill isize tables of size isize to create the surface
+        ; define y-axis function (frequency)
+;       isect1 = int(gisize*0.34375+0.5)
+;       isect2 = int(gisize*0.421875+0.5)
+isect1 = int(gisize*0.25)
+isect2 = int(gisize*0.45)
+;       iafno ftgen 300, 0, gisize+1, -5, 0.001, isect1, 0.1, isect2, 0.9, gisize-isect1-isect2, 1
+iafno   ftgen   300, 0, gisize+1, 7, 0.001, gisize, 1
+;iafno  ftgen   300, 0, gisize+1, -5, 0.0001, gisize, 1
+        loop:
+        irow = i(krow)
+        ; read y-axis table for factor for x-axis function
+        iy      tablei  irow, 300
+        ; allocate table number
+        iftnum = gihfn0+i(krow)
+        ; define x-axis function (amplitude)
+;       isect1 = int(gisize*0.59375+0.5)
+;       isect2 = int(gisize*0.171875+0.5)
+;       isect3 = int(gisize*0.1796875+0.5)
+;isect1 = int(gisize*0.25)
+;isect2 = int(gisize*0.1)
+;isect3 = int(gisize*0.35)
+;       iafno ftgen     iftnum, 0, gisize+1, -5, 0.01*iyval, isect1, 0.1*iyval, isect2, 0.25*iyval, isect3, 0.9*iyval, gisize-isect1-isect2-isect3, iyval
+;iafno ftgen    iftnum, 0, gisize+1, -7, 0.001*iyval, gisize, iyval
+; need to work backwards. suppose gisize<24 ? then what?
+; whatever, we must reach iy after gisize locs
+;iafno  ftgen   iftnum, 0, gisize+1, -5, 0.0001*iy, gisize, iy
+iafno   ftgen   iftnum, 0, gisize+1, -7, 0.001*iy, gisize, iy
+        iadj1 = 0.001
+        iadj2 = 0
+        is1 = 0
+        is2 = 0
+        is3 = 1
+        if gisize<4 igoto endtruncate
+        iadj1 = 1
+        iadj2 = 0.001
+        is1 = 0
+        is2 = 1
+        is3 = 2
+        if gisize<16 igoto endtruncate
+        iadj1 = 1
+        iadj2 = 0.001
+        is1 = 0
+        is2 = 2
+        is3 = 2
+        if gisize<32 igoto endtruncate
+        iadj1 = 1
+        iadj2 = 1
+        is1 = int(gisize/24)
+        is2 = int(2*gisize/24)
+        is3 = int(3*gisize/24)
+        endtruncate:
+        is4 = gisize-4*is1-6*is2-2*is3
+        is4 = (is4<0 ? 0 : is4)
+
+        ; an inv. exp., approx.
+;       iafno   ftgen   iftnum, 0, gisize+1, -7, 0.001*iy, is4, 0.007*iy, is1,\
+;       0.086*iy, is1, 0.174*iy, is1, 0.261*iy, is1, 0.349*iy*iadj2, is2, 0.525*iy, is2,\
+;       0.701*iy, is2, 0.876*iy, is2, 0.971*iy, is2, 0.977*iy, is2, 0.982*iy*iadj1, is3,\
+;       0.99*iy, is3, iy
+
+        if krow = gisize goto hdone
+        krow = krow+1
+        reinit loop
+        hdone:
+;print is1, is2, is3, is4, gisize
+
+Extract from genInstr-10.orc, Comanjucosa's method modified
+
+instr 1
+        ; <<< meta-instrument >>>
+; set up freq/ampl tables
+        ; default amplitude and frequency transfer function stack
+        ; creates gisize functions starting at 301
+        ; control function is f300
+        ; after Comanjucosa
+        ; harmonic amplitude function stack
+        ; we must specify a duration to initialise function tables
+        ; all other instruments start times must be offset by this in the 
+score
+        p3 = (p3==0 ? 0.001 : p3)
+        krow    init    0
+        ; fill isize tables of size isize to create the surface
+        ; define y-axis function (frequency)
+        isect1 = int(gisize*0.34375+0.5)
+        isect2 = int(gisize*0.421875+0.5)
+        iafno ftgen 300, 0, gisize+1, 7, 0.01, isect1, 0.1, isect2, 0.9, 
+gisize-isect1-isect2, 1
+        loop:
+        irow = i(krow)
+        ; read y-axis table for factor for x-axis function
+        iyval   tablei  irow, 300
+        ; allocate table number
+        iftnum = gihfn0+i(krow)
+        ; define x-axis function (amplitude)
+        isect1 = int(gisize*0.59375+0.5)
+        isect2 = int(gisize*0.171875+0.5)
+        isect3 = int(gisize*0.1796875+0.5)
+        iafno ftgen     iftnum, 0, gisize+1, -7, 0.01*iyval, isect1, 
+0.1*iyval, isect2, 0.25*iyval, isect3, 0.9*iyval, 
+gisize-isect1-isect2-isect3, iyval
+        if krow = gisize goto hdone
+        krow = krow+1
+        reinit loop
+        hdone:
+

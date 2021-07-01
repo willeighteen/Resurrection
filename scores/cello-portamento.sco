@@ -1,22 +1,20 @@
 #include "data/Cello-arco-reference-1st/Cello-arco-reference-1st-header.sco"
 
-i1	0	0		43
-
 ; make default portamento shorter
-i2	0		7.5		0		0.4		0	0	0	0	0
+;i2	0		7.5		0		0.4		0	0	0	0	0
+;
+;; expression envelope example with portamento on first group of tied notes
+;; the portamento is from note i3->p6 to i90->np5 where i90->np5 is the next
+;; i90->p5 value; the first note has no portamento!
+;i3  4		1		0		0		7.04
+;i3  +		.		0		0		7.04
+;i3  +		.		0		0		7.05
 
-; expression envelope example with portamento on first group of tied notes
-; the portamento is from note i3->p6 to i90->np5 where i90->np5 is the next
-; i90->p5 value; the first note has no portamento!
-i3  4		1		0		0		8.04
-i3  +		.		0		0		8.04
-i3  +		.		0		0		8.05
-
-i90	0		2		5000	8.00
-i90	+		.		.		8.02
-i90	+		-1		.		8.04	; next note is tied
-i90	+		.		.		8.05
-i90	+		1.5		.		8.07
+i90	0		2		2550	7.00
+i90	+		.		.		7.02
+i90	+		-1		.		7.04	; next note is tied
+i90	+		.		.		7.05
+i90	+		1.5		.		7.07
 
 ; i.e. portamento is from i3 6.04 to i90 6.04 (first, tied note, no portamento
 ; required), then from i3 6.04 to i90 6.05 (portamento between 1st. and 2nd.

@@ -1,0 +1,86 @@
+hetconvert-1.5
+November 2013
+Alterations to build, documentation changes.
+
+hetconvert-1.4
+October 2013
+Fixes to avoid 'char *' conversion to 'string' errors. New method to
+write ftable of harmonic magnitudes.
+
+hetconvert-1.03.4
+Sat Jun 21 2008
+
+Changed 'fncToDatum' to 'fncToRaw' since this better reflects its function
+(conversion of ftable file to individual per-harmonic data files for frq
+and amp. Note this method also produces ready-made 'gnuplot' files for
+viewing the data (with 'gnuplot <name.gnuplot', if you have gnuplot
+installed).
+
+Bug causing ftable size to be twice the number of data points in the het
+file fixed.
+
+
+hetconvert-1.03.3
+Thu May 22 2008
+
+Incorrectly set guard point in single-traversal ftables. Now uses even
+number of entries (ftable size).
+
+
+hetconvert-1.03.2
+Mon Apr 7 2008
+
+Missing null terminator in multiple files option. Fixed.
+
+
+hetconvert-1.03.1
+Sat Apr  5 2008
+
+Truncated destination filenames when used in multiple output file generation
+methods; fixed.
+
+
+hetconvert-1.03
+Thu Apr 3 2008
+ 
+Addtionally includes conversion from ftable to split ascii data files
+together with gnuplot files to make for ease of viewing amp/frq character-
+istics of harmonics (if you have gnuplot installed) so you can do
+'gnuplot <file>.gnuplot'
+ 
+
+HetConvert-1.02
+Sun Aug 12 17:34:26 GMT 2007
+
+Changed default release magnitude to 90% of max value from 80% to tighten
+up release time accuracy. Ok provided sustain phase is reasonably linear.
+
+
+HetConvert-1.01
+Fri Aug  3 14:46:56 GMT 2007
+
+Converts csound heterodyne analysis files produced with the 'hetro'
+command to other formats (ascii, short int, csound ftables). Also converts
+short int and ascii back to hetro format. The short int conversion allows
+editing of the harmonic structures in an ordinary wave editor.
+
+
+Build:
+do 'make' then 'hetcnv'.
+
+Test:
+Convert celloffc2.het to asc or whatever, twiddle,
+rebuild the .het file with some other name, copy the hetro.orc file to 
+some other name.orc. and edit the .het file in here from 'celloffc2.het' 
+to whatever name.het your file is, then
+
+'csound -d -W -o test.wav name.orc hetro.sco'
+
+and to reconstruct the original sampled cello,
+
+'csound -d -W -o cello.wav hetro.orc hetro sco'
+
+(assuming you've got csound loaded)
+
+Does fundamental and 29 harmonics (the hetDataTracks method allows this to be
+changed: see 'main.cc' for an example).

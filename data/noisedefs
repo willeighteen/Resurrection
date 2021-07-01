@@ -19,7 +19,7 @@
 ; attack t scalar (fraction of note attack)
 1
 ; decline phase flag: 0 = scalar of note attack, 1 = scalar of note decline
-0
+1
 ; decline t scalar
 1
 ; attack function
@@ -45,10 +45,9 @@
 ;
 ; num _processes_ for this noise
 ; max. 3 processes
-0
+3
 ;
 ; for each noise specify processes in order of processing
-;
 ;
 ; process type: band-limited noise
 3
@@ -58,18 +57,18 @@
 ; bw function
 247
 ;
-; centre frq flag (0 = harmonics, 1 = partials)
+; bw scale
 1
 ;
 ;
 ; process type: flanged noise
 2
 ;
-; process parameters
+; process parameters 
 ;
 ; lfo rate init
 1
-;
+;        
 ; lfo rate term
 3
 ;
@@ -82,29 +81,25 @@
 ; flanger function
 201
 ;
-;
 ; process type: ; pitched/fixed noise
 1
 ;
 ; process parameters
 ;
 ; centre freq. scalar (positive integer factor of f0, negative fixed freq )
-2
-;
-; bw init (Hz.)
-20
-;
-; bw term (Hz.)
-20
-;
+; cf init
+1
+; cf term
+1
+; cf fn
+247
+; bw init
+1
+; bw term
+1
 ; bw fn
 247
 ;
-; skip	; 0 = pitched, 1 = fixed
-0
-;
-;
-; second noise
 ; repeat the above sections under first noise as required; up to 3 noises may
 ; be specified. Processes are applied in order, e.g. 3,2,1 in the above
 ; example, (inoperative here since the number of noise processes is specified

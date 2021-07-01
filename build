@@ -1,13 +1,21 @@
 #!/bin/bash
 
+# clean out previous instrument setups, rebuild everything
+cd data
+for x in Viola.pizz.sulA Cello-arco-reference-1st Clarinet-Bb AltoFlute Cello.arco.sulC
+do
+rm -f $x/*header.sco $x/*data $x/*hmag.data
+done
+cd ..
+
 cd utils
 tar xzvf hetconvert-1.6.1.tar.gz
-#cd hetconvert
-#make
-#mv hetcnv ..
-#cd ..
-#build makeFtables
+cd hetconvert
 make
+mv hetcnv ..
+cd ..
+#build makeFtables
+make clean; make
 #
 # make the Viola instrument, MIDI number 41
 instr="Viola.pizz.sulA"
@@ -44,13 +52,15 @@ ppA3 ppG5 ffA3 ffF6
 # make the alternate Cello.arco.sulC instrument, MIDI number 143
 instr="Cello.arco.sulC"
 inum="143"
-harmonics="15"
+harmonics="10"
 basetbl="840"
 ./makeFtables $instr $inum $harmonics $basetbl \
 ppC2 ppD5 ffC2 ffB3
 #
+#
 cd ../data
-for x in Viola.pizz.sulA Cello-arco-reference-1st Clarinet-Bb AltoFlute Cello.arco.sulC
+for x in Viola.pizz.sulA Cello-arco-reference-1st Clarinet-Bb AltoFlute \
+Cello.arco.sulC
 do
 rm -f $x/*.asc
 done

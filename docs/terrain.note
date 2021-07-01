@@ -1,0 +1,4 @@
+Terrains
+
+3 included in amp by default, it will take 4 but if more are needed extra function tables must be declared in header.sco
+	nos. 265-268 are the default 4 terrain tables

@@ -1,0 +1,1839 @@
+Warning: this is now hopelessly out-of-date... nd only part-reconstructed
+Resurrection README (was newSynth (lost final ver.), first genInstr)
+
+Thanks to Warwick for the name.
+
+Warning
+In Resurrection scores the standard csound format is used:
+
+	<instr> <start> <duration> <amplitude> <frequency>
+
+Only the frequency parameter is definitive; duration and amplitude are taken as
+directions, but the actual duration and amplitude of notes produced will vary.
+This is in part the price paid for 'naturalness' of the produced notes. Score
+note durations can be enforced if required (giduradj = 1).
+
+
+1)	Overview
+2)	Usage
+3)	Instrument parameter list
+4)	Instrument parameter descriptions
+5)	Instrument control parameters
+6)	Function tables
+7)	Instrument type specification
+8)	Minimum functional instrument specification
+9)  Design problems
+
+
+1)	Instrument overview
+
+Only a single instrument can be played at a time; multiple instruments at the
+same time are not allowed, since both are declared by different i1 calls, and
+only one i90 instrument can be realised at a time. Therefore if two different
+instruments were defined both starting at time 0, only the second would have
+effect; this would be the instrument rendered by i90.
+
+In practice overlaying multiple instruments requires the use of a mixer; the
+different instruments are output as separate tracks and mixed down.
+
+The i90 code generating the sound uses a succession of functional blocks, each
+receiving the output of the previous block if enabled:
+
+	initialisation
+	amplitude envelope timing
+;	noise amplitude envelope timing <optional> REDUNDANT - removed from code
+	amplitude envelope shaping
+	amplitude envelope modulation (tremolo) <optional>
+	frequency modulation (vibrato) <optional>
+;	noise <optional> UNIMPLEMENTED
+	sound source - currently generation by additive sinewave synthesis
+	inharmonic partials <optional>
+	wavetable filter/equaliser (post-sound-source spectral processing)
+	attack harmonic delay <optional>
+;	decline harmonic delay <optional> REDUNDANT - removed from code
+	reverb <optional>
+
+
+Instrument 1
+Instr 1 specifies a general instrument. Various parameters govern its
+personality: Wave tables are used for instrument emulation.
+Provides variation of envelope shape with amplitude and frequency
+Various flags and parameters to define the particular instrument
+
+
+Instrument 2
+Instr 2 specifies meta-expression, governing the behaviour of instr 3 (which
+affects the way instr 1 defines the playable instrument instr 90).
+
+
+Instrument 3
+Expression
+
+Instr 3 is expression mode: not all modes apply to all instrs, so
+this s/b filtered by instr 1's igenmethod (which is defined first, instrs
+are called _in numerical order_). Default modes of expression are set
+in instrument 1, midi instrument emulation section. Instr3 supplies
+overrides for these, or definitions where no midi instr is specified.
+modes of expression include amplitude and pitch variation, note elision,
+portamento. These are available to the individually specified instrument,
+Instr 90.
+An effect such as a swell or crescendo may apply to a note, a group of notes
+(if tied), or a defined time period.
+
+
+; instr 4 deleted, replaced by macros in  instr 1
+Instrument 4
+Print instrument parameters
+This is a convenience instrument, performing no sound functions. Called after
+instrument initialisation, it displays the parameters used for that instrument.
+Called during performance of a score, the current values of global instrument
+parameters are displayed.
+
+It is most useful to enable initial settings of a MIDI-specified instrument to
+be obtained; in the case of parameters being altered in the score, use of
+instrument 4 after instrument 1 is the only way of obtaining the default
+settings used before they were altered, and therefore the only way of returning
+them to their initial state without an i1 call to re-initialise the instrument
+(which will lose any global parameters which have been set)..
+
+
+Instrument 4
+Note expression
+
+Score control of attack and decline scaling; used to adjust defaults provided
+by instrument 1.
+
+
+Instrument 8
+Vibrato
+
+Vibrato level is specified as a fraction of maximum volume (32768 for 16-bit).
+Vibrato frequency and start/end values for amplitude level may be set. By
+default the vibrato is modelled by a sine wave; this function may also be
+changed. Vibrato models frequency change.
+
+A flag, gvibdly, if set, delays onset of the vibrato until after the attack
+phase (available in instr 2, meta-expression).
+
+The vibrato amplitude envelope default is zero.
+
+
+Instrument 9
+Tremolo
+
+This is additive on the main amplitude envelope, so increasing tremolo will
+also increase maximum amplitude. Tremolo models amplitude change.
+
+Tremelo level is specified as a fraction of maximum volume. If tremolo
+frequency parameter p5, trmfrq, is zero then an auto-calculated tremolo will
+be applied. A positive value of trmfrq represents a fixed tremolo
+frequency to be applied. If the value of trmfrq is less than zero, then it
+represents a scaling factor applied to the auto-calculated tremolo whose
+magnitude is the absolute value of trmfrq+1.
+
+Start and end values for tremolo amplitude may be specified, as may the
+function making the transition between these points. Note that a start tremolo
+amplitude (parameter p6) causes the default tremolo (off) to be turned on.
+
+The tremolo amplitude envelope default is zero.
+
+
+Instrument 10
+Wavetable equaliser
+
+The combined output of the synthesiser is split by the wavetable filter
+Instrument 12 into 11 frequency bands. The first and last are controlled by
+low-pass and high-pass filters respectively of order 1 - 4 (6 - 24 dB/octave
+rolloff).
+
+
+
+Instrument 12
+Wavetable filter
+
+This implements 'continuous' group wavetable synthesis, so called due to its
+dynamic modification of wavetable component harmonics.
+
+The wavetable equaliser allows modification of the sound produced by an oscillator
+or group of oscillators (dependent on harmonics per band parameter hpb,
+i12->p21) from a given wave table. It applies a set of bandpass filters in
+parallel, whose pass band is the difference between each harmonic or harmonic
+group centred on the successive harmonics (or adjacent harmonics in groups).
+Frequencies below and above the ranges covered by the bandpass filters are
+covered by low- and high-pass filters respectively. Note the the low pass band
+includes the fundamental.
+
+This feature allows some dynamism to be applied to the sound produced from a
+single wavetable, by varying the magnitude and number of harmonics present. It
+derives from the idea of contiguous wavetable synthesis.
+
+Time-dependent (note duration) transforms model the pattern with which
+the harmonics rise, sustain and fall. However, this is an approximation
+since there can be different curvature rates on appearance and disappearance
+of even vs. odd harmonics, e.g. the clarinet, where the harmonics rise
+progressively later, but the even and odd series at exponentially different
+rates; odd harmonics are also at a very low level compared to even ones.
+
+If attack and decline functions are unity then no modulation is applied to
+harmonics (constant gain = 1)
+
+The filter also incorporates an envelope which is variable dependent on
+frequency and amplitude. It differs from contiguous group synthesis in that
+that method applies different amplitude envelopes to distinct bands of
+frequencies in the sound, whereas here we are restricted to applying the
+modification to an entire wavetable.
+
+f<x,y>rpt when negative reverses the harmonic amplitude scaling; fractionally,
+only a part of the function (starting at table position 0) is scanned
+
+f<x,y>rpt are the paths through the scaling and modulation functions and
+always start at zero in order to avoid amplitude discontinuities. If >1 they
+are the number of repeats (and may be fractional). If <1 the function is
+scanned in reverse (may also be fractional).
+
+If fxrpt is zero, then instead of the envelope specified by fampsclfn
+applying to only the post-attack portion of the note, the fampsclfn table is
+applied to the whole note, but in two or three parts
+
+In the case of default AD envelopes, the first part of the table is used to
+change the timbre of the attack, the central part is not referenced, and the 
+last part of the table affects the timbre of the decline phase of the note.
+
+In the case of user-specified decline phases (usrdclphs flag is set), then
+the first part covers the attack, the central part the combined decay/sustain
+phases and the last part the release phase timbre.
+
+Note for this to have any effect, the 'effect level', wtffxscl, must be greater
+than zero.
+
+This special case of fxrpt = 0 causes the fampsclfn table to be accessed in
+the ratio hgmodaix:tblsize-hgmodaix-hgmodrix:hgmodrix, where tblsize is defined
+in the macros section of genInstr.orc, and hgmodaix, hgmodrix are defined as
+fractions of this. By default, these are both tblsize/8 = 32. In other words,
+the first 32 locations in the table are read during the attack phase, the last
+32 during the release phase, and the remaining 192 during the combined decay
+and sustain phases. If there is no user decline phase (i.e. usrdclphs = 0)
+then the hgmodrix locations are read during the non-attack (decline) phase.
+
+This enables application of an envelope over the whole duration
+of the note: the first hgmodaix locations always map to the attack phase and
+the last hgmodrix locations to the release or decline phase, unlike the case of
+gifxrpt != 0, where the number of locations governing the constituents of the
+decline phase may vary. A repeat rate of 0, in emphasis, causes synchronisation
+of the attack and decline/release to the relevant parts of the table.
+
+This feature can be used so the timbre can be made to brighten through the
+attack phase and darken during the decay/decline phase. The fampmodfn should
+be set to $unity, so that the scaling function shape is preserved when applied
+to successive harmonics. Note that the amplitude modulation function index is
+also applied over the whole note duration, unlike the case of fxrpt != 0
+where it only applies, as does the scaling function, to the non-attack portion
+of the note.
+
+For example, the scaling function represented by the table
+	f300	0	256	7	0 32 0.7 96 1 96 0.7 32 0
+combined with the modulation function represented by $unity gives a succession
+of exponential envelopes applied to the harmonics (the fundamental envelope is
+composed of the linear sections specified in the table); practically:
+
+	gifxrpt = 0
+	gifyrpt = 1
+	gifampsclfn = 300
+	gifampmodfn = $unity
+	giwtffxscl = 1
+
+This instrument also allows the harmonic rolloff to be changed via parameters
+ifgscl and fgoffset, governing the timbre of the note with changing amplitude
+and frequency.
+
+A further parameter hpb controls the number of harmonics per band; this also
+affects the behaviour on instruments 10 and 11, equaliser and equaliser gain
+dependencies. The number of harmonics is specified as an integer, and if zero,
+the number of harmonics allocated to each band is determined automatically so
+that the bands equally divide the number of harmonics within audio range.
+
+Attack and decline phase duration may be modified by simple scaling paramters
+which operate on attack and decline produced by the instrument-specified
+attack/decline scale and offset.
+
+Harmonic delay is simulated by filters on the attack and decline/release phases
+whose gain is a function whose approximately linear portion is of reduced
+duration with increasing frequency.
+
+Delayed harmonics are spaced equally over the attack whilst attack duration
+permits, then by a fraction specified of the remainder of the attack phase
+successively; the same applies to the release/decline phase.
+
+
+Instrument 13
+Partials
+
+There are situations in which notes are comprised not only of a harmonic
+series, but also of inharmonics. Typically these seem to be either midway
+between harmonics, or in some such ratio as 2:3. Two possible settings are
+allowed, either a single partial equidistant from adjacent harmonics or two
+partials at 1/3 and 2/3 of the inter-harmonic distance. A modulation functions
+and (constant) amplitude scaling factor may be applied to the partials. Note
+that only a single function and amplitude level can be specified for each
+partial series.
+
+
+Instrument 14 REDUNDANT - removed from code
+Noise
+
+Noise is specified when the noiselvl parameter is non-zero. If zero, then the
+existing noise level will be preserved, if noise is present.If the noise level
+is non-zero, noise will be introduced even for an instrument whose
+specification excludes this, i.e. the hasnoise flag is set by non-zero
+noiselvl values.
+
+Noise levels less than zero result in a level of abs(inoiselvl+1), so -1 will
+achieve a noise level of zero, and the hasnoise flag will be made negative,
+which has the effect of only producing the noise component of the note. A
+negative noise level thus allows adjustment of the noise level without the note
+itself being produced.
+
+Noise duration may be scaled by parameter undurscl. Noise duration is limited
+to note duration.
+
+If the noise type is specified as zero then only note initialisation noise is
+produced; it does not persist through the note. A value of unity allows the
+noise to continue through the note.
+
+Noise attack and decline functions may be specified with natktbl and ndcltbl.
+
+
+Instruments 15 - 18 REDUNDANT - removed from code
+Noise band structure
+
+There are four identical noise instruments; each may be unique,dependent on
+parameter settings. Not all may be required, but this is regarded as a useful
+minimum number. This is a poor substitute for the ideal, which is of
+band-limited white noise subjected to a filter of indeterminate multiple
+bandwidths which narrow to desired harmonics (i.e. like a comb).
+
+All components of the noise may be set in these instruments, allowing
+specification of the complete noise structure.
+
+Noise amplitude is dynamically controlled by a gain factor derived using scale
+and offset parameters nb<n>ascl, nb<n>aoff. These are linked to the spectral
+width of the note, isw:
+
+	gain = isw*nb<n>ascl+nb<n>aoff
+
+hus either a constant gain factor can be used (nb<n>ascl = 0), or one which is
+dynamic and linked to isw (if a non-zero nb<n>ascl is used). Noise level is
+thus variable as the note frequency and amplitude change.
+
+The gain varies through the note by a function specified by parameter nb<n>afn,
+the noise band amplitude function. The start and end values of this function
+are determined by gain levels nb<n>a<m> as specified below.
+
+In order to allow different levels of noise from contributing noise intruments
+15 - 18 to be mixed, gain parameters nb<n>a<m> are introduced, where m is the
+number specifying start or end gain value (either 1 or 2). If the gain
+specified is negative, it is applied as a scalar of the noise level
+produced using the scale and offset values above. If positive, then the
+constant gain thus specified is used (thus the nb<n>ascl and nb<n>aoff values
+are unused).
+
+Noise band centre frequency is specified using the noise band <n> centre
+frequency function nb<n>cffn, whose start and end values are determined by
+nb<n>cf<m> parameters, as for noise amplitude. If positive, these values are
+used directly as start and end centre frequencies; if negative, their absolute
+values scale note frequency.
+
+Noise bandwidth is similarly specified using the noise band <n> bandwidth
+function nb<n>bwfn, whose start and end values are determined by parameters
+nb<n>bw<m>. If positive, these values are used directly as start and end
+bandwidth values. If negative, their absolute values scale the bandwidth
+determined by the bandwidth scale and offset parameters nb<n>bwscl, nb<n>bwoff.
+These are linked to spectral width if the scale is non-zero, otherwise the
+constant returned by the offset value is used. Thus bandwidth can be dynamic,
+dependent on note frequency and amplitude.
+
+
+Instrument 19
+Player competence.
+Competency is specified separately in amplitude and frequency terms. Both
+amplitude and frequency competence have range 0.00001 (near-total incompetence)
+to 1 (complete competence). Competence should not normally be set less than
+about 0.95 unless a deliberately 'shaky' feel is required. If both amplitude
+and frequency competence modulation are to be synchronised, then the random
+seed values for both should be the same.
+A further specification allows temporal competence to be set, varying the
+actual note duration from that specified in the score file. The tolerance of
+the ear to changes of duration are somewhat greater than to frequency or
+amplitude changes; values in the range 0.7 to 1 are useful.
+
+'Deviance rate' can be specified in amplitude, frequency and time domains: this
+affects the number of random fluctuations inserted into a note, but does not
+determine it, since the value is modified depending on the amplitude and
+frequency of the note. Actual deviance rate is inversely proportional to both
+amplitude and frequency (i.e is greater at lower amplitudes and frequencies).
+
+It should be noted that time deviance is disabled when tied notes are played.
+
+If chords are played, then the time deviation of the first note if applicable
+is used for the subsequently specified notes of the chord. Temporal deviation
+within a chord is best accomplished from the score, or successive chords'
+component notes may drift as a piece continues if the same time deviation is
+not equally applied to all the notes in the chord. A chord typically sounds
+more realistic if all its component notes are not of exactly the same duration,
+however.
+
+
+Instrument 99
+Instr 99 supplies a simple reverb. Some instrument sounds are modelled from
+analysis of anechoically-obtained samples, and are thus 'dry'. Some reverb is
+required to make these sound more natural. Reverb is supplied by parameter 4,
+reverb time, which relates to the size of enclosed space the instrument is
+performed in (broom cupboard/concert hall).
+All parameters specified must be included each time this instrument is called.
+The user parameters are reverb time (p4) and reverb return level (p5). The
+return level controls the wet/dry mix balance and should be in the range [0,1].
+
+This instrument is ancillary to genInstr and does not perform any function
+necessary for the former to operate. It may therefore be replaced at whim.
+
+
+Instrument 90
+Instr 90 specifies the instrument which is actually playable as the result of
+the combination of specifications in instr 1 and (optionally) instr 2. It is
+the emulation of a physically real instrument, which may be conventional, in
+the case of midi instrument number specification, or user-defined (having no
+prior physical incarnation, but representing its possibility). The supplied
+parameters represent the note to be played.
+
+
+
+2)	Usage
+Instruments are called in numerical order, i1, i2, i90,<i90>,... until the next
+variation in technique (i2) or instrument type (i1) is declared. This
+corresponds to the sequence 'choose instrument' 'express', 'note', 'note',...
+Change of expression on a per-note basis is allowed: i2, i90, i2, i90, ...
+
+
+
+3)	Instrument parameter list
+
+instr 1 - meta-instrument (personality of instrument 90)
+p1	i1
+p2	start
+p3	dur
+p4	wavetbl
+p5	mass
+p6	res
+p7	ctl
+p8	dcylen
+p9	dcylvl
+p10	suslvl
+
+instr 2 - meta-expression control
+p1	i2
+p2	start
+p3	dur
+p4	portramp
+p5	portscl
+p6	trmffn
+p7	vibafn
+p8	vibphs
+p9	vibdel
+p10	suslenctl
+
+instr 3 - expression control
+p1	i3
+p2	start
+p3	dur
+p4	ampl
+p5	tbl
+p6	portpch
+
+instr 4 - note expression
+p4	uatkscl
+p5	udclscl
+
+instr 8 - vibrato
+p1	i8
+p2	start
+p3	dur
+p4	ampl
+p5	freq
+p6	amps
+p7	ampe
+p8	vibffn
+
+instr 9 - tremolo
+p1	i9
+p2	start
+p3	dur
+p4	ampl
+p5	freq
+p6	amps
+p7	ampe
+p8	trmafn
+
+instr 10 - equaliser
+p1	i10
+p2	start
+p3	dur
+p4	band0g (low-pass)
+p5	band1g
+p6	band2g
+p7	band3g
+p8	band4g
+p9	band5g
+p10	band6g
+p11	band7g
+p12	band8g
+p13	band9g
+p14	band10g (high-pass)
+p15 uoscgain
+
+instr 11 - eq gain dependencies
+p1	i11
+p2	start
+p3	dur
+p4	gf0
+p5	gf1
+p6	gf2
+p7	gf3
+p8	gf4
+p9	gf5
+p10	gf6
+p11	gf7
+p12	gf8
+p13	gf9
+p14	gf10
+
+instr 12 - filter
+p1	i12
+p2	start
+p3	dur
+p4	wtffxscl
+p5	hasdelay
+p6	hadly
+p7	hddly
+p8	uatkdlyscl
+p9	udcldlyscl
+p10	wtfatkfn
+p11	wtfdclfn
+p12	fxindexfn
+p13	fyindexfn
+p14	fxrpt
+p15	fyrpt
+p16	fampsclfn
+p17	fampmodfn
+p18	fgscl
+p19	fgoff
+p20	hpb
+
+instr 13 - partials
+p1	i13
+p2	start
+p3	dur
+p4	haspartials
+p5	hpamodfn1
+p6	hpamodfn2
+p7	hp1modscl
+p8	hp2modscl
+
+instr 14 - noise REDUNDANT - removed from code
+p1	i14
+p2	start
+p3	dur
+p4	noiselvl
+p5	undurscl
+p6	ndclscl
+p7	noisetype
+p8	natktbl
+p9	ndcltbl
+
+instr 15 - noise 1 structure
+p1	i15
+p2	start
+p3	dur
+p4	nb1ascl
+p5	nb1aoff
+p6	nb1a1
+p7	nb1a2
+p8	nb1afn
+p9	nb1cf1
+p10	nb1cf2
+p11	nb1cffn
+p12	nb1bwscl
+p13	nb1bwoff
+p14	nb1bw1
+p15	nb1bw2
+p16	nb1bwfn
+
+instrs 16, 17, 18 - noise 2, 3, 4 structure
+Parameters as for instrument 15.
+
+instr 19 - player competence
+p1	i15
+p2	start
+p3	dur
+p4	competence (amplitude)
+p5	competence (pitch)
+p6	competence (note duration)
+p7	adevrate
+p8	fdevrate
+p9	aseed
+p10	fseed
+p11 tseed
+
+instr 99 - simple reverb
+p1	i99
+p2	start
+p3	dur
+p4	revtime
+
+instr 90 - instrument
+p1	i90
+p2	start
+p3	dur
+p4	ampl
+p5	freq
+
+
+
+4)	Instrument parameter descriptions
+
+instr 1 - meta-instrument (determines character of instrument 90)
+p1	instr num	i1
+p2	start		start time
+p3	dur			duration
+p4	wavetbl		wavetable number (midi instrument number)
+p5	mass		'inertia' (scales attack/decline phase) range ]0,250]
+p6	res			'resonance' (decline phase extension) range ]0,n]
+p7	ctl			instrument type control (see 5, 'Instrument control
+				parameters', below)
+p8	dcylen		decay/sustain proportion
+p9	dcylvl		decay level factor (for non-default envelopes)
+p10	suslvl		sustain level factor (for non-default envelopes)
+p11	uatkscl		user attack/decline scaling - factor of envelope timing
+p12	udclscl		generated from i1 attack and decline scale and offset
+
+Attack/decline scalings give variation to the auto-calculated
+envelope timings obtained by multiplying the spectral width value by the
+relevant i1 scale factor and adding the offset to derive an index into a
+factor table. The factor returned is independent of note frequency and
+amplitude if the i1 scale factor is zero (i.e. it is a constant). Otherwise
+the attack and decline envelope durations are modified in accordance with a
+frequency and amplitude-dependent factor.
+
+Note that the attack and decline scale and offset are manually set in i1 on a
+per-instrument basis (atkscl, atkoff, dclscl, dcloff). The paramaters uatkscl
+and udclscl provide for a scalar modification of these.
+
+The attack and decline scale and offset values are set in the instrument
+definition so as to achieve the desired access slope into the factor table;
+note that this slope may be negative, i.e. a smaller correction applied with
+increasing frequency and amplitude instead of a larger one.
+
+
+instr 2 - meta-expression (determines type of expression  of instrument 3)
+p1	instr num	i2
+p2	start		start time of effect - meta-effect persists until new i2
+				declaration
+p3	dur			duration over which effect takes place (e,g, swell, cresc.)
+p4	portramp	portamento pitch ramp fn tbl (default linear 0->1)
+p5	portscl		portamento duration scale factor (scales i1 default dur.)
+				0 = default i1 duration (auto-calculated)
+p6	trmffn		tremolo freq fn tbl (default sine)
+p7	vibafn		vibrato amplitude fn tbl (default 0 = constant unity)
+p8	vibphs		initial vibrato phase (default 0.25, cosine; 0 = sine)
+p9	vibdel		vibrato onset flag: (default 0, attack phase, 1 = decline
+				phase)
+p10	suslenctl	relative proportion of sustain and release in non-default
+				envelopes
+
+
+instr 3 - expression (mode of performance of instrument 90)
+p1	instr num	i3
+p2	start		start time of expression
+p3	dur			expression envelope duration
+p4	ampl		end amplitude level of expression envelope; start level is that
+				of last specified i3.p4
+p5	tbl			amplitude envelope fn tbl (giexprenv; default linear 0->1)
+				The last specified envelope level will persist until reset
+				by an i3 with envelope type 0, duration > 0 and level 0.
+				This reset is effective immediately at the specified start
+				time; the duration is required to be nonzero. The resultant
+				envelope, gkexprenv, is offset from base gain unity, i.e.
+				specifying an amplitude of 0 will cause a x1 factor to be
+				applied; specifying amplitude 1 gives 2x factor, and specifying
+				-0.7 gives a x0.3 expression envelope factor.
+p6	portpch		portamento pitch (default 0 = off). Portamento applies to
+				tied notes; pitch shift is from pitch i3.p6 to i90.p5
+				where i3.p6 is the previous i90.p5 pitch value). For the
+				first note in a tied group, the portamento pitch may be
+				specified as either 0 (off) or the i90.p5 value for the
+				current note (effectively a portamento from one pitch to
+				the same pitch).
+
+
+instr 4 - note expression
+p1	instr num	i4
+p2	start		start time of expression
+p3	dur			note expression duration
+p4	uatkscl		user attack scalar of i90 attack scalar given by i1 atkscl/off
+p5	udclscl		user decline scalar of i90 decline scalar given by i1 dclscl/off
+
+
+instr 8 - vibrato
+p1	instr num	i8
+p2	start		start time of vibrato
+p3	dur			vibrato effect period
+p4	vibalvl		vibrato amplitude level, fraction of $maxvol
+p5	vibfrq		vibrato frequency
+p6	vibamps		vibrato amplitude envelope start level (scales p4; range [0,1])
+p7	vibampe		vibrato amplitude envelope end level (scales p4; range [0,1])
+p8	vibffn		vibrato frequency fn tbl (default 0 = sine)
+
+
+instr 9 - tremolo
+p1	instr num	i9
+p2	start		start time of tremolo
+p3	dur			tremolo effect period
+p4	trmalvl		tremolo amplitude level, fraction of $maxvol
+p5	trmfrq		tremolo frequency (>0 fixed frequency; default 0 =
+				auto-calculated, frequency-dependent, <0 scaling of abs(p5+1)
+				applied to auto-calculated tremolo frequency.
+p6	trmamps		tremolo amplitude envelope start level (scales p4; range [0,1])
+p7	trmampe		tremolo amplitude envelope end level (scales p4; range [0,1])
+p8	trmafn		tremolo amplitude fn tbl (default 0 = constant unity)
+
+
+instr 10 - wavetable equaliser
+p1	instr num	i10
+p2	start
+p3	dur
+p4	band0g		band 0 (low-pass) gain
+p5	band1g		
+p6	band2g		
+p7	band3g		
+p8	band4g		
+p9	band5g		
+p10	band6g
+p11	band7g
+p12	band8g
+p13	band9g
+p14	band10g		band 10 (high-pass) gain
+p15	uoscgain	user oscillator gain (eq master gain)
+
+If band gains are zero, any existing band gain is preserved. If greater than
+zero, the gain specified is a constant. If less than zero, then the specified
+gain plus unity scales amplitude, frequency, spectral width isw or envelope
+scalar ies depending on the i11 flag value corresponding to the band.
+
+
+instr 11 - eq gain dependencies
+p1	instr num	i11
+p2	start
+p3	dur
+p4	gf0			band 0 gain dependency type flag
+p5	gf1
+p6	gf2
+p7	gf3
+p8	gf4
+p9	gf5
+p10	gf6
+p11	gf7
+p12	gf8
+p13	gf9
+p14	gf10
+
+Thes flags only have effect when the relevant band gain is negative. Flag
+values and corresponding gain linkage are as in the table below:
+
+	Flag value		i11 gain scales
+
+	 1				iampfactor
+	 2				1-iampfactor
+	 3				spectral width isw
+	 4				envelope scalar ies
+	-1				ifrqfactor (default)
+	-2				1-ifrqfactor
+	-3				1-isw
+	-4				1-ies
+
+
+instr 12 - wavetable filter
+p1	i12
+p2	start
+p3	dur
+p4	wtffxscl		wavetable filter fx scale: filter modulation function
+					amplitude scale factor - 'effect level'; 0<wtffxscl<n.
+p5	hasdelay		harmonic delay flag, multistate: 0 = preserve existing state,
+					-1 = force delay flag to 0 (no harmonic delay), 1 = force
+					harmonic delay flag to 1 (delay attack and decline harmonics
+					with respect to	fundamental), 2 = attack harmonick delay
+					only, 3 = decline harmonic delay only.
+p6	hadly			harmonic attack delay (fraction of attack dur.)
+p7	hddly			harmonic decline delay (fraction of decline dur.)
+p8	uatkdlyscl		user attack delay scale: scalar of i90 attack delay
+					auto-calculated from i1 atkdlyscl, atkdlyoff.
+p9	udcldlyscl		user decline delay scale: scalar of i90 decline delay
+					auto-calculated from i1	dcldlyscl, dcldlyoff.
+p10	wtfatkfn		wavetable filter attack delay function (attack shape)
+p11	wtfdclfn		wavetable filter decline delay function (decline/release shape)
+p12	fxindexfn		filter x index function: index harmonic amplitude scalar fn (default $phasor)
+p13	fyindexfn		filter y index function: index harmonic amplitude modulation function (default $phasor)
+p14	fxrpt			number of fxindexfn repeats over note (may be fractional or
+					negative). If zero, then the scaling function table is
+					indexed in the ratio hgmodaix:tblsize-hgmodaix-hgmodrix:hgmodrix,
+					corresponding to the attack, decay/sustain and
+					decline/release phases, synchronising the table sections to
+					these note phases. Note that hgmodaix, hgmodrix and tblsize
+					are defined in the macros section of genInstr
+p15	fyrpt			number fyindexfn repeats over note (may be fractional or
+					negative)
+p16	fampsclfn		filter harmonic gain scalar function
+p17	fampmodfn		harmonic gain scalar function modulation function
+p18	fgscl			harmonic filter gain index scale. If non-zero, scales the
+					amplitude/frequency-based spectral width value, otherwise
+					returns a fixed gain returned by the fgoffset index value.
+p19	fgoff			harmonic filter gain index offset
+p20	hpb				harmonics per eq band. If zero, this parameter is
+					auto-calculated and is variable dependent on noscs, the
+					number of oscillators used at some particular frequency and
+					amplitude.
+
+Parameters 16 and 17 are function table numbers whose product describes an
+amplitude envelope applied to an eq band through the duration of the note, i.e.
+the eq gain varies for that band in a manner controlled by its envelope. The
+product of the p16 scale function and modulation function p17 determines the
+particular envelope applied to a band.
+
+An example envelope is table 300; successive applications of this cause a
+brightening of the timbre towards the middle of the note, darkening thereafter.
+Successive band gain envelopes have faster rise and fall times.
+
+The parameters fgscl, fgoff determine the gain behaviour of the instrument
+specified by i1. This gain is spectral width-linked, and is used to control the
+relative magnitude of harmonics as amplitudes and frequencies change. A zero
+value of instrument gain means harmonic magnitudes are as specified in the
+header file data for the instrument. as the gain value rises, so harmonics are
+attenuated more sharply.
+
+As instrument gain rises, successive harmonics are subject to a steeper
+rolloff, thus contributing less to the timbre produced.
+
+
+instr 13 - partials
+p1	instr num	i13
+p2	start
+p3	dur
+p4	haspartials		flag: controls number and type of partials
+p5	hpamodfn1		harmonic partial amplitude modulation function 1
+p6	hpamodfn2		harmonic partial amplitude modulation function 2
+p7	hp1modscl		harmonic partial fn 1 modulation scale
+p8	hp2modscl		harmonic partial fn 2 modulation scale
+
+Partials are specified by p4. If zero, there are no partials present in the
+sound. If the value is 1, then a single set of partials equidstant between
+harmonics is used, controlled by modulation function and scale 1. Modulation
+function and scalar 2 are unused.
+
+If the value is 2 then two sets of partials are produced, of 1/3 and 2/3 the
+inter-harmonic distance, e,g, f0+(f1-f0)/3, f0+2*(f1-f0)/3 for the fundamental.
+Each of these partial series, 1/3 and 2/3, is controlled by its own amplitude
+function and scalar.
+
+
+instr 14 - noise
+p1	instr num		i14
+p2	start			start time of noise
+p3	dur				unused (noise settings persist until reset by next i1 or set by
+					next i11 declaration).
+p4	noiselvl		noise amplitude factor, tristate: >0 = amplitude factor, 0 =
+					preserve existing state, <0 = amplitude factor-1 (but only the
+					noise is output, instead of note+noise as when noisescl>0)
+p5	undurscl		user noise duration scale; scalar of i1 noise duration
+p6	pchnbwixscl		pitched noise bandwidth index scale factor
+p7	pchnbwoffset	pitched noise bandwidth index offset
+p8	naedclbrkpt		noise amplitude envelope decline phase breakpoint
+p9	naedclbrklvl	noise amplitude envelope decline phase break level
+p10	ncf1			fixed noise filter 1 centre freq
+p11	ncf2			fixed noise filter 2 centre freq
+p12	nbw1			fixed noise filter 1 bandwidth
+p13	nbw2			fixed noise filter 2 bandwidth
+p14	fnmixbal		fixed noise filter 1/2 balance
+p15	fixnlvl			fixed noise contribution to total noise
+p16 ndurixscl		noise duration index scale factor
+p17	ndurixoffset	noise duration index offset
+p18	ndclscl			noise decline phase scale factor
+
+
+instr 15 - noise 1 structure
+p1	instr num	i15
+p2	start
+p3	dur
+p4	nb1ascl			noise band 1 amplitude scale
+p5	nb1aoff			noise band 1 amplitude offset
+p6	nb1a1			noise band 1 initial amplitude
+p7	nb1a2			noise band 1 final amplitude
+p8	nb1afn			noise band 1 amplitude transition function
+p9	nb1cf1			noise band 1 filter initial centre frequency
+p10	nb1cf2			noise band 1 filter final centre frequency
+p11	nb1cffn			noise band 1 centre frequency transition function
+p12	nb1bwscl		noise band 1 bandwidth scale
+p13	nb1bwoff		noise band 1 bandwidth offset
+p14	nb1bw1			noise band 1 initial bandwidth
+p15	nb1bw2			noise band 1 final bandwidth
+p16	nb1bwfn			noise band 1 bandwidth transition function
+
+Note that transitions are accomplished from initial to final values via the
+specified function. Note also that setting initial and final amplitudes p6 an
+p7 to zero turns off noise (constant amplitude of zero).
+
+Instruments 16 to 18 are identical and allow for further noise structures if
+required. If unused, care should be taken to set their p6 and p7 paraneters to
+zero to avoid inadvertent or unwanted contributions from these instruments.
+
+instr 19 - player competence
+p1	instr num	i19
+p2	start		start time
+p3	dur			effect duration
+p4	competence	amplitude competence (stored as giadeviance = 1-competence)
+p5	competence	frequency competence (stored as gifdeviance = 1-competence)
+p6	competence	temporal competence (stored as gitdeviance = 1-competence)
+p7	adevrate	amplitude deviation rate (Hz)
+p8	fdevrate	frequency deviation rate (Hz)
+p9	aseed		amplitude variation random seed
+p10	fseed		frequency variation random seed
+p11	tseed		note duration variation random seed
+
+Note: if the orchestra macro 'UseScoreDur' is defined as '1' then the duration
+parameters will be ignored since i90 will only produce notes of score
+specified length; otherwise, the score duration is used as a hint to the
+orchestra.
+
+
+instr 99 - simple reverb
+p1	instr num	i99
+p2	start		reverb effect start time
+p3	dur			duration of reverb effect
+p4	revtime		reverberation time, seconds. A larger value will simulate a
+				larger or more echo-prone environment.
+
+
+instr 90 - instrument
+p1	instr num	i90
+p2	start 		start time
+p3	dur			note duration
+p4	ampl		note amplitude
+p5	freq		note frequency (octave pitch-class for now)
+
+
+
+5) irrelevant old stuff - removed
+
+6)	Function tables
+Useful function tables for the instruments described are listed by number.
+They are defined in the file 'genInstr-header.sco'. They have tblsize locations
+and are of size 2^n+1, n = 8.
+
+Table number	Function
+
+201				linear 0->1
+202				exponential 0.00001->1
+203				sine 0->1
+204				sigmoid 0->1
+205				unity (constant 1)
+
+211				linear 1->0
+212				exponential 1->0.00001
+213				sine 1->0
+214				sigmoid 1->0
+215				unity (constant 1)
+
+239				sine wave
+240				sawtooth
+241				square wave
+242				pulse
+243				phasor [-1,1]
+244				linear factor table [0.001, 1024.001]
+
+246				zero
+247				unity
+
+
+7)	Instrument type specification
+
+Instrument type specification - instrument 1
+
+Instruments may be specified by midi instrument number (where implemented).
+
+Instruments may also be specified by inertial mass p5 and instrument
+resonance p6. A wavetable must still be specified by p4 as this is used
+during the sustain phase of the instrument's envelope if a non-default 
+attack/decline (AD) envelope is used. Wavetable 239 specifies a sine wave;
+table nos. 129 - 199 are undefined and user-specifiable (a further table, 200,
+has equal strength harmonics and is useful for test purposes when setting up
+instrument wavetable equalisation).
+A midi instrument number may still be used, but the score mass and resonance values will 
+override those specified as defaults by the midi instrument specification.
+
+<Instruments by mass, res, method - not implemented (reference by i1.p7, 'ctl'>
+
+Values in fields 7 - 14 are optional but override those determined by use
+of midi instrument number, <method> or defaults. If a midi instrument number
+is specified, values in field 5 and 6 are also optional (and override midi
+instrument defaults).
+
+If an instrument has a non-AD (default) envelope, then parameters p8 - p10
+can be used to control the decay/sustain ratio, decay level and sustain
+level of the decline portion constituents of the envelope.
+
+
+8)	Minimum functional specification for score files
+
+The first line in any score file must be:
+
+#include "header.sco"
+
+An instrument may then be declared and notes played on it as follows:
+
+Instrument 1 - define instrument type
+
+1) by MIDI or user-defined wavetable number
+i1	0		0	<midi instr num>	0		0	0		0		0	0
+
+2) by non-midi wavetable (200 is the default sinewave),
+i1	0 		0	239			0		0	0		0		0	0 0 0 0 0
+
+Mass and resonance are defaulted internally to 1 and 10 respectively, but may
+be specified:
+
+3) Using non-midi wave table, mass and resonance
+i1	0 		0	239		<mass>	<res> 	0		0		0	0
+
+mass scales attack time (larger mass, longer attack)
+resonance scales decay time (larger resonance, longer decline phase)
+the envelope can be modified by parameters p7 - p10 ('note design' basics
+needed, first get attack right at instr mid-range freq. and average volume,
+adjust p fields to get decline phase shape and timing right). Then auto-
+calculates env for other note freqs and amplitudes). The range of adjustment
+with frequency and ampliutde can be mmodified by the use of factors returned
+from the factor table with attack and decline index scale and offset values
+(scale=0 and offset=0.25 return factor 1.001, the value at the first location
+in the linear factor table).
+
+Note the wavetable is required or no sound can be produced. Note also that in
+default mode, only a single oscillator is used as the sound source.
+
+Instrument 90 - play note on instrument defined in instr1
+
+for example, a 1-second note of average loudness, middle C (note octave
+pitch-class representation is used)
+
+i90	start	dur		ampl	frq
+i90	0		1		16384	8.00
+
+Specification of these is sufficient to play the instrument defined.
+
+
+The minimal score file is:
+
+#include "header.sco"
+i1	0 	0	200		0		0  	0		0		0		0
+i90	0	1	16384	8.00
+e
+
+
+9) Design
+
+i) Getting the noise right
+Insert this i12 call before an i90 instrument note call and if it has a noise
+component, then only the noise will be sent to output. This allows checking
+whether the noise is right for the instrument and sound you are trying to
+achieve. The negative noise scale factor is incremented by one and converted
+to a positive value internally before use (note that this means a noise level
+of 0 is achieved by specifying p4 as -1, turning off noise in noised
+instruments).
+
+; output the noise component, level 1.5 x instrument default noise level
+i12	0	0	-2.5	0	0	0	0	0	0
+
+
+ii) Timbral change with frequency and amplitude
+Timbre of a note is governed by the gain of the eq band n in which a
+particular harmonic n lies:
+
+	band n gain = igain^(igainpf^n)
+
+where n, harmonic number, is an element of [1,9] and
+
+	igainpf = gigainpf*igainpfmod
+
+igainpfmod is a value in the factor table whose index is
+
+	spectralwidth*gigainpfscl+gigainpfoffset
+
+and igain a value in the factor table whose index is
+
+	spectralwidth*gifgscl+gifgoffset
+
+Spectral width is defined as
+
+	sqrt((ifrqfactor^2)+(1-iampfactor^2))/sqrt(2)
+
+where ifrqfactor and iampfactor are transfer functions (effectively companders)
+indexed by ifrqratio and iampratio:
+	
+	iampratio = amplitude index/max amplitude
+	ifrqatio = octave index/max frequency
+
+The spectral width increases with decreasing amplitude and increasing frequency.
+
+Increase of gain power factor (1<=gainpf<=n) causes increased attenuation of
+harmonics from the level determined by gain. As gain is reduced (1>gain>0), the
+rate of reduction in harmonic magnitudes increases.
+
+For example, given gain = 0.9 and gainpf = 2:
+	band 1 eq gain:	0.9^2 = 0.81
+	band 2 eq gain: 0.9^(2^2) = 0.66
+	band gain ratio: 0.81/0.66 = 1.24
+
+and with gain = 0.1 the same gain power factor produces
+	band 1 eq gain: 0.1^2 = 0.01
+	band 2 eq gain: 0.1^(2^2) = 0.0001
+	band gain ratio: 0.1/0.0001 = 100
+
+so in the case of gain 0.1 the harmonics are much more attenuated than in
+the case of gain 0.9.
+
+In summary, the rate of attenuation is greater with larger gain power factors
+and smaller gains.
+
+If we set gainpfmod to unity with gainpfscl=0 and gainpfoffset=0.25 then
+band n gain is dependent on amplitude, frequency and gain power factor gainpf.
+This latter effectively changes the slope of the gain applied to the bands.
+
+gainpfmod controls rate of attenuation of successive harmonics with increase
+in frequency and amplitude (so the timbre is brighter with increasing frequency
+and amplitude).
+
+Normally gainpf should be greater than 1. The larger the value, the faster
+the rate at which higher harmonics are attenuated.
+
+fgscl and fgoffset should return an instrument-specific factor to scale the
+auto-calculated spectral width; gain applied is then proportional to both
+frequency and amplitude. If the fgscl value is zero, then a constant gain
+determined by the value resulting from the fgoffset index is used. Since the
+linear factor table indexed has values 0.001 to 1024.001 over 256 locations, an
+fgoffset value of 0.25 results in a constant gain of 1 (the 0.001 offset is
+subtracted before use); an index value of 0.125 gives a constant 0.5.
+
+Normally the fgscl and fgoffset values are adjusted so as to provide
+suitable gain with amplitude and frequency. The scale and offset values should
+be adjusted so as to produce a gain value in the range ]0,1[.
+
+Examples.
+Ensure that band gains band<n>g are set to 1 and band modification functions
+to the $unity function. This ensures no band gain modulation functions are
+applied. These are the default values.
+
+Using
+
+	gifgscl = 0
+	gifgoffset = 0.125
+
+to return a constant factor 0.5, and
+
+	gigainpf = 0
+	gigainpfscl = 0
+	gigainpfoffset = 0
+
+then instrument gain 0.5 is raised to successive powers of 0, so all band gains
+are 1 and the wavetable is unmodified.
+
+Using
+
+	gigainpf = 1.2
+	gigainpfscl = 0
+	gigainpfoffset = 0.25
+
+the gain power factor is the product of gigainpf and the moderating factor
+returned by the gigainpfscl and gigainpfoffset values applied to the spectral
+width; this is a constant zero, so the gain power factor is solely the result
+of the user-defined gain power factor 1.2, which is applied to successive
+bands raised to successive integer powers:
+
+band 1 gain = 0.5^1.2
+band 2 gain = 0.5^(1.2^2)
+band 3 gain = 0.5^(1.2^3)
+
+and so on. The results of applying this to the unmodified test signal produced
+by instrument 200 (fig1) are shown in fig2 (these are FFT analyses
+produced by the MiXViews program). A further gigainpf value of 2 is used to
+produce fig3. Examination of these shows that as the gain power factor
+rises, the attenuation of successively higher harmonics becomes greater, so
+that the higher harmonics disappear sooner with rising frequency in the case of
+gigainpf=2 (fig3) than they do for the case gigainpf=1.2 (fig2).
+
+Thus the gain power factor can be used to control the attenuation rate of the
+harmonics, and should be set so as to approximate the behaviour of the real
+instrument to be modelled.
+
+Use of the gigainpfscl and gigainpfoffset enables dynamic modification of the
+gain power factor value, which has hitherto been fixed. referring to the
+example above where band gain is fixed at 0.5 and gain power factor fixed at
+1.2, we use the gigainpfscl and gigainpfoffset values to scale the spectral
+width (assuming the gigainpfscl value is nonzero) in order to derive an index
+into the factor table which returns a value dependent on note amplitude and
+frequency which is added to the fixed power factor. Thus the actual power
+factor applied itself varies according to the factor f returned:
+
+band 1 gain = 0.5^(1.2+f1)
+band 2 gain = 0.5^((1.2+f2)^2)
+band 3 gain = 0.5^((1.2+f3)^3), etc.
+
+Since the f values change, the rate of attenuation can be varied so it becomes
+steeper or more shallow with change of amplitude and frequency as desired.
+
+Generally, the higher the gain, for given gainpf, the more harmonics are
+present in the output.
+	
+Timbres may be further modified by the use of a harmonic scaling function
+gifampsclfn which itself is modified by a modulation function gifampmodfn.
+Successive transformations of the product of the scaling and modulation
+functions are appplied to successive harmonics. This can be used to change the
+timbre of a note during its progress.
+
+By default, each of the gifampmodfn and gifamsclfn tables are scanned once per
+note. This may be changed by the use of the gifxrpt and gifyrpt variables,
+which specify how many times per note each of the tables is scanned (starting
+from location zero). A special case of gifxrpt = 0 cause synchronisation of
+parts of the table to attack, decay/sustain and decline/release phases (see
+Instr. 11, above).
+
+Thus if gifampmodfn = $sine, gifamsclfn = $unity, gifxrpt = 0.5 and gifyrpt =
+1, then the sine table is scanned over half its range for every scan of the
+$unity table (which occurs once per note). The result is a set of
+positive-half-cycle sine envelopes. If gifxrpt = 2, then each envelope would
+consist of two cycles of the sine function.. Quite complex patterns of harmonic
+variation may be constructed, most useful for minor timbral change (the
+giwtffxscl variable controls the 'effect' level).
+
+The gifampsclfn and gifammodfn tables are indexed by a phasor ($phasor); this
+does not have to be the case. Other functions may be substituted for more
+complex behaviour, but note that the tables are indexed from the centre
+outwards (for all cases other than gifxrpt = 0). To ensure coverage of the entire
+table, these index functions should return values in the range [-1,1].
+
+Fixed gains may be introduced on a per-band basis by the giband<n>g variables.
+If the value of a band gain is specified as zero, then any previous
+specification for that band continues to be used.
+
+A band gain may be set to zero by using giband<n>g = -1.
+
+A fixed gain acts as a scalar for the existing gain, whether this be
+amplitude and frequency dependent or a constant.
+
+If giband<n>g is specified as a negative value greater than -1, then the
+absolute value of giband<n>g+1 is used for the gain scalar, but this is
+amplitude and frequency independent. This can be used to maintain a constant
+gain irrespective of frequency or magnitude of the note fundamental.
+
+
+9) Design problems.
+Chief of these is spectral variation with amplitude and frequency. Using a
+wavetable apporoach and csound's gen routines, we can construct an ftable with
+harmonics to emulate steady-state sound of an instrument. In order to
+achieve timbral richness at l.f. we require the maximum harmonics possible
+without exceeding the nyquist limit (sr/2) - and then we cannot proceed to use
+the table for higher-frequency notes because this limit will be exceeded, thus
+introducing aliasing at h.f. and consequent corruption of the sound.
+Conversely, limiting the ftable harmonics to a number consistent with not
+breaching the nyquist limit at h.f. means sacrificing timbral richness at l.f.
+
+We require the gen routines concerned to have an extra parameter, limiting the
+number of terms of the table read. This number is already available in
+genInstr.orc - it is 'iharmonics'. If we could use this as an extra parameter
+when accessing the ftable the problem would be solved.
+
+Unfortunately we can't filter the sound, it contains the aliased harmonics at
+the point of production by the ftable.
+
+Alternative approach is multi-oscillator bank, one for each harmonic, set
+suitable larger (~50) to start, but there is the messy problem of avoiding
+unwanted higher harmonics by use of goto statements.
+
+The multi-osc approach, though cumbersome, is useable. Instead of defining a
+wavetable with gen routines
+09, 10 or 19, we use gen02 and filling this table with the harmonic magnitude
+values. We then index these to run oscillators at multiples of f0 (subject to
+the nyquist limit) and sum the outputs, thus obtaining the desired
+spectrum in the output signal.
+
+In order to avoid using too much space on the GOTOS list and save processing
+time we sacrifice low-frequency richness and
+specify maximum number of harmonics at 80 (although the piano has harmonics
+which can contribute appreciably at 128*f0).
+
+
+A further problem lies in a conflict between specified note duration, p3, and
+the automatically determined attack and decline phase durations when a non-
+default AD envelope is used. The sum of these latter durations may exceed the
+magnitude of p3. It would be desirable for the p3 variable to specify the
+combined decay/sustain phases, preserving the attack and decline durations.
+However, this leads to note overlap, where the start value of a succeeding note
+lies in the preceding (extended) note. This is a paricular disadvantage in the
+case of use of the '+' notation in scores. In order to allow this notation to
+be used, attack and decline phase durations, if their sum exceeds the magnitude
+of p3, are rescaled proportionally to fit the specified p3 duration. This can
+therefore result in reduced attack and release times.
+
+If DEBUG_ENV_TIMING in genInstr.orc is set to '1', the factor by which the
+attack and decline phases have been reduced is shown by the 'AD phase rescale'
+value. If required, note lengths may be adjusted so rescaling does not
+occur (in which case the AD phase rescale value is 1).
+
+
+
+NOTE: See celloModel.notes...
+
+
+Harmonic gain control.
+
+girlf<scl,off>	 gihrfix<scl,off>		girlfr<scl,off>	gihdixfp<scl,off>
+   |				 |						|				|
+$linfactor	 ----$linfactor				$linfactor		ihdixfn<1,2>
+   |		|		 						|				|
+irlflvl	 ihrfixscl-->x<--(khn)			irlfrate			|
+   |				 |						|				|
+   x<--gkurflvl	  girlftbl					|				|
+   |				 |						|				|
+   |				krlf-------->x<---------				|
+   |							 |	+girlfbase(redundant)	|
+	-----(krlflvl?)------------->+							|  	khnix
+								 |							|    |
+								 x<----------------------kdpix   |
+								 |								 |
+								 |						ihdcl-->f255
+			gihdfp<scl,off>-->ihdclfn<1,2>						|
+								 |								|
+								khdcl------>x<---------------khampscl
+											|
+									(output h mag. scalar)
+
+Note: all <scl,off> input variables operate on spectral width isw (not shown
+for clarity).
+
+Note 2: if irlfvl ~ 0 then krlf can't be >1 (if a standard table is used as the
+rolloff table) so index kdpix can't advance faster than at the rate of the note
+duration. The scaling by irlfrate achieves this.
+
+Note 3: decline function ihdclfn index: (irlflvl+(krlf*irlfrate))*kdpix
+
+If we make ihrfixscl near-zero, then harmonic number is irrelevant: the rolloff
+table will be accessed at or near its l.h. entry and since this is a scalar of
+index kdpix all harmonics are equally affected. This provides a means of
+scanning the decline function at a constant rate for all harmonics irrespective
+of harmonic number. If the l.h. table entry is unity then the rate of
+progression through the dcl tbl is governed by the product of constants irlflvl
+and irlfrate, and may be longer or shorter than note duration.
+
+Note 4: the dcl fn is applied to the whole non-attack phase: care should be
+taken that modifications to any decay/sustain period are minimised, e.g. by use
+of an exponential index function or custom function table.
+
+Note 5: the dcl functions specified here modify the default harmonic envelope
+kenv. The combination of effects should be borne in mind.
+
+
+
+Tied notes
+Temporal incompetence is disabled. During chords, if a note is tied, then it
+must be time-offset from the rest of the chord by some small amount, or
+envelope conflation results in the tied envelope being used for non-tied notes.
+For example,
+
+i90		0		1		6000 8.05	
+i90		0		.		5000 8.09	
+i90		0		-0.25	4000 8.11
+i90		0		0.75	3500 9.00
+
+will fail to produce the expected result whilst
+
+i90		0		1		6000 8.05	
+i90		0		.		5000 8.09	
+i90		0.001	-0.25	4000 8.11
+i90		0.001	0.75	3500 9.00
+
+produces the chord with a tied note. Care must be taken when using chords
+constructed with a notation editor; the time offsets may have to be introduced
+manually.
+
+
+Chords
+Amplitude level problems may occur if the carry '.' notation is used for
+amplitudes in a chord, or any constituent notes have the same amplitude by
+specification. This means that
+
+	i90	0	0.5		6000	8.00
+	i90	0	0.5		.		8.03
+
+is an invalid specification, as is
+
+	i90	0	0.5		6000	8.00
+	i90	0	0.5		6000	8.03
+
+but
+
+	i90	0	0.5		6000	8.00
+	i90	0	0.5		5999	8.03
+
+is not and should result in the expected output. Typically a variation of no
+more than 3% in amplitude level will suffice to eliminate discontinuities (as
+is also the case for envelope-related discontinuities caused when kr != sr and
+ksmps != 1).
+
+Note also that temporal competence is disabled automatically for chords, since
+accumulated timing discrepancies so caused will eventually result in the notes
+in chords drifting apart. The first note specified in a chord will have its
+duration recalculated if temporal competence is not 100% (i.e. deviance = 0),
+but subsequent notes in the same chord do not have independent durations, using
+that of the first note instead.
+
+Chords do, however, sound more realistic when their component notes do not have
+the same durations (or start times); this should be manually determined in the
+score.
+
+Chords in which the notes do not have exactly the same start time will be
+treated as individual notes and therefore subject to individual temporal
+variation.
+
+
+Portamento
+
+A sample score is:
+
+#include "header.sco"
+
+i1	0	0		43
+
+; make default portamento shorter
+i2	0		0		0		0.4		0	0	0	0	0
+
+; expression envelope example with portamento on a group of tied notes
+; the portamento is from note i3->p6 to i90->np5 where i90->np5 is the next
+; i90->p5 value; the first note has no portamento!
+i3  2		1		0		0		6.04
+i3  +		.		0		0		6.04
+i3  +		.		0		0		6.05
+
+i90	0		1		5000	6.00
+i90	+		.		.		6.02
+i90	+		-1		.		6.04	; next note is tied
+i90	+		.		.		6.05
+i90	+		1		.		6.07
+
+; i.e. portamento is from i3 6.04 to i90 6.04 (first note of tied group,
+; initialise),
+; then from i3 6.04 to i90 6.05 (portamento between 1st. and 2nd. notes), and
+; finally from 13 6.05 to i90 6.07.
+
+////// cut out of newCelloModel.notes
+
+Timbral trimming
+The user rolloff level control i5.p5 can be used to correct this; factors of 10
+at fflf and 0.5 at ffhf are effective corrections:
+
+i5	<start>		<dur>	0	10
+
+for example.
+
+The harmonic level can be adjusted globally to alter the balance with the
+harmonics specified by tables. At pplf, for example, where the harmonics are
+slightly too prominent (although persisting for the correct duration and of
+adequate frequency range):
+
+i5	<start>		<dur>	0.5	0
+
+Note that dur can be zero.
+
+For particularly problematic notes the user control
+gkurlflvl is a scalar of the auto-calculated rolloff level, and can be used to
+adjust the higher harmonic duration from the score if necessary.
+
+
+
+// resurrection rewrite stuff
+
+Synthesis modes
+
+1) prescribed harmonics (p-harmonics)
+Uses data tables to specify the amplitude and frequency of each harmonic.
+
+2) synthesised harmonics (s-harmonics)
+Harmonic shape controlled by terrain specification in both ampl and freq
+domains.
+
+3) harmonic magnitude table
+Individual harmonics' peak magnitudes are contained in a data
+table. This mode may also be used to control the decline of even/odd harmonic
+series if the table length is is 2 and wrap mode is on.
+
+4) complex table
+if gioscs =1 and both gishtblbase and gitblbase are zero, then behaviour
+defaults to csound gen19 synthesis. A complex wavetable is used by a single
+oscillator. This osc is specified as gisgenfn and overrides the default
+sinewave table.
+
+
+Attack/decay factors
+
+An instrument is specified as having a mass (gimass, amount of sound-producing
+material) and a resonance (gires, relating to the type or quality of
+this material).
+
+Larger masses imply lower pitches, longer attacks and decays due to the greater mass to be energised and then to release this
+supplied energy and consequent longer dissipation time. Larger values of
+resonance imply longer decay times (attacks are relatively unaffected and any
+contribution is ignored).
+
+The relations established governing the behaviour of an instrument of some
+specified mass and resonance are:
+
+	high mass, low pitch, high inertia, longer attack, longer decay
+	low mass, high pitch, low inertia, shorter attack, shorter decay
+
+	low amplitude, less energy, longer attack, shorter decay
+	high amplitude, more energy, shorter attack, longer decay
+
+Indices of note amplitude and pitch (iampi, iocti) are normalised (iampratio,
+ifrqratio) to obtain a modified internal (i90) amplitude and frequency index
+(iampfactor, ifrqfactor) returned by the indexed transfer functions amptf and
+frqtf. These provide an index of between 0.1 and 0.9 for scored note amplitude
+and frequency ranges [1000, 20000] and [65, 1025] respectively. This ensures
+that 90% of the amplitude/frequency attack/decay tables are used over the range
+of most-used note amplitudes and frequencies. The transfer functions can be
+replaced by others providing different indexing with note amplitude and
+frequency so the range of timbral and envelope modification over amplitude and
+frequency range can be changed (these are the amptf and frqtf transfer
+functions in the header.sco file).
+
+The scalars for attack and decay with amplitude and frequency (iamp<a/d>,
+ioct<a/d>) are themselves scaled by instrument mass and resonance to obtain
+attack and decay durations. The scalars are calculated in accordance with the
+definition of 'typical' instrument behaviour, as follows.
+
+Amp attack
+For a given mass, as amplitude rises, attack duration decreases; the energy
+supplied to the mass as amplitude rises means it reaches excitation more
+quickly. As mass increases, the amount of inertia to be overcome to reach
+excitation increases and therefore the attack lengthens. The amp. attack scalar
+is inversely proportional to score note amplitude and and proportional to
+instrument mass
+
+Amp decay
+As amplitude rises, as above, excitation of a given mass occurs sooner and
+since more energy is supplied, it consequently takes longer for this excitation
+to die away once the attack phase has passed. Therefore decay time increases
+as amplitude rises. Resonance of the material is also a factor of the decay;
+larger resonance implies a longer decay, since excitation of teh material
+persists for longer. The amplitude decay is a function of note amplitude, mass
+and resonance. The amp. decay scalar is proportional to amplitude, mass and
+resonance.
+
+Frq attack
+Pitch is a function of the amount of mass to be energised; a larger mass
+indicates a greater inertia to be overcome to reach excitation, hence longer
+attacks. As frequency rises, attack duration shortens since inertia is overcome
+faster. The frq. attack scalar is inversely proportional to frequency and
+proportional to mass.
+
+Frq decay
+Lower pitches imply greater momentum so the excitation persists longer and the
+decay lengthens. As mass rises so does inertia and consequently decay time
+increases. As resonance increases, so the excitation of the material persists
+longer and so does the decay. The frq. decay scalar is inversely proportional
+to frequency and proportional to both mass and resonance.
+
+
+Decay level.
+Arbitrary and based solely on instrument resonance. Generally as resonance
+decreases so the decay becomes greater. There is a default
+
+	(2^(log10(gires)))/4
+
+which gives the following approximate scalars of attack peak amplitude:
+
+resonance (gires)	0.001  0.01   0.1    1     10   100  1000
+decay scalar		0.03   0.06   0.125  0.25  0.5  1    2
+
+Values of decay level > 1 are illegal and trapped; there is no default decay
+for resonance values above 100. Decay scaling may be changed with the variable
+gidcylvlctl.
+
+
+Decay duration
+This is a function of both mass and resonance. Larger values of mass and
+resonance produce a longer decay phase in accordance with the formula
+
+.	sqrt(((2^log10(gimass))/4)^2+(((2^log10(gires))/4))^2)
+
+
+Duration adjustment
+This flag if set forces a note with a user-defined envelope to the same
+duration as specidfied in the score. If unset, then the score duration
+specifies the decay/sustain duration.
+
+Note that the duration adjust flag has little effect on AD envelopes obtained
+with giusrdclphs==0 unless the default generated AD duration is greater than
+the score-specified note duration. If this envelope is of less duration than the
+score specifies, it will remain unchanged since the AD durations are determined
+by mass and resonance not the score.
+
+terrain stuff
+; we need to read a table as for hdcl, per-harmonic, to get a scalar
+; of amp and frq (both use same table)
+; limiiting effect to s-harmonics);
+; need to index p-oscs via inposcs (via khn)
+; table specified per-instr, defne 2 default cases
+; 1 equal application to p- and s- h's, 2 no mod to p-oscs, modd s-oscs
+; BUT this requires DYNAMIC construction of the table!
+; we specify p- and s- mod factors and construct table in i90
+; iphmodscl = const, ishmodscl = const
+now done in the a and f domains separately
+giphamodscl		init	1
+gishamodscl		init	1
+giphfmodscl		init	1
+gishfmodscl		init	1
+are the defaults
+Kludge. Ideally we shouldn't need these - limit mods to p-harmonics when the
+same level mod should be applied to all really. In cases where we have too
+much embedded modulation in the het analysis files.
+ 
+Terrain modulation
+There is noticeable frq variation at hf, increasing as h frq rises. Virtually
+no effect at lf. Actual variation ferq constant for harmonics, about 2/3 sec.
+in the pphf case. lesser effect and perhaps lower rate of variation at ffhf.
+
+At lf, even (f0,2,...) harmonics are stronger than even ones; this is absent 
+at hf, where the 2nd harmonic (f1) is prevalent. Perhpas modelled by a
+repeating 2-entry h mag table. After about the 12th harmonic, ecen in the
+fflf case where the alternation is most evident, the effect disappears. SInce
+we are largely modelling these lower harmonics with ftables, we ignore this
+facotr in s-harmonic modelling.
+
+In the lf cases, the even (f0,2,..) harmonics initially reach a peak earlier
+than the odd ones, which tend to peak nearer the centre of the note. Tghis
+suggests a very slow 1 cycle-per-note offset by pi alternately would serve to
+sculpt the harmonics.
+
+In all cases the duration of the fundamental is slightly longer than that of
+the harmonics.
+
+Converting the clarinet data
+On auditioning the full range of the instrument, a frequency 'wobble' was noted
+particular in mf notes at higher frequencies (although not the very highest).
+Examination of the reconstructed sound from the .het data files (see
+data/Clarinet.Bb/README) showed this was mostly due to excessive variation in
+f5-10 and 12ff. in ffG6.het and to f4ff. in ppG6.
+
+These files were extracted with the standalone 'hetcnv' utility. This is
+not built by default. To build it, change to the utils/hetconvert directory and
+type 'make' (no quotes). This should build the hetconvert binary. It is easiest
+to copy this to the location required for use and then invoke it with 'hetcnv'.
+
+
+Making a test directory for the ppG6 note, we copy both ppG6.het and hetconvert
+to this location. Invoking the utility with 'hetcnv' (no quotes), a menu is
+displayed. We enter the following data:
+
+	'1 ppG6.het<return>'
+	'2 ppG6-2.asc<return>'
+	'4<return'
+
+This produces an ascii file ppG6-2.asc. We next convert this to short integer
+format:
+
+	'1 ppG6-2.asc<return>'
+	'2 ppG6-2<return>'
+	'7<return>'
+
+This generates a decomposition of the .het file into individual amplitude and
+frequency data files; there are also associated time data files, which are used
+internally by hetcnv and should not be altered. The amplitude and frequency
+data are in unsigned short integer format, which allows their being loaded as
+16-bit data of type 'raw' by a wave editor. The harmonic amplitude and
+frequency structures may then be edited visually, depending on the facilities
+offered by the wave editor used.
+
+It may be necessary to conver the raw data to .wav format before editing. Once
+edited, the files must be converted back to short int. format. Using
+mixwave-1.01 the data is converted to integer (4-byte) template format, then
+edited:
+
+1) Raw to Wave
+	'ppG6--f5', 'ppG6--f5.wav'
+
+2) Wave to Int
+	'ppG6--f5.wav', 'ppG6--f5.int'
+
+3) load template 'ppG6--f5.int'
+
+4) select appropriate region in view for editing (the sustain region)
+
+5) use 'Shape template' 'smooth' option with 5 points and weighting 3
+
+6) the .int file is now edited. Convert back to raw (short int) format via
+int->wave then wave->raw:
+
+	'ppG6--f5.int' -> 'ppG6--f5.wav'
+	'ppG6--f5.wav' -> 'ppG6--f5'
+
+We now convert the short int files back to hetro file format using hetcnv as
+follows:
+
+	'1 ppG6-'
+	'2 ppG6-2.het'
+	'h14'			(total number of harmonics)
+	'8'				(convert short int files to hetro format)
+
+The file created, ppG6-2.het, is used as a replacement for the original
+ppG6.het.
+
+
+Terrain Synthesis
+There are two separate terrain synth units for both amplitude and freuqency
+domains. Each generates its own x and y components. These are then summed
+before the xy product (surface) is obtained. The resulting surface is still 3D
+but effectively composed of far more complex components x and y. Typically the
+separate x or y components are used to generate a through-note modulation plus
+another determining overall harmonic amplitude shape or attack frequency
+deviation. Complex effects can be achieved by using simple functions, making
+obtaining the desired result easier to visualise (otherwise a complex and
+individual orbit would be required for each harmonic).
+
+
+New terrain synthesis (resurrection-6)
+
+Axis function and indexing (1 surface, domain and axis shown)
+
+        on flag gis1axal:
+
+        ----------------------------------------------------------
+        | is1axal || -1 -> ioscnorm | 0 -> isw | 1 -> iampfactor |
+        ----------------------------------------------------------
+            |
+             -- (* gis1axixaixscl + gis1axixaixoff)
+                                  |
+             ---------------------------------------
+             | is1axixaixscl || index | $linfactor |
+             ---------------------------------------
+                       |
+			           * khnix
+                       |
+        ----------------------------------------------------------
+ix amp  | ks1axixa || index | gis1axixatbl | ... | gis1axixawrap |
+        ----------------------------------------------------------
+             |
+               -- (* gis1axixascl + gis1axixaoff)
+                                 |
+                               (amp)
+
+        on flag gis1axfl:
+
+        ----------------------------------------------------------
+        | is1axfl || -1 -> ioscnorm | 0 -> isw | 1 -> iampfactor |
+        ----------------------------------------------------------
+            |
+             --- (* gis1axixfixscl + gis1axixfixoff)
+                              |
+        ---------------------------------------
+        | is1axixfixscl || index | $linfactor |
+        ---------------------------------------
+                |
+                * khnix
+                |
+       ---------
+      |
+      |   ----------------------------------------------------
+	  |   | is1axixfscl || isw * gis1axixfscl + gis1axixfoff |
+      |   ----------------------------------------------------
+      |         |
+      |       (scl)
+      |
+      |    on flag gis1axixflag: t = idur
+      |            gis1fxixflag <=-2 -> t = (abs(gis1fxixflag)-1)*attack
+      |
+      |    --------------------------------------------------------------
+      |    | is1axixffscl || -1 -> scl/t | 0 -> scl | 1 -> scl*inotefrq |
+      |    --------------------------------------------------------------
+      |           |
+      |            -------------------------------------------------
+      |                                                             |
+       -----------------                                            |
+                        |                                           |
+        ----------------------------------------------------------  |
+ix frq  | ks1axixf || index | gis1axixftbl | ... | gis1axixfwrap |  |
+        ----------------------------------------------------------  |
+             |                                                      |
+             * -----------------------------------------------------
+             |
+             + gis1axixffoff
+             |
+           (frq)
+
+        --------------------------------------
+ix osc  | ks1axix || amp | frq | gis1axixtbl |
+        --------------------------------------
+             |
+          (* gis1axixscl + gis1axixoff)
+             |
+         -----
+        |     on flag gis1axol:
+        |
+        |     ----------------------------------------------------------
+        |     | is1axol || -1 -> ioscnorm | 0 -> isw | 1 -> iampfactor |
+        |     ----------------------------------------------------------
+        |          |
+        | (* gis1axixoixscl + gis1axixoixoff)
+        |                                 |
+        |            ---------------------------------------
+        |            | is1axixoixscl || index | $linfactor |
+        |            ---------------------------------------
+        |                   |
+        |                   * khnix
+        |                   |
+        |   ------------------------------------------------------
+offset  |   | ks1axixo || index | gis1axotbl | ... |gis1axowrap) |
+        |   ------------------------------------------------------
+        |         |
+        | (* gis1axixoscl + gis1axixooff)
+        |         |
+        --------- + -
+                     |
+        ------------------------------------------------
+axis fn | ks1ax || index | gis1axfn | ... | gis1axwrap |
+        ------------------------------------------------
+            |
+        (* gis1axscl + gis1axoff)
+            |
+             ----------
+                       |
+        ----------------------------
+terrain | kmodamp || ks1ax * ks1ay |
+        ----------------------------
+
+
+
+Noise
+Noises may be multiple. For any noise there are different processing options
+(currently 3). Decode noise params with genInstr-25 iiparams method.
+Bita
+0-2		3rd routine called (one of values 1, 2, 4 indicates which)
+3-5		2nd process (if any); one of 8, 16, 32
+6-8		1st 3rd process - one of 64, 128, 256
+
+but with this schema adding more processes disp[laces the list head; problems.
+Code has to be rewritten to account for it.
+
+However, decoding bits right to left is difficult

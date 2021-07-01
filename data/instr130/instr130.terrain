@@ -4,11 +4,11 @@
 ; data tables. Find the highest-numbered instrument hmag.data table and
 ; use the next table number after this to be certain!
 
-f1000	0	128	-23	"data/instr130/cosineOrbitParams-2"
-f1001	0	128	-23	"data/instr130/sineOrbitParams-2"
+;f1000	0	128	-23	"data/instr130/cosineOrbitParams-2"
+;f1001	0	128	-23	"data/instr130/sineOrbitParams-2"
 ;f1002	0	128	-23	"data/instr130/xparams"
 ;f1003	0	128	-23	"data/instr130/yparams"
 
 
-;f1000	0	128	-23	"data/instr130/xparams"
-;f1001	0	128	-23	"data/instr130/yparams"
+f1000	0	128	-23	"data/instr130/xparams"
+f1001	0	128	-23	"data/instr130/yparams"

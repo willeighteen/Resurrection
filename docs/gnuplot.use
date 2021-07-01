@@ -1,0 +1,57 @@
+# usage: 'gnuplot gnuplot.use'
+
+# 1) plotting file data contents
+
+#set key outside below
+#plot 'f502.data'
+#<'more.files'>,\
+
+# 2) 3D plot
+#set xrange [0:2*pi]
+#set yrange [0:2*pi]
+set isosamples 100,100
+set xlabel "X axis"
+set ylabel "Y axis"
+#set zlabel "Z axis" 0, 0
+# plot fn 501
+#plot sin(2.5*x)+sin(x)
+# fn 503
+#plot sin(3.5*x)-cos(3*x)
+# fn 506
+#plot sin(x)-sin(1.5*x)+sin(2.5*x)+0.5*sin(3.5*x)
+# fn 507
+#plot sin(x)-sin(1.5*x)+sin(2.5*x)-0.5*sin(3.5*x)
+#plot sin(x*x)-2*sin(x)+0.5*sin(0.5*x)
+#plot sin(x)-0.2*sin(0.5*x*x), cos(x)-0.5*cos(0.2*x*x)
+
+#splot (sin(x)-0.2*sin(0.5*x*x))*(cos(y)-0.5*cos(0.2*y*y))
+#plot sin(x*x)
+
+#plot sin(x) 
+# 3D plot 506*507
+#splot (sin(x)-sin(1.5*x)+sin(2.5*x)+0.5*sin(3.5*x))*(sin(y)-sin(1.5*y)+sin(2.5*y)-0.5*sin(3.5*y))
+
+set xrange [-2:2]
+set yrange [0:1.5]
+# Rosenbrock
+#splot log(((1-x)^2)+(100*((y-(x^2))^2)))
+splot log(((1-x)*(1-x))+100*((y-(x*x))*(y-(x*x))))
+
+# Henon-Heiles potential map
+#splot 0.5*(x*x+y*y+2*x*x*y-((2/3)*y*y*y))
+# iterate
+# x[n+1] = y[n]+1-Ax[n]^2
+# y[n+1] = Bx[n]
+
+# initially A=1.4 and B=0.3 (Henon)
+
+# Henon
+#for(count=O; count<num; count++)
+#{
+#newx = y +1.0 - (A *  x  * x); 
+#y = B * x;
+#x = newx
+#}
+
+pause -1
+reset

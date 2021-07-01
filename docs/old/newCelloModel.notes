@@ -1,0 +1,796 @@
+New cello model notes (2007)
+
+sample sound and extract info with csound's 'hetro' opcode.
+convert the csound het analysis file to ftables with hetconvert
+(editing if necessary)
+
+Instrument settings
+In the Cello section, we specify
+
+giph<case> = 30; 	max. harmonics specified by ftables
+gioscs = 30	; we only use the ftable-specified harmonics
+gimass = 1
+gires = 1
+giduradj = 0
+giusrdclphs = 0
+giminvol = 2000		; data min and max ranges (from original sound)
+gimaxvol = 12000
+giminfrq = 65.406	; C2: nominal frequencies of note range (csound book)
+gimaxfrq = 587.33	; D5
+gipplft = 0.434		; pp C#2: table atk proportion (from ftable file)
+gipphft = 0.401		; pp D5
+gifflft = 0.078		; ff C2
+giffhft = 0.065	; altered by visual inspection
+girlspplft = 0.581	; pp C#2 release start (fraction of note dur.)
+girlspphft = 0.519
+girlsfflft = 0.159
+girlsffhft = 0.682	; by visual inspection
+
+The main problem with this approach is in reproduction of tied notes. Since the
+section between attack and release is arbitrarily assigned to sustain and
+decay, it is not possible to guarantee that the table amblitude envelope for a
+given harmonic has similar start and end values. There is an amplitude
+discontinuity at the juncture of the two tied notes, making for an unnatural
+effect.
+
+By default genInstr produces notes of length of which the score values are
+merely indicative. This can lead to note overlap, a phenomenon which must be
+disabled in this intrument. In order to produce notes of length as specified by
+the score, we set giduradj = 1, but initially we specify giduradj = 0.
+
+We run the test score (cello-range.sco) and adjust global gain until notes are
+in range. We choose a relatively low-level output since a contribution from
+synthesised harmonics must be added later. Experimentally, a global gain of
+0.25 gives an output of about 5000: this is achieved with
+
+gigainscl = 0
+gigainoff = 0.00025
+
+We obtain the output for the prescriptive harmonics (those specified by
+individual harmonic data in the cello data file) by running the following
+score, which has notes of typical length at frequency and amplitude extremes
+
+#include "genInstr-header.sco"
+
+i1	0		0		43
+
+i90	0		3.31	2000	6.01	; pp C#2
+i90	4		2.39	2000	9.02	; pp D5
+i90 6.5		6.21	12000	6.00	; ff C2
+i90 12		1.83	12000	7.11	; ff D5
+e
+
+Note: ignore warning messages 'WARNING: duration < zero'; these result from
+unused oscillators having durations of zero specified at initialisation time.
+
+Amplitude discontinuities can occur between envelope sections. These can
+typically be removed by a small and usually inaudible variation in score note
+volume. They are less prone to occur as kr rises and ksmps falls, but the note
+processing time increases.
+
+
+Envelope timing
+We adjust mass and resonance so the reproduced notes have roughl;y the same
+proportion as the samples (whose durations are specified in the score). This
+turns out to be
+
+gimass = 1.5
+gires = 15
+
+Set DebugEnvTiming = 1, run the score, obtaining the default attack and decline
+timings.
+
+We obtain for the instrument (from the ftables or by inspection)
+
+			Attack/s
+			lf		hf
+	pp		1.44	0.96
+	ff		0.48	0.58
+
+and for the rendered file
+
+			Attack/s
+			lf		hf
+	pp		1.282	0.797
+	ff		0.508	0.390
+
+Relevant envelope scaling factors ies are
+
+			lf		hf
+	pp		0.823	0.536
+	ff		0.564	0.480
+
+We obtain a scaling factor for the attack phase using the utility 'linsolve' in
+the utils directory:
+
+linsolve pplf-r-atk pplf-g-atk ffhf-r-atk ffhf-g-atk pplf-ies pphf-ies
+
+where r = real instrument, g = genInstr-generated
+
+linsolve 1.44 1.282 0.58 0.390 0.823 0.480
+
+We obtain the output
+
+raw index:  scale -0.271624, offset 0.511097
+
+so
+
+giatkscl = -0.272
+giatkoff = 0.511
+
+We find from examination of instrument notes at its extremes the decline phse
+duration as found from the duration minus the time of the maximum amplitude
+sample location (or by subtracting the attack duration from the total duration
+as given in the ftables):
+
+For the actual instrument (from ftable data)
+
+			Decline/s
+			lf		hf
+	pp		1.873	1.433
+	ff		5.732	1.255
+
+
+We have, for the rendered version,
+
+			Decline/s
+			lf		hf
+	pp		1.228	0.788
+	ff		2.093	1.631
+
+We compare and adjust the generated release phase timings so they are rescaled
+to the note decline proportions above at the extremes of the envelope scalar
+ies:
+
+linsolve pplf-r-dcl pplf-g-dcl ffhf-r-dcl ffhf-g-dcl pplf-ies pphf-ies
+
+linsolve 1.873 1.228 1.255 1.631 0.823 0.480
+
+giving
+
+raw index:  scale 0.564078, offset -0.073774
+
+so
+
+gidclscl = 0.564
+gidcloff = -0.074
+
+We set giduradj = 1 re-run the test score (or the synth uses the score
+note length _in addition to_ the attack and decline durations, allocating
+these to the decay/sustain phase.
+
+We obtain, in the extreme pplf and ffhf cases at least, envelope durations
+which match those of the instrument samples.
+
+We run the tet score to obtain the attack and decline corrected output for the
+table-specified harmonics.
+
+We set
+giph<case> = 0
+gioscs = 100 (possibly less if csound complains about lack of text space)
+gihdclscl = 0
+gihdcloff = 0 (this is so harmonic shaping does not affect the output)
+
+Re-run the score to obtain synthetic osc output. Notes are of the correct
+duration but the wrong shape. We construct an envelope.
+
+Regarding the real instrument there is, particularly in louder notes,  a small
+decay which we model with an exp decline; the overall note shape varies
+between slow attack and release, short attack, sustain, release. The release
+appears exp., with a long tail. The best model appears to be a sigmoid attack,
+exp. decay, sigmoid sustain and hybrid cos/exp release.
+
+We set require a user-specified envelope to replace the default AD. The user
+decline phase flag is set, we use a short decay, sigmoid attack and linear
+sustain:
+
+giusrdclphs = 1
+gidcylenctl = 0
+giatktbl = 204
+gisuslenctl = 0.5
+gisuslvlctl = 0
+gisustbl = $unity
+gisustbl2 = $unity
+gidcytbl = 212
+gidcylenctl = 0.1
+gidcylvlctl = 2.5
+
+The decline phase changes dramatically with note amplitude, being of a cosine 
+release at low amplitude to an exp. release at high amplitude. We specify the
+first decline table as cos., the second as exp.
+
+gidcltbl = 213		(decline phase table index points to cos decline phsae table)
+gidcltbl2 = 212		(dcl phs ix points to exp. decline)
+
+We need a cos. release for isw >= 0.556 and exp release for isw <= 0.518 in
+order to obtain a cos. release for pp cases and an exp. release for ff ones.
+Since these values are close together, the transition may be too abrupt. We
+settle for about half-way to cos for the isw 0.556 case and mostly to exp for
+the isw 0.518 case.
+
+We require index values to be returned (not scalars) and therefore use
+hgixsolve:
+
+hgixsolve 0.25 0.85 0.556 0.518
+
+which returns
+
+normalised: scale -15.789479, offset 9.028951
+
+so the release function pointer is scaled by
+
+girelpscl = -15.8
+girelpoff = 9.03
+
+We run the test score again to obtain the synthesised harmonic output.
+
+We now have a default envelope for synthesised harmonics.
+
+Set DebugEnvTiming 0 and DebugSynth 1.
+
+
+Amplitude balance
+We adjust
+gitblbase = 500 (base of cello ftables)
+gioscs = 30
+giph<case> = 30
+
+and re-run the score.
+
+We now set gioscs=100 to get the synthesised (s) oscillator output, and need
+to match the giph<case>+1'th s oscillator level to one matching the decline
+pattern of the giph<case> oscillators. FFT analysis using MiXViews shows a 30th
+harmonic amplitude of about 50 in the fflf case. We adjust the s harmonic
+levels so the 31st harmonic has about the same value.
+
+An internally-generated harmonic decline function causes harmonics to reduce in
+amplitude exponentially as harmonic number rises; the final harmonic has
+near-zero amplitude. The rate of progression through the decline fuinction can
+be related to isw with use of gisoiscl and gisoioff. By default these values
+are 0 and 0.001, giving unity scaling. If the scaling is increased then the
+rate of progression down the decline curve is greater and higher harmonics are
+attenuated more rapidly. Here we use the default value as it seems
+satisfactory.
+
+We need to reduce the s harmonic gain for pphf and pplf, isw 0.405 and 0.288, whilst
+increasinging it for the pp cases, isw 0.556 and 0.703.
+
+We try a factor of x5 for the pp case extreme and x0.5 for the ff extreme,
+relative to the gain already established (0.25):
+
+linsolve2 1.25 0.125 0.703 0.288
+
+returns
+
+normalised: scale 0.002711, offset -0.000656
+
+so we set
+
+gioscgscl = 0.002711
+gioscgoff = -0.000656
+
+The synthesised harmonics are about the right level.
+
+The instrument gain affects the combined levels of ftable-prescribed (p) and
+synthetic (s) oscillators.
+
+
+Harmonic shaping and rolloff
+
+##########We need giusrdclphs = 1##########
+The harmonic decline curve reduces the strength of harmonics as frq
+increases.
+
+The exp curve generated (internal fn 255) starts at value unity and declines
+exponentially to ihdclval (which by default is effectively zero).
+
+The decline can be modified so it terminates in a non-zero value:
+
+The decline curve governs how many higher harmonics are present, and at what
+level. A larger ihdclval means the harmonics decline less as frequency
+increases, i.e. rolloff is less. If the ihdclval is > 1, harmonic
+amplification with increasing frequency occurs.
+
+The default decline is acceptable but higher harmonics are entirely lacking in
+the The pphf note at isw 0.703. This latter is not a particular problem since
+we are lacking few harmonics here due to the high pitch of the note (an can
+compensate by a score-specified i5 statement).
+
+By way of illusration, suppose we require the ihdcl to be 10 in the pphf cass
+(isw 0.703) and arbitrarily 0 at pplf (isw 0.558)
+
+linsolve2 10 0 0.7 0.6
+
+produces
+
+normalised: scale 0.010000, offset -0.006000
+
+so we would put
+
+gihdclscl = 0.1
+gihdcloff = -0.06
+
+the harmonic 'decline' is in fact a gain increase at pplf since the harmonics
+decline to the ihdclval which is here a gain factor of 1.294.
+
+We accept the default decline (gihdclscl and gihdcloff are  not specified in
+the cello setup).
+
+Although the default envelope is applied to the shape of the s harmonics
+(here, >h29), this does not necessarily produce the correct pattern of decay
+with time. In the case of the cello, there is a marked difference between low
+amplitude notes and high ones. In the former, the harmonics persist for most of
+the note's duration and in the latter are insignificant after a short period of
+time. Further, with the higher amplitude notes, the rate of rolloff changes so
+that there is an approximate exponential decline in duration of the first few
+higher harmonics, then the rate of duration decline becomes constant for all
+succeeding ones.
+
+The harmonics in the real cello tend to decline rapidly as frequency increases,
+tending to a constant rate at some point, in which all the succeeding harmonics
+reach the same level at the same time. This point is earlier on in the note for
+the ff cases.
+
+The control mechanism is diagramatically illustrated in README. Generally, a
+decline function (ihdclfn) is indexed over the decline phase duration by an
+index (kdpix) to provide a scalar (khdcl) which is applied to a given
+harmonic to control its magnitude with time.
+
+Using a decline function which is decreasing linear and an index function which
+is increasing exp., we can obtain the necessary decline in the release phase
+without unduly affecting the sustain phase. This pattern must be implemented
+for all but the fflf note, which requires its harmonics to be truncated much
+earlier.
+
+pphf at isw 0.703 requires no modification; the synthesised harmonics are
+absent, effectively, due to their very low level.
+
+pplf at isw 0.556 requires an earlier truncation for the synthetic
+harmonics to decline at the same rate as the higher-frequency p harmonics.
+
+ffhf at isw 0.518 requires a greater duration reduction to the pplf case.
+
+The fflf case with isw 0.288 requires duration of about half at most of the
+note .
+
+We set the decline function pointer ihdfp to access a linear decreasing
+function when isw>=0.35, so all but the fflf cases use this. For the latter,
+by we choose a sigmoid decline. We use an increasing exp. index function for
+all but the fflf case: the increasing exp index fn is too slow for indexing
+the sigmoid decline of the latter case. We choose a linear increasing index
+function:
+
+gihdclfn1 = 211
+gihdclfn2 = 214
+gihdixfn1 = 202
+gihdixfn2 = 201
+
+and
+
+hgixsolve 0 1 0.35 0.288
+
+which returns
+
+normalised: scale -16.129030, offset 5.645161
+
+so we set
+
+gihdfpscl = -16.129
+gihdfpoff = 5.645
+
+to switch between the two decline functions (idhfp is 0 and 1 at the two
+isw extremes).
+
+We require that the exp. index be used for isw >=0.518 and the linear index for
+isw <=0.288. The index function pointer accesses gihdixfn1 when zero and
+gihdixfn2 when 1.
+
+hgixsolve 1 0 0.288 0.518
+
+returns
+
+normalised: scale -4.347826, offset 2.252174
+
+so
+
+gihdixfpscl = -4.35
+gihdixfpoff = 2.52
+
+We now require to curtail the duration of harmonics of pp notes a little and
+drastically reduce the duration of fflf notes. This latter is a separate case
+and for now we concentrate on reduction of the synthetic harmonics' duration to
+match that of the p harmonics.
+
+The rolloff level achieves this (it controls rate of progress through the
+decline function, giving an equal decline rate to all harmonics).
+
+The rolloff level (irlflvl) is a constant scalar applied to all harmonics for any given
+note. It acts as a factor of the decline fn index kdpix, so as to make this
+advance more or less rapidly. In this case we require early truncation for isw
+much greater than fflf=0.288, and leave this portion of the range unchanged
+(since the harmonics do not decline at equal rate in this case).
+
+A constant value of unity (girlfscl = 0, girlfoff = 0.001) gives a harmonic
+duration pattern which is about 10% too long at pplf and about 50% too long at
+fflf or pphf. We aim to change the behaviour over the range 0.556 (pplf) to
+0.288 (fflf).
+
+with girlfscl = 0 we use girlfoff to control fixed rolloff and experiment to
+find suitable fixed values of rolloff level for the various cases:
+
+isw		case	rolloff level	offset
+0.288	fflf	2				0.002
+0.405	pphf	3				0.003
+0.556	pplf	10				0.01
+0.703	ffhf	0				0
+
+This unfortunately proceeds to change factor in a non-linear fashion with
+increasing isw. The factor at 0.703 with factor 10 at 0.556 would be very
+large, which reduction would however be unnoticeable at this note frequency, so
+we can ignore the fact the harmonics have durations of near-zero here.
+
+However, the rolloff level at isw 0.405 is about 5 not 3, so the harmonics'
+duration here is shortened
+
+We arbitrate instead between the pphf and pplf cases:
+
+linsolve2 3 10 0.405 0.556
+
+returns
+
+normalised: scale 0.046358, offset -0.015775
+
+so we set
+
+girlfscl = 0.046358
+girlfoff = -0.015775
+
+In the case of fflf note, the harmonics now persist much too long - the rolloff
+level is zero and should be about 2.
+
+The harmonic decline shape table (decline function) has at this point been
+scanned once during the note duration for each harmonic; this time can be
+altered, a factor of the function index value being provided for this purpose.
+
+This scaling factor is derived from indexing a rolloff table by a scaled
+harmonic number. When the index scale is unity, the rolloff table is
+progressively indexed as harmonic number increases. If the scaling is altered,
+the table can be read more or less quickly, either the range of harmonics does
+not index the whole table, or the indexed values are the same after some
+limiting harmonic number. Since the values returned are limited to the range of
+values offered by the rolloff table, a further scaling is provided, the rolloff
+rate, which is a factor of the rolloff table output value. Finally a constant
+factor, the rolloff base, is added to provide for functions in [0,1] where a
+zero-value output may not be desirable.
+
+To adjust the extended duration of s harmonics in the fflf case, we require
+that lower harmonics be reduced in duration more rapidly than higher ones, so
+the harmonic decline rate tends to some constant level, modelling the real
+instrument in this spectral region.
+
+By using a decreasing exp. rolloff table and adding an offset of 1 to the
+output, then scaling the result, we ahieve a scalar of the decline fn index
+which is higher for lower harmonics and tends to unity as harmonic number
+increases. Thus higher harmonics traverse the decline function over longer
+time  than lower ones, adjusting the long duration of lower harmonics whilst
+preserving that of the higher ones.
+
+Experimentally for the fflf note we find approximately
+
+	girlftbl = 212
+	girlfbase = 1
+	girlfrscl = 0
+	girlfroff = 0.002
+	gihrfixscl = 0
+	gihrfixoff = 0.0003
+
+Note that we do not read the entire rolloff table - only the first third
+approximately, returning values from 1 to about 0.5. SInce the rolloff base is
+added to this, a range of 2 to 1.5 results, scaled by the constant rolloff rate
+of 2. The final decline function index scaling is in the range 4 to 3 as
+harmonic number rises, this being the fraction of the note duration taken to
+traverse the decline function
+
+Since the rolloff level for the fflf note is zero and the above scaling factor
+is added to it, the decline function index is entirely controlled by the
+mechanism just described. It is desirable to phase this effect out as isw
+increases, before the range of ffhf values is reached (isw 0.405). We
+arbitrarily choose 0.35 as the cutoff point. This may need subsequent
+re-examination in the light of actual produced notes.
+
+For the rolloff rate scaling we have
+
+linsolve2 2 0 0.288 0.35
+
+which returns
+
+normalised: scale -0.032258, offset 0.011290
+
+so we set
+
+girlfrscl = -0.032258
+girlfroff = 0.011290
+
+and for the rolloff table index scaling
+
+linsolve2 0.3 0 0.288 0.35
+
+gives
+
+normalised: scale -0.004839, offset 0.001694
+
+so
+
+gihrfixscl = -0.004839
+gihrfixoff = 0.001694
+
+These factors can be score-corrected to alter the behaviour of the harmonics
+over a defined note range (with i5).
+
+The s harmonic level is too high: we have previously used facors 1.25 at pphf
+and 0.125 at fflf. We try 1 and 0.1
+
+linsolve2 1 0.1 0.703 0.288
+
+returns
+
+normalised: scale 0.002169, offset -0.000525
+
+so
+
+gioscgscl = 0.002169
+gioscgoff = -0.000525
+
+which gives a less 'buzzy' result.
+
+Finally we adjust the global gain to get the pp and ff notes in the right
+amplitude proportions: we require gain of about 2/5 at pp and x3 at ff. Taking
+the case extremes for isw, since the global gain (igain) is a fixed 0.25, we
+find gains factors of 0.1 and 0.75 respectively:
+
+linsolve2 0.1 0.75 0.703 0.288
+
+returns
+
+normalised: scale -0.001566, offset 0.001201
+
+so
+
+gigainscl = -0.001566
+gigainoff = 0.001201
+
+We find the following results
+fflf	0.288	x1
+ffhf	0.405	x0.8
+pplf	0.556	x4
+pphf	0.703	x1
+
+The gain can be adjusted from the score with the global user gain scale
+giugain (i12.p6), since changing the score note volume results in the altering
+the note timbre.
+
+
+Default Ad harmonic shaping
+????????????? now?
+The user-defined characteristics above do not apply to the default env, since
+in the former case  the note is defined by the envelope which governs the
+harmonics; in the latter case there is no envelope applie to the p harmonics,
+and the s harmonics continue to track the non-default AD shape.
+
+Rolloff: needs to be x3.5 at fflf (isw 0.288) and x1.5 at ffhf (isw0.405);
+this leaves the harmonics for pplf persisting too long, necessitating score
+adjustment.
+
+linsolve2 5 1.5 0.556 0.288
+
+normalised: scale 0.013060, offset -0.002261
+
+girlfscl = -0.017094
+girlfoff = 0.008423
+
+
+
+Harmonic modulation
+
+Twiddle the terrain parameters for a natural-sounding note with amp and frq
+range (using linsolve2 mostly)
+
+We set the frequency defaults as followe:
+gimalscl = 0
+gimaloff = 0
+gimflscl = 0
+gimfloff = 0.001
+
+i.e unity gain for frequency modulation and amplitude modulation turned off.
+
+for frtq modulation we use a decresing then incresing exp and a sine. The exp
+fn  is single-pass through the note dur (time-indexed), the sine fn is wrapped and indexed acc
+to frequency.
+
+We obtain a modulation chuiefly at the beginning of the noe, with some effect
+at the end.
+
+for pphf...
+gifxtrnscl = 0	; no x translation, envelope, must not be modified
+	gifxixfn = 201
+	gifyixfn = 201
+	gifxfn = 231	; exp fall, rise
+	gifyfn = $sine
+	gifxtrnscl = 0
+	gifytrnscl = 17
+	gifywrap = 1
+	gifxixfscl = 0
+	gifxixfoff = 0.001	; freq const 1
+	gifyixfscl = 0
+	gifyixfoff = 0.001
+	gimflscl = 0
+	gimfloff = 0.0001
+
+and for fflf
+	gifyixfoff = 0.005
+	gimfloff = 0.00005
+
+We need a freqeuncy scaling of x5 at fflf and x1 at pphf.
+
+We also need to change the output level scaling from x0.1 at pphf to x0.05 at
+fflf:
+
+Note that the scaling factors are related to the the internal
+frequency ratio ifrqratio and NOT to spectral width (isw). We cannot use
+linsolve to obtain the respective scale and offset (there is no linear factor table
+lookup involved) so we use hgixsolve:
+
+we have for pphf ifrqratio = 0.637 and for fflf ifrqratio = 0.417
+We have respective gains of 0.1 and 0.05
+
+hgixsolve 0.0001 0.00005 0.637 0.417
+
+returns
+
+normalised: scale 0.000227, offset -0.000045
+
+so
+
+gimflscl = 0.000227
+gimfloff = -0.000045
+
+This is a bit too pronuounced at ffhf, so we have lower thegain at fflf to
+achieve the reduction required. We use factors 0.1 and 0.03:
+
+hgixsolve 0.0001 0.00003 0.637 0.417
+
+returns
+
+normalised: scale 0.000318, offset -0.000103
+
+and
+
+gimflscl = 0.000318
+gimfloff = -0.000103
+
+For the freqeucny range involved,
+
+hgixsolve 0.005 0.001 0.417 0.637
+
+returns
+
+normalised: scale -0.018182, offset 0.012582
+
+so
+
+gifyixfscl = -0.018182
+gifyixfoff = 0.012582
+
+The frequency modulation level is a bit too high, exp. around ffhf.
+
+For amplitude modulation, a different approach is taken. We need to ensure a
+fiarly wide variation in terrain orbits so that successive harmonics' peaks and
+troughs do not coincide, which would noticeably affect the sound in the pattern
+of the basic modulation. We choose elliptical orbits which are displaced in the
+x and y domains by different increments.
+
+We operate on the s harmonics to avoid complications due to data ftable
+variations. The amplitude modulation terrain itself is constructed from
+triangle and sine functions.
+
+We set giph<case> = 0 and gioscs = 100.
+The actual control parameters chosen are the result of some experimentation. To
+facilitate this process it is best to reduce the number of harmonics to a
+minimum and uncomment the frequency-related 'display' lines in the macro
+'terrain' in the orchestra code.
+
+Note that it is possible to use tables of harmonic magnitudes in addition to
+the default synthetic harmonics (whose successive relative magnitudes must be
+formed by use of the harmonic decline function). These tables should be in the
+order ppllf, pphf, fflf and ffhf; The base of the tables should be the next
+ftable number after the prescribed harmonics; for the cello, this would be 740,
+to which value gishtblbase should be set. By default this latter variable is
+zero, indicating that purely synthesised harmonics should be used.
+
+
+Amplitude modulation
+Amplitude modulation results from orbiting a surface generated by sine and
+triangle functions. The orbits are offset by differing amounts. We set the
+functions to wrap if the indices are out-of-range with gia<x/y>wrap = 1.
+
+We set the amplitude defaults as follos:
+gimalscl = 0
+gimaloff = 0.001
+gimflscl = 0
+gimfloff = 0
+
+i.e unity gain for amplitude modulation and frequency modulation turned off.
+
+We duration-link the indexing of the sine table wih giaxixflag = -1 and
+frequency-link the indexing of he triangle table with giayixflag = 1. The
+number of undulations caused by the orbits increase with increasing note
+duration but do not change with frequency.
+
+We next choose as index functions for the x and y axes sine and cosine
+respectively (gia<x/y>ixfn). This pair allows production of circular orbits
+hrough the terrain. Here we choose restricted elliptical orbits by using
+giaxascl = 0.22 and giayascl = 0.33 (these scale the output of the x and y
+amplitude function index oscillators).
+
+We set the x and y index translation scalars to unity (gia<x/y>trnscl); these
+are a factor of the harmonic number, so a harmonic-related translation is
+added to the x and y indices (the orbits are progressively displaced over the
+terrain with each successive harmonic). Thus the orbit of the modulation
+surface is different, though related, for each harmonic. In particular this
+means that peaks and troughs in the modulation of each harmonic do not coincide
+and distort the note shape.
+
+We choose a 'sufficient' number of modulation changes for a nominal 1 second
+note, such as might be found in the progress of a note on a real cello. We use
+a scalar of 1 (giaxixfscl = 0, giaxixfoff = 0.001). The y fn indexing is scaled
+by a factor of 1.5 (giayixfscl = 0, giayixfoff = 0.0015).
+
+The orbits are by default displaced by a small amount determined by the
+harmonic number and the reciprocal of the number of oscillators used for the
+sound. In practice this causes too small a displacement on the terrain between
+successive harmonics, so their modulation patterns are similar and
+time-shifted. We apply scaling to the translation of these orbits
+(gia<x/y>scl). The parameters are pretty much a case of observation, intution
+and udition. We apply the experiments to the case with largest number of
+harmonics reproduced in audio range (pplf) since here the increment due to the
+harmonic number will be smallest and consequently variatiiion in shape less. We
+choose parameters sufficient to prodce an acceptable timbre and reuce obvious
+phasing due to nearly-alike harmonic successive modifcations.
+
+giaxaorbscl = 0
+giaxaorboff = 0.00011	; fixed x orbit magnitude 0.11
+giayaorbscl = 0
+giayaorboff = 0.00025
+giaxixfn = $sine
+giayixfn = $cosine
+giaxfn = $sine
+giayfn = 233	; triangle
+giaxtrnscl = 19
+giaytrnscl = 13
+giaxixflag = -1
+giayixflag = 1
+giaxwrap = 1
+giaywrap = 1
+giaxixfscl = 0
+giaxixfoff = 0.001
+giayixfscl = 0
+giayixfoff = 0.0015
+
+Note that a considerable dislacement has been applied to both x and y axis
+index oscillator outputs.
+
+we choose a modification in amplitude of x0.075 and x0.05 at the
+note extremes fflf and pphf (using ifrqratio and hgixsolve):
+
+hgixsolve 0.00005 0.000075 0.417 0.637
+
+normalised: scale 0.000114, offset 0.000003
+
+gimflscl = 0.000114
+gimfloff = 0.000003
+
+BUT CURRENTLY...
+We use a fixed amplitude modulation level 0.75:
+
+gimalscl = 0
+gimaloff = 0.00075

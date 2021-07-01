@@ -1,5 +1,5 @@
-; resurrection-17.3.8.1.orc
-; 20/02/2021
+; resurrection-17.3.8.2.orc
+; 09/03/2021
 
 ; Resurrection - a csound sound rendering engine
 
@@ -22,10 +22,12 @@ sr = 96000
 
 ;kr = 19200
 ;ksmps = 5
-kr = 9600	; smooth
-ksmps = 10
-;kr = 960		; coarse
-;ksmps = 100
+;kr = 9600	; smooth
+;ksmps = 10
+kr = 960		; coarse
+ksmps = 100
+;kr = 480
+;ksmps = 200
 
 nchnls = 1
 
@@ -248,7 +250,6 @@ nchnls = 1
 	; noise specification
 	gihasnoise	init	0
 	ginsuslvl		init	1
-	giforcenoiseampenv	init	0	; default - if 1, envelope noise and signal together
 
 	; noise shape specification
 	inatktbl1	init	$lini
@@ -310,14 +311,14 @@ nchnls = 1
 	kppfrq = (k2frq-k1frq)*iocti+k1frq
 	kfffrq = (k4frq-k3frq)*iocti+k3frq
 	khfrq = (kfffrq-kppfrq)*iampi+kppfrq
-	khrq = khfrq*ifrqscale
+; typos and only kfrq used!
+;	khrq = khfrq*ifrqscale
+khfrq = khfrq*ifrqscale
 	kpartpch = 0
 	$comosccode(p'khn)
 	aosc	oscili	kamp*kzap, kfrq, gisgenfn, inotephase
 	$hpcode(p'khn)
 ;printks"p khn %d kamp %d\n", 0.1*idur, khn, kamp
-;aposc = (giTerrainMode0a==0 ? aosc+kamp*kzap : aosc*kzap)
-
 	aoscp = aoscp+aosc+aoscpt
 	ktrk = ktrk+1	; next amplitude table index increment
 #
@@ -347,8 +348,8 @@ nchnls = 1
 	kamp = (gihmagtblbase==0 ? inotevol : kamp)
 	kamp = (gihmagtblnorm=0 ? kamp : kamp*inotevol)	; normalised hmag table
 	khfrq = 0	; no frequency deviation data exists for synthetic harmonics
-	kpartpch = 0
 	khfrq = 0	; no contribution from p-harmonic frq diffs
+	kpartpch = 0
 	$comosccode(s'khn)
 	aosc	oscili	kamp*kzas, kfrq, gisgenfn, inotephase
 	$hpcode(s'khn)
@@ -390,8 +391,8 @@ nchnls = 1
 	khNum = khn+1	; <a/f> regardless, this index is given by osc calls
 	$terrainLayer(1'$terrainType'$eTime'khNum)	; returns harmonic modifier kz
 	kmod = kz$terrainType$eTime
-	$terrainLayer(2'$terrainType'$eTime'khNum)
-	kmod = (giTerrainMode1$terrainType==0 ? kmod+kz$terrainType$eTime : kmod*kz$terrainType$eTime)
+;	$terrainLayer(2'$terrainType'$eTime'khNum)
+;	kmod = (giTerrainMode1$terrainType==0 ? kmod+kz$terrainType$eTime : kmod*kz$terrainType$eTime)
 ;	$terrainLayer(3'$terrainType'$eTime'khNum)
 ;	kmod = (giTerrainMode2$terrainType==0 ? kmod+kz$terrainType$eTime : kmod*kz$terrainType$eTime)
 	; Horner-Ayers contiguous group synthesis (modified)
@@ -433,13 +434,9 @@ nchnls = 1
 ; the indices don't change just durations (encoded in phases) - they reference the variables loaded from control file
 	khNumTDC = (iTDCOP$vName$baseName$axis$orbitType==0 ? i$HTDC$baseName$axis$orbitType*khNum+i$AFTDC$baseName$axis$orbitType : i$HTDC$baseName$axis$orbitType*khNum*i$AFTDC$baseName$axis$orbitType)
 	kndx	oscili	i$v1$baseName$axis$orbitType, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
-;printks "mkkv $axis a: khn %d kndx %f\n", 0.01*idur, khn, kndx
 	kndx = (kndx+i$v5$baseName$axis$orbitType)*khNumTDC
-;printks "mkkv $axis b: khn %d kndx %f\n", 0.01*idur, khn, kndx
 	k$vName$baseName$axis$orbitType	tablei	kndx, i$v6$baseName$axis$orbitType, 1, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
 	k$vName$baseName$axis$orbitType$eTime = k$vName$baseName$axis$orbitType*i$v9$baseName$axis$orbitType+i$v10$baseName$axis$orbitType
-;printks "mkkv $axis khn %d  k$vName$baseName$axis$orbitType$eTime %f\n", 0.01*idur, khn, k$vName$baseName$axis$orbitType$eTime
-
 #
 
 
@@ -547,7 +544,8 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	indclt$noiseNum = (indclt$noiseNum>itime$eTime-ieattacka$eTime ? itime$eTime-ieattacka$eTime-$minperiod : indclt$noiseNum)
 	indclt$noiseNum = (ieattacka$eTime==0 ?  itime$eTime : indclt$noiseNum)
 	indur$noiseNum = inatkt$noiseNum+indclt$noiseNum
-	inatktbl$noiseNum	table	indefsix+4, $noisedefs
+print indur$noiseNum, inatkt$noiseNum, indclt$noiseNum
+inatktbl$noiseNum	table	indefsix+4, $noisedefs
 	indcltbl$noiseNum	table	indefsix+5, $noisedefs
 	intype$noiseNum	table	indefsix+6, $noisedefs
 	indefsix = indefsix+7
@@ -609,6 +607,7 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	kpchcfdiff = $cfterm-$cfinit
 	knpchcf	oscili	kpchcfdiff, 1/(indur$noiseNum+$minperiod), $cffn
 	knpchcf = knpchcf+$cfinit
+;printks "pchncf cf %.3f bw %.3f\n", 0.01*idur, knpchcf, knpchbw
 	anoiser reson   anoise, knpchcf, knpchbw
 	anoiser	balance 	anoiser, anoise
 	anoise = anoiser
@@ -627,17 +626,22 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	anoise = adel0+adel1+adel2+adel3+adel4
 #
 
-#define blnoise
+
+#define blnoise(noiseNum)
 #
-	knfrq = kpramp*khn*kblnpb
-	knbw = 2*kpramp*iblbwscl
-	knbw = knblbwmod*knbw
-	kncf = knfrq			; base harmonic
+; note - could use resony
+	knbw = kpramp*2*inratio
+; this is the max bw
+        knbw = knblbwmod*knbw*inbwscl$noiseNum
+	kncf = kpramp*khn
+;printks "khn %d hfrq %.3f kncf %.3f knbw %.3f\n", idur*0.01, khn, kpramp*khn, kncf, knbw
+;printks "1: khn %d cf %.3f bw %.3f kp1fincr %.3f kp2fincr %.3f\n", 0.01*idur, khn, kncf, knbw, kp1fincr, kp2fincr
 	$filtblnoise(kncf'knbw)
-	kncf = knfrq-kp1fincr	; first partial below
-	$filtblnoise(kncf'knbw)
-	kncf = knfrq-kp2fincr	; second partial below
-	$filtblnoise(kncf'knbw)
+	kcf = kncf-kp1fincr	; first partial below
+;printks "2: khn %d cf %.3f bw %.3f\n", 0.01*idur, khn, kcf, knbw
+	$filtblnoise(kcf'knbw)
+	kcf = kncf-kp2fincr	; second partial below
+	$filtblnoise(kcf'knbw)
 	khn = khn+1
 #
 
@@ -646,9 +650,7 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	abnoise butterbp anoise, $cf, $bw
 	abnoise butterbp abnoise, $cf, $bw
 	abnoise butterbp abnoise, $cf, $bw
-	abnoise	balance	abnoise, anoise
 	ablnoise = (khn>=inoscs ? ablnoise : ablnoise+abnoise)
-	ablnoise	balance	ablnoise, anoise
 	anoise0 = anoise0+ablnoise
 #
 
@@ -656,12 +658,16 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 #
 	; pitched/fixed noise
 	indefsix = indefsix+1
+print indefsix
 	inpchcfinit	table	indefsix, $noisedefs
 	inpchcfterm	table	indefsix+1, $noisedefs
+print inpchcfinit, inpchcfterm
 	inpchcffn		table	indefsix+2, $noisedefs
 	inpchbwinit	table	indefsix+3, $noisedefs
+print inpchcffn, inpchbwinit
 	inpchbwterm	table	indefsix+4, $noisedefs
 	inpchbwfn	table	indefsix+5, $noisedefs
+print inpchbwterm, inpchbwfn
 	inpchbwinit = (inpchbwinit<0 ? abs(inpchbwinit) : inpchbwinit*inotefrq)
 	inpchbwterm = (inpchbwterm<0 ? abs(inpchbwterm) : inpchbwterm*inotefrq)
 	inpchcfinit = (inpchcfinit<0 ? abs(inpchcfinit) : inpchcfinit*inotefrq)
@@ -669,47 +675,52 @@ indclt$noiseNum = (indclflag$noiseNum==0 ? indcl$noiseNum*ieattacka$eTime: indcl
 	indefsix = indefsix+6
 	$pchnoise(inpchcfinit'inpchcfterm'inpchcffn'inpchbwinit'inpchbwterm'inpchbwfn'$noiseNum)
 	inprocs$noiseNum = inprocs$noiseNum-1
+print indefsix
 #
 
 #define flangednoise(noiseNum'indefsix)
 #
 	; flanged noise
 	indefsix = indefsix+1
+print indefsix
 	inrinit			table	indefsix, $noisedefs
 	inrterm			table	indefsix+1, $noisedefs
 	inrfn				table	indefsix+2, $noisedefs
+print inrinit, inrterm, inrfn
 	inmaxdlyms		table	indefsix+3, $noisedefs
 	inflangefn		table	indefsix+4, $noisedefs
 	indefsix = indefsix+5
+print inmaxdlyms, inflangefn, indefsix
 	kfln	line	inrinit, indur$noiseNum, inrterm
 	$flangenoise($noiseNum'inrinit'inrterm'inrfn'inmaxdlyms'inflangefn'kfln)
 	inprocs$noiseNum = inprocs$noiseNum-1
 #
 
+
 #define bandlimitednoise(noiseNum'indefsix)
 #
-	; band-limited noise
+        ; band-limited noise
+        indefsix = indefsix+1
+        inblbwfn$noiseNum       table   indefsix, $noisedefs
 	indefsix = indefsix+1
-	inblbwfn$noiseNum	table	indefsix, $noisedefs
-	indefsix = indefsix+1
-	inblcf$noiseNum	table	indefsix, $noisedefs
-	indefsix = indefsix+1
-	iblnpbt 	table	indefsix, $noisedefs	; atk pitch bend dur
-	indefsix = indefsix+1
-	iblnpbscl 	table	indefsix, $noisedefs	; at kpitch bend amount
-	indefsix = indefsix+1
-	khn = inblcf$noiseNum
-	ablnoise = 0
-	iblbwscl = (gihaspt==0 ? 1 : 1/(gihaspt+1))
-	knblbwmod	oscili	1, 1/(indur$noiseNum+$minperiod), inblbwfn$noiseNum
-	; the bwmod is applied to each harmonic in turn
-	iblnpbdur = inatkt$noiseNum*iblnpbt
-	kblnpb linseg	iblnpbscl, iblnpbdur, 1
-	kblnoisemask	linseg	1, indur$noiseNum-$mindur, 1, 0, 0, idur-indur$noiseNum+$mindur, 0
-	$allncode
-	anoise0 = anoise0*0.3333*kblnoisemask
+	inbwscl$noiseNum	table	indefsix, $noisedefs
+        khn = 1
+        ablnoise = 0
+        knblbwmod$noiseNum      oscili  1, 1/(indur$noiseNum+$minperiod), inblbwfn$noiseNum
+;printks "knblbwmod$noiseNum %.3f\n", 0.01*idur, knblbwmod$noiseNum
+
+        inblbwterm$noiseNum     table   1, inblbwfn$noiseNum, 1
+        ; the bwmod is applied to each harmonic in turn
+	knblbwmod2      linseg  1, indur$noiseNum, 1, 0, 0
+        knblbwmod3      linseg  0, indur$noiseNum, 0, $minperiod, inblbwterm$noiseNum, idur-indur$noiseNum, inblbwterm$noiseNum
+        knblbwmod = knblbwmod$noiseNum*knblbwmod2
+        knblbwmod$noiseNum = knblbwmod+knblbwmod3
+	$allncode($noiseNum)
+;        anoise0 = anoise0+ablnoise
 	inprocs$noiseNum = inprocs$noiseNum-1
+        indefsix = indefsix+1
 #
+
 
 #define loadTerrainTables(baseName'axis'orbitType)
 #
@@ -1339,18 +1350,18 @@ print itimes, itimep, idur
 	$sosccode
 #
 
-#define nblockcode
+#define nblockcode(noiseNum)
 #
-	$blnoise
-	$blnoise
-	$blnoise
-	$blnoise
-	$blnoise
-	$blnoise
-	$blnoise
-	$blnoise
-	$blnoise
-	$blnoise
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
+	$blnoise($noiseNum)
 #
 
 #define allpcode
@@ -1382,18 +1393,19 @@ print itimes, itimep, idur
 ;	$sblockcode
 #
 
-#define allncode
+#define allncode(noiseNum)
 #
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
-;	$nblockcode
+	$nblockcode($noiseNum)
+	$nblockcode($noiseNum)
+	$nblockcode($noiseNum)
+	$nblockcode($noiseNum)
+	$nblockcode($noiseNum)
+;	$nblockcode($noiseNum)
+;	$nblockcode($noiseNum)
+;	$nblockcode($noiseNum)
+;	$nblockcode($noiseNum)
+;	$nblockcode($noiseNum)
+;	$nblockcode($noiseNum)
 #
 
 
@@ -1597,6 +1609,7 @@ giterrainxexclude2a = 588	; don't use this file if tied/held, return dummy z val
 ; test pure synthesis using function to generate dynamic wavetable
 gisntype = 1	; use Hz in score
 gisgenfn = $unity	; linear 0dBfs
+;gihflvl = 1	; use table frequency diffs
 gigain = 0.03
 gioscs = 20
 ;gisuslvlctl = 2.5
@@ -1624,8 +1637,8 @@ giterrainFn1a = 2	; use rosenbrock fn
 	inum133:
 	if giinum > 133 igoto inum143
 	; bass range D2-D4, 6.02-8.02, amplitude 1000 -> 10000
-	gioscs = 20	; override default 10 oscillators (f0 - f9)
-	gigain = 10
+	gioscs = 20		; override default 10 oscillators (f0 - f9)
+	gigain = 3		; note amplitude correction is terrain file dependent
 	giminvol = 1000	; data min and max ranges
 	gimaxvol = 12000	; ensure indices iampix, ifrqix are in ]0,1]
 	giminfrq = 73.5	; or required subinterval to obtain desired range
@@ -1642,21 +1655,32 @@ giterrainFn1a = 2	; use rosenbrock fn
 	; alternate cello based on UIOWA Cello.arco.sulC samples
 	inum143:
 	if giinum > 143 igoto instrSetupDone
-	gioscs = 1
-	gimass = 15
-	gires = 2
+;giEnableEnvelopeKludge = 1
+iafno ftgen $noisedefs, 0, 261, -23, "data/Cello.arco.sulC/Cello.arco.sulC.noisedefs"
+gihasnoise = 1
+ginscl1 = 1
+;gihaspt = 1
+
+;giatktbl = $unity
+;gidcltbl = $unity
+	gioscs = 10
+	gimass = 0.5
+	gires = 20
 	giusrdclphs = 1
-	giduradj = 1
-	gisuslvl = 1
-	gigain = 0.2
-	giphpplf = 15	; maximum value: number of ftable-prescribed harmonics
-	giphfflf = 15	; in note extreme cases. If less further harmonics are
-	giphpphf = 15	; synthesised rather than being table-derived
-	giphffhf = 15
-	gitblbase = 840;	start of cello data fn tables (0=no tables)
-	gihmagtblbase = 960	; start of harmonic magnitude data (if present)
-;gitblbase = 0
-;gihmagtblbase = 0
+;	giduradj = 1
+gisuslvl = 2
+;giudclscl = 0.1
+;giatkdly = 1
+;gidcladvance = 2
+;	gigain = 
+	giphpplf = 10	; maximum value: number of ftable-prescribed harmonics
+	giphfflf = 10	; in note extreme cases. If less further harmonics are
+	giphpphf = 10	; synthesised rather than being table-derived
+	giphffhf = 10
+;	gitblbase = 840;	start of cello data fn tables (0=no tables)
+;	gihmagtblbase = 920	; start of harmonic magnitude data (if present)
+gitblbase = 0
+gihmagtblbase = 0
 	; Cello.arco.sulC data
 	giminvol = 1500		; data min and max ranges (from original sound)
 	gimaxvol = 3500
@@ -1671,7 +1695,9 @@ giterrainFn1a = 2	; use rosenbrock fn
 	girlspphft = 0.33
 	girlsfflft = 0.58
 	girlsffhft = 0.47
-;giTerrainMode0a = 0
+;giEnvPhasea1 = 4
+;gitbl1axOF = 1000
+;giUseAllH1a = 1
 	; end Cello.arco.sulC data
 	igoto instrSetupDone
 
@@ -1929,6 +1955,7 @@ print iampix, ifrqix, iafix
 	; frq diffs in tables might not be for frequencies generated
 	inotefv = iocti*ginotefscl+ginotefoff
 	ifrqscale	tablei	inotefv, gifsclfn, 1
+print ifrqscale
 	inoscs = (inoscs>gioscs ? gioscs : inoscs)
 
 	; these need to be the number of available p-harmonics
@@ -2106,18 +2133,22 @@ print iampix, ifrqix, iafix
 	anout = 0
 	indefsix = 0
 	inoises	table	indefsix, $noisedefs	; table containing noise setup
+print inoises
 	if inoises<=0 kgoto noisedone
 	indefsix = 1
 	; noise1
 	$readNoiseParams(1'indefsix'p)
 
 	; noise type 1 parameters
+print intype1
 	if intype1 != 1 igoto non1t1
 	$initBetaNoise(1'indefsix)
 
 	non1t1:
 	invol1	table	indefsix, $noisedefs
+print invol1
 	inprocs1	table	indefsix+1, $noisedefs	; number of processes to apply to this noise
+print inprocs1
 	indefsix = indefsix+2
 	$naenv(inatkt1'indclt1'inatktbl1'indcltbl1'inpersistent1)
 	knbeta	oscili	inbetaterm1-inbetainit1, 1/indur1, inbetafn1
@@ -2137,14 +2168,17 @@ print iampix, ifrqix, iafix
 
 	inproc131:
 	if inproc11!=3 goto inprocterm11
+print inproc11
 	$bandlimitednoise(1'indefsix)
 	anoise = anoise0/inoscs
 
 	inprocterm11:
+print inprocs1
 	if inprocs1==0 goto inprocend1
 
 	; process noise - pass 2 of 3
 	inproc12	table	indefsix, $noisedefs
+print inproc12
 	if inproc12!=1 goto inproc122
 	$pchfixnoise(1'indefsix)
 
@@ -2159,9 +2193,10 @@ print iampix, ifrqix, iafix
 
 	inprocterm12:
 	if inprocs1==0 goto inprocend1
-
+print inprocs1
 	; process noise - pass 3 of 3
 	inproc13	table	indefsix, $noisedefs
+print inproc13, indefsix
 	if inproc13!=1 goto inproc123
 	$pchfixnoise(1'indefsix)
 
@@ -2392,13 +2427,14 @@ print iampix, ifrqix, iafix
 	aoscpt = 0	 	 	 	 
 
 	$allpcode
-	phdone:		; return from oscs described by ftables (p-harmonics)
+	phdone:		; return from oscs prescribed by ftables (p-harmonics)
 
 	$allscode
 	shdone:		; return from synthesised harmonics (s-harmonics)
 	; ##### END SOUND SYNTHESIS #####
 
-	asig = (giforcenoiseampenv==0 ? aoscp+kenv*(aoscs+aoscpt)+anout : aoscp+kenv*(aoscs+aoscpt+anout))
+; enforce kenv on p-h's?
+	asig = aoscp+kenv*(aoscs+aoscpt)+anout
 ;asig    dcblock2  asig
 	; add amplitude deviance
 	asig = asig*(1+kadev)
@@ -2410,8 +2446,8 @@ print iampix, ifrqix, iafix
 	asig = asig*gigain
 	; apply reverb
 	garvbsig = asig
-	out asig*(1-girvbrtn)
-;out anout	; comment above line and uncomment this one for noise output
+;	out asig*(1-girvbrtn)
+out anout	; comment above line and uncomment this one for noise output
 	girandctl = girandctl+1
 ; <<< end instr 90, 'instrument' >>>
 endin

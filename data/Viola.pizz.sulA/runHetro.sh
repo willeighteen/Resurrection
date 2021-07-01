@@ -1,8 +1,8 @@
 #!/bin/bash
 
 harmonics=10
-lfpoints=32
-hfpoints=16
+lfpoints=128
+hfpoints=64
 
 # pplf:
 hetro -f440 -h$harmonics -m0 -n$lfpoints notes/Viola.pizz.pp.sulA.A4.wav ppA4.het

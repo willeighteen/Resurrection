@@ -1,5 +1,7 @@
 ;#include "header.sco"
-#include "data/Cello-arco-reference-1st/Cello-arco-reference-1st-header.sco"
+;#include "data/Cello-arco-reference-1st/Cello-arco-reference-1st-header.sco"
+#include "data/instr130/instr130-header.sco"
+
 
 ; clarinet test (not really sutiable for a portamento demo!)
 ;i1	0		0		72
@@ -51,7 +53,7 @@ i90	8.5		.		5000	8.11
 i90	10		-1		.		9.00
 i90	+		.		.		10.00
 i90	+		1		.		7.00
-s
+
 
 ; default AD envelope test
 ;i1	0 		0		129	; default instrument
@@ -84,7 +86,7 @@ i90	+		.		5000	7.00
 s
 
 ; slide clarinet!
-i1	0		0		72
+;i1	0		0		72
 ; port dur override
 i2	0		0		201		100		0	0	0	0	0	; make lin. decline portamento
 												; over approx. tied note duration

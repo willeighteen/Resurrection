@@ -1,8 +1,8 @@
 #!/bin/bash
 
 harmonics=15
-lfpoints=32
-hfpoints=16
+lfpoints=128
+hfpoints=64
 
 # pplf:
 hetro -f146.832 -h$harmonics -m0 -n$lfpoints notes/BbClar.pp.D3.wav ppD3.het

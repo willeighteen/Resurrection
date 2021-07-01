@@ -1,0 +1,96 @@
+; source file ../data/Viola.pizz.sulA/ppA4.het
+; via ../data/Viola.pizz.sulA/ppA4.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f480	0	16	-2
+14304
+3302
+860
+2046
+672
+183
+180
+110
+72
+79
+0
+0
+0
+0
+0
+0
+
+; source file ../data/Viola.pizz.sulA/ppG6.het
+; via ../data/Viola.pizz.sulA/ppG6.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f481	0	16	-2
+60
+9
+4
+3
+2
+2
+2
+2
+2
+2
+0
+0
+0
+0
+0
+0
+
+; source file ../data/Viola.pizz.sulA/ffA4.het
+; via ../data/Viola.pizz.sulA/ffA4.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f482	0	16	-2
+23723
+5116
+2632
+1188
+427
+259
+158
+118
+88
+68
+0
+0
+0
+0
+0
+0
+
+; source file ../data/Viola.pizz.sulA/ffG6.het
+; via ../data/Viola.pizz.sulA/ffG6.asc
+;
+; number of harmonics (amp/frq track pairs):
+; 10
+;
+f483	0	16	-2
+1381
+178
+69
+37
+24
+17
+13
+11
+9
+8
+0
+0
+0
+0
+0
+0
+

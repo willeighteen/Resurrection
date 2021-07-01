@@ -1,7 +1,8 @@
 ; portamento in chord demo
-; port time is long enough to make a glisaando
+; port time is long enough to make a glissando
 
 #include "data/Cello-arco-reference-1st/Cello-arco-reference-1st-header.sco"
+
 
 i2	0		4	0	-1	0	0	0	0	; scale portamento by factor note dur.
 

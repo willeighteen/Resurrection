@@ -1,0 +1,964 @@
+This file is part of genInstr - a general-purpose csound instrument.
+
+Cello design
+or, how to implement a genInstr instrument
+
+Consideration of the instrument.
+Wide frequency range (typ. C2-C6). Wide variation of timbre dependent on pitch,
+amplitude and performer. Performer-related timbral change seems most evident at
+lower frequencies.
+
+As with the clarinet, the maximum number of discrete harmonics is displayed at
+low frequency and high amplitude (here, ff.C2).
+We require sets of data for the extremes of amplitude and frequency: pplf,
+pphf, fflf and ffhf. For each of these, we require instantaneous peak magnitude
+harmonic data for each harmonic used and separate data files covering the
+behaviour of the fundamental and first 9 harmonics with time.
+
+
+We consider the UIOWA EMS samples cello, arco.pp.sulC series; the lowest soft
+note available (pp C2) shows considerable quaver caused by uneven breath
+pressure. The most acoustically even note is D2. Harmonics for the notes C2-D2
+extend to nearly 10k in all cases; there is no appreciable difference in
+harmonic range between the note sequence, merely in the relative strength of
+higher harmonics: the C2 sounds appreciably more 'sawn' than does D2. The first
+two notes have a small but distinct peak in harmonics around 2 kHz which is
+much less pronuonced in D2. Since C#2 represents a good compromise between the
+roughness of the C2 timbre and the smoothness of the D2 bowing action, we use
+this as the base for pp lf data.
+
+Note that since genInstr can generate up to 100 harmonics, we use the next
+largest power of 2 (128) as the number of data points in the peak-amplitude
+pp lf data specification.
+
+With regard to individual harmonics, since the sound is quite complex, a larger
+number of data points will be required to model variations in harmonic
+structure. We choose data size 128. Note that the last data value must be zero
+to avoid a discontinuity on note termination. There is complexity in both
+attack and decline phases. Therefore we choose to allocate half the data points
+to the attack and half to the decline.
+
+Cello.arco.pp.sulC.C#2: duration: 3.336531
+The peak amplitude is at 1.403923s; we require 64 data points in this period:
+
+Mixviews: frame offset = dur*sr/npoints
+
+where npoints = number of data points required (64)
+sr = sample rate (44100 Hz)
+dur = t<maxamp>
+
+In order to avoid distortion by the analytical process at the attack end we
+decompose the entire sample. Since we require 64 data points in the attack phase
+we will need a total of t<total>/t<maxamp>*64 = 152 data points for the
+complete sample. This in turn leads to a frame offset of
+
+3.336531*44100/152 = 968 samples. This actually leads to a decomposition into
+155 data points, so we manually adjust the frame offset. A value of 989 (at
+2048 fft points) is the minimum sufficient to decompose the sample into the
+required 152 data points (frames 0-151), the first 64 value representing the
+attack phase (frames 0-63).
+
+We also require the decline phase to be decomposed into 64 frames. The period
+is t<sample>-t<maxamp> = 3.336531-1.403923, and of the total this represents a
+fraction 0.5792; the total number of frames required for the sample to obtain
+64 frames in the decline period is therefore 1/0.5792*64 = 111 samples. We
+calculate the frame offset:
+
+3.336531*44100/111 = 1332 samples
+
+This actually provides 113 frames of data. We adjust the frame offset: a value
+of 1351 is the minimum sufficient to obtain the required 111 frames.
+
+We do a MiXViews fft data dump of the sample
+'Cello.arco.pp.sulC.C#2.decline-phase.data'
+
+Frames 48-111 contain the required decline phase data.
+
+COnsidering next the attack peak data used to model harmonic maxima of
+synthesised harmonics (f10 upwards), we select a region for decomposition 0.05s
+approx. either side of the maxamp sample location: 1.351156->1.451202s. We
+analyse this with 2048 point resolution and frame offset 10 samples. The result
+is 850 frames of data. The required attack peak data is at frame
+
+(1.403923-1.351156/1.451202-1.351156)*850 = 448
+
+Note that this file is very large (45 Mb). It is removed after data extraction.
+'Cello.arco.pp.sulC.C#2.peak.data'.
+
+Note that the frequency analysis produced by MiXViews differs somewhat from
+what would be expected from theory. Csound Book gives 69.296 Hz as the
+frequency of C#2. In practice, due perhaps to tuning of the instrument,
+the sampling process, or artefacts generated in the analysis, the peak harmonic
+frequencies produced by the MiXViews data dump option differ significantly from
+simple multiples of the base frequency. We compare the two harmonic series
+using data from frame 448 of the peak data file.
+
+Frequency comparison: theoretical vs. actual freq. peak, Hz.
+
+Harmonic	Theoret.		Actual
+f0			69.30			64.60
+f1			138.59			139.97
+f2			207.89			204.57
+f3			277.18			279.93
+f4			346.48			344.53
+f5			415.78			419.90
+f6			485.07			484.50
+f7			554.37			549.10
+f8			623.66			624.46
+f9			692.96			689.06
+
+In order to obtain  peak magnitude harmonic data we extract frame 448 data from
+the peak data file.
+
+To obtain the data file for the attack peak (which represents peak magnitudes
+of all harmonics not covered by an individual data file, to which a default
+amp env is applied) we use the tools utility 'hderive'. We use non-normalised
+data.
+
+'./hderive ../data/Cello.bowed/Cello.arco.pp.sulC.C#2.peak.data 64.60 447 0 0 > output'
+
+to get the frame 448 frequency and magnitude data, then
+
+'./hderive ../data/Cello.bowed/Cello.arco.pp.sulC.C#2.peak.data 447 1 0 > output2'
+
+to get the magnitudes only. We then find the 127th (or highest, if less)
+harmonic in the file 'output', which is simple since the harmonics are listed
+by number, and then find the corresponding magnitude in 'output2'. We then
+copy the list of magnitudes back to the start into a new file. This now
+contains the magnitudes of the fundamental and first 127 harmonics for frame
+448, which is used for all harmonic generation for which an individual harmonic
+data file does not exist (i.e. the fundamental and first 9 harmonics).
+
+File name should be appropriate: 'Cello.arco.pp.sulC.C#2.data'
+
+
+The actual harmonic frequency values above are used by the stripharmonics
+utility to obtain individual data for the behaviour of each harmonic with time.
+
+Note that in this program frequencies of the form 'm.n' Hz must be entered as
+'m\\.n', i.e. the decimal point must be double-escaped.
+
+change to tools dir of genInstr. '. stripharmonics.sh' and then extract
+harmonics using the actual frequency values obtained above from botrh the
+attack and decline data files.
+
+Use option 1 and '../data/Cello.bowed/Cello.arco.pp.sulC.C#2.attack-phase.data'
+then option 2 with successive frequency values as in the table above.
+
+This generates harmonic data files for the fundamental f0 and first 9
+harmonics, 'Cello.arco.pp.sulC.C#2.attack-phase.data.f<n>'.
+
+We repeat the exercise using the decline phase data file.
+
+We use the attack and decline data files for each harmonic to construct the
+final pp lf data file. A blank exampleis in the data subdirectory, 
+'genInstr-hdata-template'. This is copied into the data/Cello.bowed directory
+as 'genInstr.Cello-bowed.data' and the first 64 entries from the attack file
+and last 64 from the decline file are copied inot the relevant harmonic number
+section of the blank data file. We will insert data for the first 4 ftables
+later, from the peak data file.
+
+Note that the default entry '3' for the ftable sixe must be replaced by the
+actual ftable size (here, 128 entries), hence, since we use tables of size
+2^n+1, the value is '129'. Note that the final, 128th., entry should be altered
+so it is zero. The harmonic data for each ftable must end in zero or amplitude
+discontinuities accur at the end of a note producing an audible 'click'.
+
+We finally insert the data for the peak magnitudes, copying the 128 entries
+from the Cello.pp.arco.sulC.C#2.data file prepared previously to the pp lf peak
+magnitude blank table in genInstr-Cello.bowed.data. Note that the table size is
+actual number of entries, i.e. the default '2' should be replaced by '128'.
+
+This completes the pp lf case for the bowed cello. We repeat the procedure for
+cases pp hf, ff lf and ff hf, using appropriate notes for analysis.
+
+
+Cello.arco.pp.sulC.D5: duration: 2.432902s
+Peak amplitude at 0.762789s. We again use 128 data popints, allocating half
+each to attack and decline phases.
+
+Attack
+t<total>/t<maxamp>*datapoints
+2.432902/0.762789*64 = 204 data points over sample time
+frame offset: 2.432902*44100/204 = 526 samples
+
+This produces a 211-frame decomposition; we adjust the f.o. manually. A frame
+offset of 544 produces the required 204 frames of data. The fft data is dumped
+to file for later processing.
+
+Decline
+Period covered by required 64 data points: t<sample>-t<maxamp> = 1.6701; of the
+total duration this represents a fraction 0.6865, so the total number of frames
+for the sample to obtain the required 64 in the decline phase is 1/0.6865*64 =
+93 frames. The frame offset is therefore 2.432902*44100/93 = 1151. This
+actually gives a 96-frame decomposition in MiXViews' fft analysis; we adjust
+manually. A frame offset of 1185 produces the required 93 frames. We save the
+fft data for later processing.
+
+Attack peak data
+Considering next the attack peak data used to model harmonic maxima of
+synthesised harmonics (f10 upwards), we select a region for decomposition 0.05s
+approx. either side of the maxamp sample location: 1.351156->1.451202s. We
+analyse this with 2048 point resolution and frame offset 10 samples. The result
+is 850 frames of data. The required attack peak data is at frame
+
+(1.403923-1.351156/1.451202-1.351156)*850 = 448
+
+We select a region approx. 0.05s either side of the maxamp location: 0.707596s
+-> 0.832472s. Using 2048 fft points and frame offset 10, resulting in 960
+frames' data. The required attack peak is at frame
+
+(t<maxamp>-t<start>/t<end>-t<start>)*datapoints
+
+(0.762789-0.707596/0.832472-0.707596)*960 = 424
+
+We can now process these files to obtain the peak magnitude and individual
+harmonic ftable data.
+
+A comparison between actual and theoretical frequencies shows an alarming
+difference. Whereas the theoretical D5 is given as 587.33 Hz, this appears to
+be the frequency of the first harmonic in the data file. The fundamental
+appears at around 260 Hz, compared with the theoretical D4 of 293.67. This
+raises the question as to whether the actual instrument produces subharmonics;
+however, this is the first peak in the fft file.
+
+We choose, for consistency, to assume that the actual note represented is D4,
+although we specify the maximum frequency of the instrument as D5 in the
+cello specification section of genInstr. This simply means there will be no
+change in spectral width contributed by frequencies above D4.
+
+Frequency comparison: theoretical vs. actual freq. peak, Hz.
+
+Harmonic	Theoret.		Actual
+f0			293.67			269.17
+f1			587.34			549.10
+f2			881.01			818.26
+f3			1174.68			1098.19
+f4			1468.35			1367.36
+f5			1762.02			1647.29
+f6			2055.69			1916.46
+f7			2349.36			2185.62
+f8			2643.03			2465.55
+f9			2936.70			2734.72
+
+We extract the harmonic data from the attack and decline phase files using
+stripharmonics.sh. as before.
+
+In order to obtain  peak magnitude harmonic data we extract frame 423 data from
+the peak data file (data frames are numbered from 0).
+
+Note that the peak data is extracted using multiples of the base frequency
+(here, 269.17 Hz) and that this series may not (in fact does not in this case)
+correspond to the actual harmonic frequencies in the data file. Since
+interpolation is used, the magnitudes of the peaks may not be at the same level
+as the actual peaks in the individual data files. Level adjustment in genInstr
+is allowed and necessary.
+
+Note also that there are only 80 harmonics within audio range at this
+frequency; we still specify a table size of 128, since we require the minimum
+power of 2 necessary to hold this number of harmonics. We could use table size
+64 and sacrifice some detail....
+
+
+Cello.arco.ff.sulC.C2: duration: 6.263605s
+Peak amplitude at 0.762789s. Attack maxamp at 0.018005s. In view of the relatively
+short attack phase we allocate a 128-value table with a quarter reserved for
+the attack phase. The attack is not the maxamp sample location in the sample,
+but the maxamp location in an edited initial section of the sample, since the
+remainder of the note to the sample maxamp may be considered an increasing
+sustain. The section used for the attack is the first 0.118186s of the sample.
+
+Attack
+There is a rising sustain, making it difficult to estimate the attack peak.
+Visually we find attack of strongest harmonic peaks at frame 515 of 1034 in a
+0.141814s sample section, i.e. at 0.070633s. If we need 32 frames for this
+period, we require 0.141814/0.070633*32 = 64 frames for the sample section,
+requiring offset of .141814*44100/64 = 97 frames. We actually obtain 106
+frames. Using frame offset 106 gives the required result.
+
+Decline
+Period covered by required 96 data points: t<sample>-t<maxamp> =
+6.263605-0.070633 = 6.192792s; of the
+total duration this represents a fraction 0.9887, so the total number of frames
+for the sample to obtain the required 96 in the decline phase is 1/0.9887*96 =
+97 frames. The frame offset is therefore 6.263605*44100/97 = 2848, which
+produces 98 frmaes' data. A frame offset of 2861 gives the correct
+decomposition into 97 frames, of which the final 96 constitute the decline
+phase data!
+
+Due to the averaging process invovling different frame poffsets, there is a
+considerable discontinuity between the end-of-attack harmonic values and
+start-of-decline values. Comparing the attack data at frame 31 (end of attack)
+with decline data at frame 1 (start of decline), we obtain
+
+		end attack	start decline	norm. factor
+f0		24.9295		43.5598			0.572
+f1		72.0213		127.9018		0.563
+f2		183.7165	369.3305		0.497
+f3		67.2136		102.5438		0.656
+f4		84.8707		133.2234		0.637
+f5		116.8760	143.6974		0.813
+f6		23.9434		46.3397			0.517
+f7		56.4560		80.3789			0.678
+f8		61.8648		127.2471		0.486
+f9		62.6945		104.9152		0.598
+
+We use the average value of 0.6017 sa a scale factor. We rescale the original
+sample and obtaining the decline phase data as before.
+
+Note that there is still an amplitude discrepancy between the end of attack and
+start of decline: we take the next subsequent decline file value as it is
+nearer in amplitude to the attack value, and add a trasilinmg zero (instead of
+zeroing the last value).
+
+Peak magnitudes
+We perform analysis on a section including maxamp as before using 2048
+fft points and frame offset 10. We obtain 849 frames' data. The attack peak is
+at frame (t<maxamp>-t<start>/t<end>-t<start>)*datapoints
+
+(0.070633-0.024898/0.124694-0.024898)*849 = 389 (i.e. frame 388, since they
+start at 0).
+
+Frequency comparison: theoretical vs. actual freq. peak, Hz.
+
+Harmonic	Theoret.		Actual
+f0			65.41			64.60
+f1			130.81			129.20
+f2			196.22			193.80
+f3			261.62			269.17
+f4			327.03			333.76
+f5			392.44			398.36
+f6			457.84			462.96
+f7			523.25			527.56
+f8			588.65			592.16
+f9			654.06			656.76
+
+We use hderive with base freq. 64.60 to obtain the frame 388 data:
+
+hderive Cello.arco.ff.sulC.C2.peak.data 64.60 388 >0/1> 0 > output<2>
+
+finding the 128th harmonic and copying the list from 0 to here into the
+relevant peak data section of the cello data file 'genInstr-Cello.bowed.data'.
+data section.
+
+We finally obtain the ff lf section harmonic data using stripharmonics.sh and
+the actual frequency values in the table above. We use the first 32 entries
+from the attack-phase data files and the last 96 from the decline-phase files,
+remembering to zero the last data entry.
+
+
+Cello.arco.ff.sulC.B3: duration: 1.862109s
+Peak amplitude at 0.762789s. Maxamp at 1.251247s. This is even more of a
+problem than the previous note: the audible attack is not the same as the
+maxamp location. On examining the initial 0.19s of the sample, the peak
+actually appears at 0.078435s. The remainder of the sample to the maxamp
+location is in fact an increasing sustain. We choose to treat this as part of
+the decline phase, although energy is still being supplied to the instrument.
+We allocate 32 frames to the attack and 96 to the decline; the attack phase is
+modelled in considerably greater detail.
+
+
+Peak magnitudes
+We use period 0.025011s -> 0.125351s. With frames offset 10 and
+2048 fft points we obtain 852 frames' data  The attack peak is at frame 
+(t<maxamp>-t<start>/t<end>-t<start>)*datapoints = 
+(0.078435-0.025011/0.125351-0.025011)*852 = 454.
+
+hderive Cello.arco.ff.sulC.B3.peak.data 183.03 453 <0/1> 0 etc.
+
+Note that the harmonics only go up to 119. We still specify an extended
+128-entry table.
+
+Note: this analysis omits the initial bow noise which occurs before the note
+sounds, as the bow begins to 'bite'. At 0.32s, thia is appreciably longer than
+the period defined as the attack phase. Extending the frame coverage to this
+region would result in loss of detail in the attack harmonics and poor
+modelling of the bow noise, since it is not amenable to being treated as some
+combination of frequency-multiple waves.
+
+Harmonic	Theoret.		Actual
+f0			246.94			183.03
+f1			493.88			355.30
+f2			740.83			527.56
+f3			987.77			710.60
+f4			1234.71			882.86
+f5			1481.65			1065.89
+f6			1728.59			1238.16
+f7			1975.54			1421.19
+f8			2222.45			1593.46
+f9			2469.42			1776.49
+
+Attack
+Peak visually at frame 608 of 1276 in sample section: 608/1276*0.196757s =
+0.093753s (maxamp sample location 0.078435s). We take the visually obtained
+value. We require 32 data points in the attack period and so
+0.196757/0.093753*32 = 67 data points, hence frame offset 0.196757*44100/67 =
+130. It actually takes 190 frame offset to achieve the required 67 frames.
+
+Decline
+We have the attack is at 0.093753sand the sample dur is 1.862109s, so we need
+96 dat points in dur-atk = 1.768356s, therefore 101 data points for the whole
+sample. The frame offset is 1.862109*44100/101 = 812. We obtain 106 frames,
+therefore adjust: f.o of 847 produces correct result.
+
+We compare attack data frame 31 and decline data frame 5:
+
+		end attack	start decline	norm. factor
+f0		654.0976	537.5065		1.217
+f1		323.0890	243.6510		1.326
+f2		54.0431		48.4387			1.116
+f3		288.8845	183.1326		1.578
+f4		68.7392		120.0817		0.572
+f5		141.2465	132.3263		1.067
+f6		281.4526	226.7490		1.241
+f7		73.7593		53.4558			1.380
+f8		255.6775	215.1110		1.189
+f9		125.0805	76.4294			1.631
+
+We use the average value of 1.2317 sa a scale factor. We rescale the original
+sample and obtaining the decline phase data as before.
+
+Note we adjust the f4 decline data by selecting the subsequent value (i.e.
+frame 7) instead of frame 6 as the start of the decline data, and add a
+trailing zero.
+
+All in all, it's debatable whether we should be using attack peak harmonic
+magnitudes for the non-prescriptive oscs (10 upwards) or whether some
+'steady-state' values might be preferable.
+
+In the genInstr Cello section, we specify
+giminvol = 2000	; data min and max ranges
+gimaxvol = 12000
+giminfrq = 65.406	; C2
+gimaxfrq = 587.33	; D5
+gipplft = 0.5		; table atk proportion at minvol, minfrq
+gipphft = 0.5
+gifflft = 0.25
+giffhft = 0.25
+
+
+Envelope timing
+The shape is approximated by attack-sustain-release, so we use a user decline
+phase envelope (giusrdclphs = 1). The sustain is not always present; whether
+this follows the attack or is part of it is performer-related.
+
+Initial values
+giusrdclphs = 0, gi<atk/dcl>scl = 0, gi<atk/dcloff> = 0, giduradj = 0
+gimass = 1
+gires = 1
+gioscs = 10, ginposcs = 10 (i.e. the total number of oscillators is retricted
+to the ones we have individual data tables for, the fundamental and first nine
+harmonics).
+
+We use a default score with the minimu and maximum values for amplitude and
+frequency for the instrument; the note durations are irrelevant. This generates
+default attack and decline timings.
+
+Test score:
+#include "../genInstr-header.sco"
+
+i1	0		0		43		0		0	0		0		0		0
+
+i90	0	1	2000	6.01	; pp C#2
+i90	3	1	2000	9.02	; pp D5
+i90 6	1	8000	6.00	; ff C2
+i90 9	1	12000	7.11	; ff B3
+
+
+Set DebugEnvTiming = 1, run the score, obtaini the default attack and decay
+timings. We obtain for the instrument
+
+			Attack/s
+			lf		hf
+	pp		1.40	0.76
+	ff		0.07	0.08
+
+and for the rendered file
+
+			Attack/s
+			lf		hf
+	pp		0.744	0.463
+	ff		0.365	0.226
+
+Experimenting with gimass, a value of 1.6 gives
+
+			Attack/s
+			lf		hf
+	pp		1.392	0.865
+	ff		0.682	0.424
+
+Relevant envelope scaling factors ies are
+
+			C2		C6
+	pp		0.823	0.536
+	ff		0.666	0.480
+
+We obtain scaling factor for the attack phase usinmg the utility 'linsolve' in
+the tools directory:
+
+linsolve pplf-r-atk pplf-g-atk ffhf-r-atk ffhf-g-atk pplf-ies pphf-ies
+
+where r = real instrument, g = genInstr-generated
+
+linsolve 1.4 1.392 0.08 0.480 0.823 0.48
+
+We obtain the output
+
+raw index:  scale 0.062625, offset -0.025793
+
+We set giatkscl = 0.06263, giatkoff = -0.02579, then re-run the test score.
+The results in the extreme cases of pplf and ffhf now correspond, but the pphf
+attack is too short and the fflf envelope too long. Thes can be corrected using
+user attack scalings in the score for the particular note(s) concerned.
+
+The default decline phase timing is simply the note duration minus the attack
+phase, for the real instrument. We obtain for the instrument
+
+			Decline/s
+			lf		hf
+	pp		1.93	1.67
+	ff		6.19	1.78
+
+It is worth noting that these attack and decline phases all contain an element
+of sustain.
+
+For the rendered version we have
+
+			Decline/s
+			lf		hf
+	pp		0.078	0.050
+	ff		0.118	0.104
+
+Since the ies values are those already noted, we find
+
+linsolve 1.93 0.078 1.78 0.104 0.823 0.48
+
+obtaining
+
+raw index:  scale 0.569336, offset 0.164873
+
+which we use to set the decline phase attack and decline scaling. We re-run the
+test score.
+
+We obtain, in the extreme pplf and ffhf cases at least, envelope durations
+which match those of the original samples.
+
+Thes envelope durations do not include any user-specified decay/sustain phase
+based on the note duration. If a note duration is specified and must be used
+then giusrdclphs must be set to 1.
+
+
+Envelope design.
+There is no discernible decay; shape varies between slow attack and release,
+short attack, sustain, release. The release appears exp., with a long tail
+The best model appears to be a sigmoid attack (the default kenv attack),
+linear sustain and hybrid cos/exp release. The decline phase changes
+dramatically with note amplitude, being of a cosine decay at low amplitude to
+an exp decay at high amplitude. We specify the first dcl tbl as cos, the 2nd as
+exp. We note the isw values for the pp case are >0.5, those for ff case <0.5,
+in particular the extremes for pp and ff are 0.558 and 0.405.
+
+Since we require index values, we use hgixsolve:
+
+hgixsolve 0 1 0.558 0.405
+
+which returns
+
+normalised: scale -6.535946, offset 3.647058
+
+We set girelscl = -6.536, gireloff = 3.647.
+
+transition is between isw=0.405 and isw=0.558 for the ff/pp note series. If we
+maximise the function pointer ihdfp range to 0 and 1 between these values there
+will be no change outside this isw range since the decline function is forced
+to be either one or the other. Between the range limits, interpolation between
+function shapes occurs.
+
+
+Gain control
+
+(1) determine overall gain level. gigainscl = 0, gigainoff = 0.95 gives an
+output roughly in accordance with score magnitudes.
+
+We se gioscs to the max number of oscs used (100) and ginposcs to 10 (the
+number of harmonics including the fundamental for which we have an indivdual
+data specification).
+
+Set gihdclgain = 1 (harmonic decline curve initial value).
+
+In order to avoid the internal harmonic magnitude decline function khampscl from
+modifying the attack peak data values for synthesised harmonics, we must
+ensure this returns unity for each harmonic.
+
+The pphf case with isw 0.703 has 37 oscillators within audio range; the fflf
+case with isw 0.389 uses all available 100 oscillators. The ihdcl factor
+returned by the gihdcl<scl/off> values descends exponentially from gihdclgain
+to gihdclgain*(1-isw)/((inoscs-inposcs)*ihdcl). Since gihdclgain has been set
+to unity, then it follows the required 'curve' should stay constant at this
+value.
+
+Since (1-isw)/((inoscs-inposcs)*ihdcl) = 1
+
+we have that
+
+ihdcl = (1-isw)/(inoscs-inposcs)
+
+so
+
+(1) (1-0.703)/37-10 = 0.011
+(2) (1-0.389)/100-10 = 0.007
+
+and
+
+linsolve2 0.011 0.007 0.703 0.389
+
+returns
+
+raw index:  scale 0.000326, offset 0.000052
+
+We require the raw index values, hence gihdclscl = 0.00033,gihdcloff = 0.00005.
+
+We have achieved a state in which the returned synthetic harmonic
+magnitudes are broadly those specified by the peak magnitude data for the
+sysnthesised (i.e. non-prescriptive) harmonics.
+
+; init...
+gihdclgain = 1
+gioscgscl = 0
+gioscgoff = 0.0256	; raw index mode - returns synth osc gain 1
+girlfscl = 0
+girlfoff = 0	; rolloff level irlflvl = 0
+girlfrscl = 0
+girlfroff = 0	; rolloff rate irlfrate = 0
+girlftbl = $unity
+gihrfixscl = 0
+gihrfixoff = 0
+gihdclfn1 = $unity
+gihdclfn2 = $unity
+gihdixfn1 = $zero
+gihdixfn2 = $zero
+
+this ensures the harmonic scaling is approx unity for all harmonics.
+
+Next we need to have the unmodified harmonics at the right level i.e. those >
+inposcs, whose values are specified in the attack peak magnitude data: we
+adjust the level. We set ginposcs = 10 (number of harmonics specified by
+individual harmonic data) and gioscs = 100 (max: fundamental plus 99 harmonics).
+
+For pphf (isw = 0.703) the higher harmonics are a little too low level; for
+fflf (isw = 0.389) they are about 5x too small
+
+We use gains 2 and 5 for the two cases respectively:
+
+linsolve2 2 5 0.703 0.389
+
+gives
+
+raw index:  scale -0.244586, offset 0.223144
+
+so gioscgscl = -0.245, gioscgoff = 0.223
+
+Now the ffhf case has harmonics at too high an amplitude as frequency rises;
+the pplf case also has harmonics which are too strong but this is not so
+severe. The two cases for which the adjustment was made are about right.
+
+Harmonics persist in time for longer than they should and need correction.
+
+The region requiring attention is that between fflf (isw 0.389 and ffhf (isw
+0.405). We thus choose an adjustment over this range (which also limits
+harmonics of cases of isw > 0.405).
+
+We adjust ihdcl to provide for an exponential decay in successive harmonic
+amplitudes.
+
+The exp curve generated (internal fn 255) starts at value gihdclgain, changing
+to gihdclgain*(1-isw)/((inoscs-inposcs)*ihdcl). These endpoint values apply to
+the harmonics inposcs and inoscs-1.
+
+We require very little chamge in the pphf and fflf cases. The cases most in
+need of modification are pplf (too many harmonics) and ffhf (again, too many
+harmonics). The relevant isw values are 0.558 and 0.405. If we have a steeper
+cutoff at the first than the second, the the fflf case with isw 0.389 won't be
+trimmed enough, and the pphf case with isw 0.703 will have its harmonics
+reduced further than the already minimal level they're at.
+
+There are too many harmonics in the fflf case with isw 0.389 and just about the
+right number at pphf with isw 0.703. From the above we have unity gain for pphf
+when ihdcl = 0.011. For the fflf case, choosing a final gain value of 0.01
+(effective at the 99th harmonic), we have that
+
+(1-isw)/((inoscs-inposcs)ihdcl) = 0.01
+
+therefore
+
+ihdcl = 100(1-0.389)/90 = 0.679
+
+and
+
+linsolve2 0.011 0.679 0.703 0.389
+
+produces the required scale and offset
+
+raw index:  scale -0.054461, offset 0.038568
+
+We set gihdclscl = -0.0545, gihdcloff = 0.0386.
+
+
+Harmonic shaping and rolloff
+Although the default envelope is applied to the shape of the synth harmonics
+(here, >h9), this does not necessarily produce the correctpattern of decay with
+time. In the case of the cello, there is a marked difference between low
+amplitude notes and high ones. In the former, the harmonics persist for most of
+the note's duration and in the latter are insignificant after a short period of
+time. Further, with the higher amplitude notes, the rate of rolloff changes so
+that there is an approx exp decline in strength of the first few higher
+harmonics, then the rate of decline becomes constant for all succeeding ones.
+
+gihdclfn1 = $unity
+gihdclfn2 = $unity
+gihdixfn1 = $zero
+gihdixfn2 = $zero
+girlfscl = 0
+girlfoff = 0	; irlflvl = 0
+girlfrscl = 0
+girlfroff = 0	; rolloff rate 0
+girlftbl = $unity
+gihrfixscl = 0
+gihrfixoff = 0
+
+(these are the i0 _init_ defaults).
+
+As things stand the pphf note is poor, sounding almost undistinguishable from a
+wind instrument (lack of harmonics and modulation). The ffhf note is 'buzzy',
+containing too high a level of higher harmonics, but we cannot reduce this
+without reducing the fflf harmonics, which are about right.
+
+Adjusting to make these two notes sound better simply makes the remaining two,
+which are acceptable, worse. The situation can be improved by use of the
+user-level gain variable giuoscgain, which simply scales the synthetic
+harmonics output so their level changes relative the the sound produced by the
+prescriptive harmonic oscillators inposcs.
+
+The harmonics in the real cello tend to decline rapidly as frequency increases,
+tending to a constant rate at some point, in which all the succeeding harmonics
+reach the same level at the same time. This point is earlier on in the note for
+the ff cases
+
+With the default settings above the rolloff rate with frequency can be set to
+produce an equally-spaced declining harmonic pattern by use of the rolloff
+level: this produces a constant scaling value of the decline function index
+kdpix. The rate at which this indexes the decline function is thus constant for
+any given note.
+
+Using a decline function which is decreasing linear and an index function which
+is increasing exp., we can obtain the necessary decline in the release phase
+without unduly affecting the sustain phase. This pattern must be implemented
+for all but the fflf note, which requires its harmonics to be truncated much
+earlier. The fflf case is an exception. The pphf case does not require
+modification. Therefore we restrict the effect to isw range 0.558 to 0.389
+(pplf to ffhf). BY the time we reach the ffhf note we only require to reduce
+the time the hifgher harmonics persist marginally, whilst a cosniderable
+reduction is necessary in the pplf case.
+
+We set gthe decline function pointer ihdfp to access a linear decreasing
+function when isw>=0.389, so all but the fflf cases use this. For the latter,
+we choose a sigmoid decline. We use
+
+gihdclfn1 = 211
+gihdclfn2 = 214
+
+and
+
+hgixsolve 1 0 0.389 0.405
+
+which returns
+
+normalised: scale -62.499989, offset 25.312496
+
+so we set gihdfpscl = -62.5, gihdfpoff = 25.3
+
+to switch between the two decline index functions (idhfp is 1 and 0 at the two
+isw extremes).
+
+With some experimentation we choose factors of 100 for the pplf case and 0.1
+for the ffhf case to control the constant rolloff factor irlflvl determining
+the constant rate of rolloff for all harmonics for some particular note.
+
+linsolve2 100 0.1 0.558 0.389
+
+returns
+
+normalised: scale 0.059112, offset -0.022985
+
+so we set girlfscl = 0.0591, girlfoff = -0.023. At the pplf case isw=0.558 the
+large irlflvl causes the linear decline fn to be accessed rapidly and at ffhf
+isw=0.389 the effect is minimised; by the fflf note with isw 0.389 is largely
+unaffected since the rate of progress along the decline function is very small,
+i.e. it remains near unity.
+
+The increasing exp index fn is too slow for indexing the sigmoid decline of the
+fflf case. We choose a linear increasing index function:
+
+gihdixfn1 = 202
+gihdixfn2 = 201
+
+We require that the exp. index be used for isw >=0.405 and the linear index for
+isw <=0.389. The index fn ptr accesses gihdixfn1 when zero and gihdixfn2 when
+1.
+
+hgixsolve 1 0 0.389 0.405
+
+returns
+
+normalised: scale -62.499989, offset 25.312496
+
+so gihdixfpscl = -62.5, gihdixfpoff = 25.3
+
+We next require a rolloff table which, when accessed by successive harmonics,
+returns a scalar whose value increases less rapidly as the function is indexed
+by the constant index fn (increasing linear). A rising exp. serves the purpose,
+so girlftbl = 206.
+
+This latter function is only needed for the fflf case, and is controlled by
+harmonic rate function index ihrfixscl (a scalar of harmonic number) and the
+rolloff rate (a constant scalar for some note) irlfrate.
+
+The harmonic number is of no importance until the fflf case is reached. We
+require that ihrfixscl be near-zero at isw 0.405 so that notesof greater isw
+are unaffected. The larger number for the fflf case with isw 0.389 means that
+each harmonic contributes to the position in the rolloff table accessed.
+Reference to the gain control diagram in README is helpful. The resulting
+tranistion is thus over the range 0.405->0.389.
+
+The rolloff rate scalar irlfrate is necessary since if irflvl is zero, the
+reuslting decline function index cannot be greater than unity if standard
+functionsare used. Since this is a scalr of decline fn indexing rate kdpix, it
+is bvious that a decline function cannot be traversed more rapidly than note
+duration uless an additional scalar is used.
+
+Experimentally we set limits of 0.5 and 10 for the harmonic rolloff fn index
+scalar ihrfixscl:
+
+We choose a table increment factor of 0 to define the behaviourof harmonics of
+notes with isw>=0.405 and a factor of 10 for the case of isw= 0.389.. Since the
+factor is returned from the liear factor table, value 10 is returned from the
+table by index 0.001. Hence
+
+hgixsolve 0 0.001 0.405 0.389
+
+returns
+
+normalised: scale -0.0625, offset 0.0253
+
+We accordingly set gihrfixscl = -0.0625, gihrfixoff = 0.0253. This returns an
+index scaling ihrfnixscl of 0 for isw = 0.405, rising to 9.733 at isw = 0.389.
+The decline is traversed rapidly in this latter case, and not at all in the
+other cases (since the index remains at zero).
+
+Since ihrfixscl controls indexing rate of kdpix into
+the decline function (sigmoid), it is evident the function will be scanned much
+more slowly in the one case than the other. The effect is largely confined to
+the case we require, fflf. Further, in the latter case each succeeding harmonic
+causes the dcl fn to be traversed more quickly, so higher harmonics are
+truncated faster in accordance with the rolloff table. The harmonics in the
+fflf case decline at an increasingly similar rate as harmonic number increases.
+
+However, although we now access the rolloff table faster for the fflf case, it
+still only returns a maximum index scalar of 1, i.e. is unable to cause the
+index kdpix to be traversed more rapidly than the duration of the note. We
+arrange for the fflf case to be traversed more quickly, causing earlierr
+harmonic rolloff, with the rolloff rate scalar irlfrate. We choose values of
+0.1 to 2 over the isw range 0.405 to 0.389, so the table is traversed in half
+the note dsuration in the fflf case.
+
+We require to solve for index values returning 0.1 and 2 from the linear factor
+table. These are 0.00005 and 0.0002 respectively:
+
+hgixsolve 0.00001 0.0002 0.405 0.389
+
+returns
+
+normalised: scale -0.011875, offset 0.004819
+
+so we set girlfrscl = -0.01188, girlfroff = 0.00482
+
+Increasing rolloff rate causes the harmonics to be truncated earlier in the
+note. Increasing the index scaling into the rolloff table causes successive
+harmonics to decline at a decreasing rate as progress through table 206 is made.
+
+Since with the above settings the successive harmonics of fflf decline more
+rapidly than required as harmonic number increases, the rate of access into the
+roplloff table is increased. We use factors 0 and 25 (indices 0 and 0.0025):
+
+hgixsolve 0 0.0025 0.405 0.389
+
+returns
+
+normalised: scale -0.156250, offset 0.063281
+
+so gihrfixscl = -0.1563, gihrfixoff =  0.0633.
+
+We reduce the scalar irlfrate to allow the harmonics to persist longer through
+the main sustain body of the note:. Using factors 1 and 1.5, we solve for the
+relevant indices into the linear factor table:
+
+hgixsolve 0.0001 0.00015 0.405 0.389
+
+returns
+
+normalised: scale -0.003125, offset 0.001366
+
+so girlfscl = -0.00313, girlfoff = 0.00137.
+
+The result of all these modifications is to alter the synthetic harmonic
+level. As a result, we still have too many harmonics in particular at ffhf
+whilst not enough at pphf. We can only alter this by changing the ihdcl value,
+which will also affect the ffhf note.
+
+If, for the pphf case with isw 0..703, we put
+
+(1-isw)/((inoscs-inposcs)*ihdcl) = 1.5
+
+then ihdcl = 1/1.5*(1-0.703)/(37-10) = 0.0073, this being the factor necessary
+to achieve the required gain multiplication.
+
+For the fflf case, choosing a final gain value of 0.005, a reduction by half
+in the previous level, (effective at the 99th harmonic), we have that
+
+(1-isw)/((inoscs-inposcs)ihdcl) = 0.005
+
+therefore
+
+ihdcl = 200(1-0.389)/90 = 1.358
+
+linsolve2 0.0073 1.358 0.703 0.389
+
+produces the required scale and offset
+
+raw index:  scale -0.110121, offset 0.077602
+
+so we set gihdclscl = -0.11, gihdcloff = 0.078
+
+which is about as good as it gets with this.
+
+
+Harmonic modulation
+
+Harmonic modulation in both frequency and amplitude domains is governed by a
+path through a 3D terrain. This is constructed from suitable x and y axis
+functions, the product of whose ordinate values is the 'height' of the terrain.
+
+A simple example is the product of a sine and decreasing linear function. We
+set giaxfn = $sine, giayfn = 211, gia<x/y>ixfn = 201 (i.e. both amplitude
+functions are indexed by an increasing linear index), gia<x/y>mode = 1
+(normalised ftable access) and giamodfn = $unity (output level control).
+
+This generates a decreasing sine amplitude function which is applied to each
+harmonic.
+
+It is possible to vary the indexing (hence the path) into the x and y functions
+either on the basis of the number of oscillators used in a note or the total
+oscillators available. In the latter case, each harmonic has the same path for
+all notes.  A flag giahashc controls this behaviour. It is also possible to
+specify a user-defined increment to the path (giahnixro). Thus the function
+applied to each harmonic varies with the path.

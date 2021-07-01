@@ -1,8 +1,8 @@
 #!/bin/bash
 
 harmonics=10
-lfpoints=32
-hfpoints=32
+lfpoints=128
+hfpoints=64
 
 # pplf:
 hetro -f220 -h$harmonics -m0 -n$lfpoints notes/AltoFlute.pp.A3.wav ppA3.het

@@ -1,9 +1,11 @@
 ; Cello terrain parameter table declarations
 
-f584    0       128      -23     "data/Cello-arco-reference-1st/x1aOFparams"                                  
+f584    0       128      -23      "data/Cello-arco-reference-1st/x1aOFparams"                                  
+;f584    0        128      -23      "data/Cello-arco-reference-1st/x1aOFparams-ripples"
+
 ;f585    0       128      -23     "data/Cello-arco-reference-1st/y1aOFparams"
 
-f588    0       128      -23     "data/Cello-arco-reference-1st/x2aOFparams"
+f588    0       128      -23     "data/Cello-arco-reference-1st/x2aOFparams-new"
 f589    0       128      -23     "data/Cello-arco-reference-1st/y2aOFparams"
 ;f590    0       128      -23     "data/Cello-arco-reference-1st/y2aOFparams"
 ;f591    0       128      -23     "data/Cello-arco-reference-1st/y2aOFparams"

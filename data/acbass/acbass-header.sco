@@ -5,4 +5,4 @@
 
 #include "header.sco"
 
-i1      0       0       33      ; i1 defines i90 as instr. MIDI no. 33: acbass
+i1	0	0	33	; i1 defines i90 as instr. MIDI no. 33: acbass

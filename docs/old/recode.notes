@@ -1,0 +1,119 @@
+recode.notes
+
+c++
+
+//Instead of fn tables as in csound, use pointers to actual fns
+// this makes it easier to achieve parametric fn surfaces, hard to realise
+// with a table approach
+
+
+num cycles is dur*2*pi*f<n+1>*t, n = harmonic number (0, 1, ..)
+
+num samples is sr*dur
+
+y = sin(x) default, Resurrection can use different fns
+
+the x step is governed by k-rate (borrow this from csound for compatibility)
+
+1 cycle is
+
+there are 2*pi*f*t repeats for some f and t
+
+float modAmp;
+
+;t = noteDuration/s
+;sr = sampleRate
+;kr = controlRate	/* for batch processing */
+
+int pHarmonics;	// equiv of posc and sosc in Resurrection
+int sHarmonics;
+
+numAmpTerrains = 0;
+totalSamples = sr*t;
+
+//genFnCycles = 2*pi*f*t
+
+//genFnIncrement = genFnCycles/totalSamples = 2*pi*f*t/sr*t = 2*pi*f/sr
+genFnIncrement = 2*pi*f/sr;
+
+samplesProcessed = 0;
+
+/* work out the offset from the phase before the call */
+x = 0	; assume this just to get something going */
+
+x = genFnOffset;	/* initial function argument */
+// note - might not be is the _phase_ is nonzero - there will be an offset
+// the starting sample is still 0 */
+
+
+// guts of the synthesis process follows
+
+while (processedSamples<totalSamples)
+{
+	y = sin (x);	/* note this needs to point to an actual generator fn */
+	
+	if there's no terrain involved, eg ac-bass, we can omit the terrain call */
+	
+	if (numAmpTerrains>0)
+	// make the terrain call virtual
+		modAmp = terrain();		/* fn returns an amplitude modulation */
+					/* this affects a _batch_ of samples if kr<sr */
+					/ * terrain goes through all harmonics */
+					/ * here we just have fundamental specified */
+					/* terrain returns a composite amp mod value */
+					/* we need ... */
+// wrong - just specify fundamental freq and let terrain do the rest of the synthesis
+// then howe do we cope with no terrain but multiple hs?
+
+// soln - call some amp modifying fn which calculates the hs and their sum
+// if need be test in there as above whether terrain needed and apply amp mod
+// as eaxch harmonic is created before summation for that sample
+// needs to be createSound() - this can call terrain per harmonic if req'd
+
+// WE NEED TO MOVE THE WHOLE ABOVE LOT OUT TO FN
+// since the fn increment will be different for each successive harmonic
+// f0, f1=2*f0, f<n> = <n+1>*f0 generally...
+
+	// y *= modAmp
+	
+	// apply global mod env... if required
+	// need to choose whjether p/s or both are subject
+	// NOTE: need a utility to dehumanise the sample - to get a linear shape
+	// makes is easy to track - lgreater resemblance to sh global env
+	// perhaps don't need a global env, could calculate that per h if req's - 
+	// or use a global if not
+	applyAmpEnv();	// or some such
+	// write out y
+	writeSample();	// or, to the point, dump a whole block if poss
+	// writing block to RAM then dumping the array is much more efficient
+	// and we can just use cout << array[bounds];
+	
+	x += genFnIncrement;
+	processedSamples++;
+}
+
+// this takes no account of the need for interruptibility so that the calling code
+// e.g. a GUI, can get this to do the processing in chunks (_not_ the same thing
+// as kr) and have it call back periodically or when req'd by the calling code
+// same thing applies to the computationally intensive terrain modelling
+// std approach is fork a subprocess but this is probably a bit heavyweight here
+
+
+class Note
+{
+	public:
+		note (instr, start, duration, amplitude, frequency);
+		
+		// n.b. we don't use start here (but we could) - preserve csound
+		// compatibility (so we can still throw scores at it)
+		//also if the MIDI spec is a bit different we can use the
+		// same call and overload the function.
+		// we can check if the note is for an existing instr or not. Initialisation
+		// can be skipped on all successive notes on the same instr.
+		// the initialisation only occurs when the first note on a new instrument
+		// is declared.
+		// NOTE ALSO the above code snippet isn't set up to do this, requires
+		// some constructional thought.
+	// we also need
+		sampleRate (return _sampleRate);;
+		sampleRate (_sampleRate = <supplied arg>); // etc

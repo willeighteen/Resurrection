@@ -1,0 +1,352 @@
+General Table Index Method
+
+Variables:
+
+; <p> mag	<p> off		<p> tbl
+i<p>		i<p>off		i<p>tbl
+
+; <p> ix mag	<p> ix off	<p> ix tbl
+i<p>ix		i<p>ixoff		i<p>ixtbl
+
+; <p> tbl off	<p> tbl wrap	<p> ix tbl scan period	<p> ix tbl bounce mode
+i<p>toff		i<p>twrap	i<p>ixsp				i<p>ixbm
+
+table: number (specified in header.sco)
+period: n >= 0, n/duration (p3)n < 0, frequency (Hz)
+
+
+Output:
+
+k<p>	output parameter
+|
++ i<p>off
+|
+* i<p>	the defining output magnitude scalar
+|
+k<p>
+
+Table:
+
+output	opc	args...
+mag		tbl	index	function	mode	offset	wrap
+
+k<p>		k<p>ix	i<p>tbl	1		i<p>toff	i<p>twrap
+
+
+Index bounce mode
+
+k<p>ix = ((k<p>ix<0 && i<p>ixbm==1) ? abs(k<p>ix) : k<p>ix)
+k<p>ix = ((k<p>ix>i<p>ix && i<p>ixbm==1) ? i<p>ix-k<p>ix : k<p>ix)
+
+k<p>ix
+|
++ i<p>ixoff
+|
+k<p>ix
+
+
+Direct index:
+
+output	opc	args...
+mag		osc	amp		freq			function
+
+k<p>ix		i<p>ix	i<p>ixsp		i<p>ixtbl
+
+
+Index frequency
+
+i<p>ixsp = (i<p>ixsp<0 ? abs(i<p>ixsp) : i<p>ixsp/p3)
+
+
+
+Indirect index:
+Replacing i<p>ix and i<p>ixsp in the index oscillator, i<p>ixoff in the index offset and i<p>off and i<p> in the table indexed by the equivalent k-rate variables offers greater control flexibility and generates more complex outputs. This also removes the necessity of specifying these parameters, since they are generated.
+
+Note that control of the index frequency is problematical: an output may be generated which has positive and negative values. We have to decide under what circumstances we should consider the index frequency to be valid. Any output containing both positive and negative values should be prohibited as under the current scheme this will result in an alternation between the two timing modes, frequency and duration. This is likely to be of little or no use.
+
+Therefore index frequencies should be designed to be either entirely positive or entirely negative (easily achieved by appropriate offset) and then either represent frequency- or duration-based indexing.
+
+This leads to the following schema (bracketed i variables are substituted by k equivalents):
+
+<n> = sub-section expansion name.
+
+Variables:
+
+; <p> <n> mag	<p> <n>  off		<p> <n> tbl
+(i<p><n>mag)	(i<p><n>off)		i<p><n>tbl
+
+; <p> <n> ix mag	<p> <n> ix off		<p> <n> ix tbl
+(i<p><n>ixmag)	(i<p><n>ixoff)	i<p><n>ixtbl
+
+; <p> <n> tbl off	<p> <n> tbl wrap	<p> <n> ix tbl scan period	<p> <n> ix tbl bounce mode
+i<p><n>toff		i<p><n>twrap	(i<p><n>ixsp)		i<p><n>ixbm
+
+; table: number (specified in header.sco)
+; period: n >= 0, n/duration (p3)n < 0, frequency (Hz)
+
+
+1) i<p>mag -> k<p>mag
+Scalar of the returned table value.
+; <p> mag mag	<p> mag  off		<p> mag tbl
+(i<p>magmag)		(i<p>magoff)		i<p>magtbl
+
+; <p> mag ix mag	<p> mag ix off		<p> mag ix tbl
+(i<p>magixmag)	(i<p>magixoff)		i<p>magixtbl
+
+; <p> mag tbl off	<p> mag tbl wrap	<p> mag ix tbl scan period	<p> mag ix tbl bounce mode
+i<p>magtoff		i<p>magtwrap		(i<p>magixsp)				i<p>magixbm
+
+
+2) i<p>off -> k<p>off
+Offset to the table value returned by the index.
+
+; <p>off mag		<p>off  off		<p>off tbl
+(i<p>offmag)		(i<p>offoff)		i<p>offtbl
+
+; <p>off ix mag	<p>off ix off		<p>off ix tbl
+(i<p>offixmag)		(i<p>offixoff)		i<p>offixtbl
+
+; <p>off tbl off		<p>off tbl wrap	<p>off ix tbl scan period		<p>off ix tbl bounce mode
+i<p>offtoff		i<p>offtwrap		(i<p>offixsp)				i<p>offixbm
+
+
+3) i<p>ixmag -> k<p>ixmag
+Scalar of the index magnitude.
+
+; <p> ixmag mag	<p> ixmag  off		<p> ixmag tbl
+(i<p>ixmagmag)	(i<p>ixmagoff)		i<p>ixmagtbl
+
+; <p> ixmag ix mag	<p> ixmag ix off	<p> ixmag ix tbl
+(i<p>ixmagixmag)	(i<p>ixmagixoff)	i<p>ixmagixtbl
+
+; <p> ixmag tbl off	<p> ixmag tbl wrap	<p> ixmag ix tbl scan period	<p> ixmag ix tbl bounce mode
+i<p>ixmagtoff		i<p>ixmagtwrap	(i<p>ixmagixsp)			i<p>ixmagixbm
+
+
+4) i<p>ixoff -> k<p>ixoff
+Offset to the index value.
+
+; <p> ixoff mag	<p> ixoff  off		<p> ixoff tbl
+(i<p>ixoffmag)		(i<p>ixoffoff)		i<p>ixofftbl
+
+; <p> ixoff ix mag	<p> ixoff ix off		<p> ixoff ix tbl
+(i<p>ixoffixmag)	(i<p>ixoffixoff)		i<p>ixoffixtbl
+
+; <p> ixoff tbl off	<p> ixoff tbl wrap	<p> ixoff ix tbl scan period	<p> ixoff ix tbl bounce mode
+i<p>ixofftoff		i<p>ixofftwrap		(i<p>ixoffixsp)				i<p>ixoffixbm
+
+
+5) i<p>ixsp -> k<p>ixsp
+Table scan period.
+
+; <p> ixsp mag	<p> ixsp  off		<p> ixsp tbl
+(i<p>ixspmag)		(i<p>ixspoff)		i<p>ixsptbl
+
+; <p> ixsp ix mag	<p> ixsp ix off		<p> ixsp ix tbl
+(i<p>ixspixmag)	(i<p>ixspixoff)		i<p>ixspixtbl
+
+; <p> ixsp tbl off	<p> ixsp tbl wrap	<p> ixsp ix tbl scan period	<p> ixsp ix tbl bounce mode
+i<p>ixsptoff		i<p>ixsptwrap		(i<p>ixspixsp)				i<p>ixspixbm
+
+
+Extended index variables: code template.
+
+; Files are loaded into a function table via score f# <start> 64 -23 "paramfilename" statement. The contents are allocated to appropriate variables in the instrument.
+
+idur = p3	; p3 optional
+
+i<p>table = p<n>	; allocate table number ffrom score parameter
+				; do not rename 'table' to 'tbl' to avoid variable conflict.
+
+; The top-level variable specification is now reduced to 2 tables, 2 flags:and one table offset.
+
+i<p>tbl				table	0, i<p>table, 0
+i<p>ixtbl				table	1, i<p>table, 0
+i<p>toff				table	2, i<p>table, 0
+i<p>twrap			table	3, i<p>table, 0
+i<p>ixbm				table	4, i<p>table, 0
+
+; followed by the complete specification for the substituted variables:
+
+; 1
+i<p>magmag			table	5, i<p>table, 0
+i<p>magoff			table	6, i<p>table, 0
+i<p>magtbl			table	7, i<p>table, 0
+i<p>magixmag		table	8, i<p>table, 0
+i<p>magixoff			table	9, i<p>table, 0
+i<p>magixtbl			table	10, i<p>table, 0
+i<p>magtoff			table	11, i<p>table, 0
+i<p>magtwrap			table	12, i<p>table, 0
+i<p>magixsp			table	13, i<p>table, 0
+i<p>magixbm			table	14, i<p>table, 0
+
+; 2
+i<p>offmag			table	15, i<p>table, 0
+i<p>offoff			table	16, i<p>table, 0
+i<p>offtbl			table	17, i<p>table, 0
+i<p>offixmag			table	18, i<p>table, 0
+i<p>offixoff			table	19, i<p>table, 0
+i<p>offixtbl			table	20, i<p>table, 0
+i<p>offtoff			table	21, i<p>table, 0
+i<p>offtwrap			table	22, i<p>table, 0
+i<p>offixsp			table	23, i<p>table, 0
+i<p>offixbm			table	24, i<p>table, 0
+
+; 3
+i<p>ixmagmag		table	25, i<p>table, 0
+i<p>ixmagoff			table	26, i<p>table, 0
+i<p>ixmagtbl			table	27, i<p>table, 0
+i<p>ixmagixmag		table	28, i<p>table, 0
+i<p>ixmagixoff			table	29, i<p>table, 0
+i<p>ixmagixtbl			table	30, i<p>table, 0
+i<p>ixmagtoff			table	31, i<p>table, 0
+i<p>ixmagtwrap		table	32, i<p>table, 0
+i<p>ixmagixsp			table	33, i<p>table, 0
+i<p>ixmagixbm		table	34, i<p>table, 0
+
+; 4
+i<p>ixoffmag			table	35, i<p>table, 0
+i<p>ixoffoff			table	36, i<p>table, 0
+i<p>ixofftbl			table	37, i<p>table, 0
+i<p>ixoffixmag			table	38, i<p>table, 0
+i<p>ixoffixoff			table	39, i<p>table, 0
+i<p>ixoffixtbl			table	40, i<p>table, 0
+i<p>ixofftoff			table	41, i<p>table, 0
+i<p>ixofftwrap			table	42, i<p>table, 0
+i<p>ixoffixsp			table	43, i<p>table, 0
+i<p>ixoffixbm			table	44, i<p>table, 0
+
+; 5
+i<p>ixspmag			table	45, i<p>table, 0
+i<p>ixspoff			table	46, i<p>table, 0
+i<p>ixsptbl			table	47, i<p>table, 0
+i<p>ixspixmag			table	48, i<p>table, 0
+i<p>ixspixoff			table	49, i<p>table, 0
+i<p>ixspixtbl			table	50, i<p>table, 0
+i<p>ixsptoff			table	51, i<p>table, 0
+i<p>ixsptwrap			table	52, i<p>table, 0
+i<p>ixspixsp			table	53, i<p>table, 0
+i<p>ixspixbm			table	54, i<p>table, 0
+
+; table: number (specified in header.sco)
+; period: n >= 0, n/duration (idur); n < 0, frequency (Hz)
+
+i<p>magixsp = (i<p>magixsp<0 ? abs(i<p>magixsp) : i<p>magixsp/idur)
+i<p>offixsp = (i<p>offixsp<0 ? abs(i<p>offixsp) : i<p>offixsp/idur)
+i<p>ixmagixsp = (i<p>ixmagixsp<0 ? abs(i<p>ixmagixsp) : i<p>ixmagixsp/idur)
+i<p>ixoffixsp = (i<p>ixoffixsp<0 ? abs(i<p>ixoffixsp) : i<p>ixoffixsp/idur)
+i<p>ixspixsp = (i<p>ixspixsp<0 ? abs(i<p>ixspixsp) : i<p>ixspixsp/idur)
+i<p>ixspixmag = (i<p>ixspixmag<0? abs(i<p>ixspixmag) : i<p>ixspixmag/idur)
+i<p>ixspmag = (i<p>ixspmag<0? abs(i<p>ixspmag) : i<p>ixspmag/idur)
+
+; generate sectional sub-indices
+; one for each substituted variable
+
+; 1
+k<p>magix	oscili	i<p>magixmag, i<p>magixsp, i<p>magixtbl
+k<p>magix = k<p>magix+i<p>magixoff
+k<p>magix = ((k<p>magix<0 && i<p>magixbm==1) ? abs(k<p>magix) : k<p>magix)
+k<p>magix = ((k<p>magix>i<p>magixmag && i<p>magixbm==1) ? i<p>magixmag-k<p>magix : k<p>magix)
+k<p>mag		tablei	k<p>magix, i<p>magtbl, 1, i<p>magtoff, i<p>magtwrap
+k<p>mag = k<p>mag*i<p>magmag+i<p>magoff
+
+; 2
+k<p>offix		oscili	i<p>offixmag, i<p>offixsp, i<p>offixtbl
+k<p>offix = k<p>offix+i<p>offixoff
+k<p>offix = ((k<p>offix<0 && i<p>offixbm==1) ? abs(k<p>offix) : k<p>offix)
+k<p>offix = ((k<p>offix>i<p>offixmag && i<p>offixbm==1) ? i<p>offixmag-k<p>offix : k<p>offix)
+k<p>off		tablei	k<p>offix, i<p>offtbl, 1, i<p>offtoff, i<p>offtwrap
+k<p>off = k<p>off*i<p>offmag+i<p>offoff
+
+; 3
+k<p>ixmagix	oscili	i<p>ixmagixmag, i<p>ixmagixsp, i<p>ixmagixtbl
+k<p>ixmagix = k<p>ixmagix+i<p>ixmagixoff
+k<p>ixmagix = ((k<p>ixmagix<0 && i<p>ixmagixbm==1) ? abs(k<p>ixmagix) : k<p>ixmagix)
+k<p>ixmagix = ((k<p>ixmagix>i<p>ixmagixmag && i<p>ixmagixbm==1) ? i<p>ixmagixmag-k<p>ixmagix : k<p>ixmagix)
+k<p>ixmag	tablei	k<p>ixmagix, i<p>ixmagtbl, 1, i<p>ixmagtoff, i<p>ixmagtwrap
+k<p>ixmag = k<p>ixmag*i<p>ixmagmag+i<p>ixmagoff
+
+; 4
+k<p>ixoffix	oscili	i<p>ixoffixmag, i<p>ixoffixsp, i<p>ixoffixtbl
+k<p>ixoffix = k<p>ixoffix+i<p>ixoffixoff
+k<p>ixoffix = ((k<p>ixoffix<0 && i<p>ixoffixbm==1) ? abs(k<p>ixoffix) : k<p>ixoffix)
+k<p>ixoffix = ((k<p>ixoffix>i<p>ixoffixmag && i<p>ixoffixbm==1) ? i<p>ixoffixmag-k<p>ixoffix : k<p>ixoffix)
+k<p>ixoff		tablei	k<p>ixoffix, i<p>ixofftbl, 1, i<p>ixofftoff, i<p>ixofftwrap
+k<p>ixoff = k<p>ixoff*i<p>ixoffmag+i<p>ixoffoff
+
+; 5
+k<p>ixspix	oscili	i<p>ixspixmag, i<p>ixspixsp, i<p>ixspixtbl
+k<p>ixspix = k<p>ixspix+i<p>ixspixoff
+k<p>ixspix = ((k<p>ixspix<0 && i<p>ixspixbm==1) ? abs(k<p>ixspix) : k<p>ixspix)
+k<p>ixspix = ((k<p>ixspix>i<p>ixspixmag && i<p>ixspixbm==1) ? i<p>ixspixmag-k<p>ixspix : k<p>ixspix)
+k<p>ixsp		tablei	k<p>ixspix, i<p>ixsptbl, 1, i<p>ixsptoff, i<p>ixsptwrap
+k<p>ixsp = k<p>ixsp*i<p>ixspmag+i<p>ixspoff
+
+; Finally do top-level indexing with k-rate indices above.
+
+; there isn't an i<p>ix to test against, only k<p>ix
+k<p>ix	oscili	k<p>ixmag, k<p>ixsp, i<p>ixtbl
+k<p>ix = k<p>ix+k<p>ixoff
+k<p>ix = ((k<p>ix<0 && i<p>ixbm==1) ? abs(k<p>ix) : k<p>ix)
+if (k<p>ix<=1 && i<p>ixbm==0) kgoto <p>nobounce
+k<p>ix = k<p>ix-int(k<p>ix)
+k<p>ix = 1-k<p>ix
+<p>nobounce:
+k<p>	tablei	k<p>ix, i<p>tbl, 1, i<p>toff, i<p>twrap
+k<p> = k<p>*k<p>mag+k<p>off	; k<p> is final output
+
+display k<p>magix, idur
+display k<p>mag, idur
+display k<p>offix, idur
+display k<p>off, idur
+display k<p>ixmagix, idur
+display k<p>ixmag, idur
+display k<p>ixoffix, idur
+display k<p>ixoff, idur
+display k<p>ixspix, idur
+display k<p>ixsp, idur
+display k<p>ix, idur
+display k<p>, idur
+
+
+Extended index variables: default parameter file template.
+Return values for tables and indices set to zero.
+
+; <p> tbl		<p> ix tbl	<p> tbl off	<p> tbl wrap	<p> ix bounce mode
+207			207			0			0			0
+;
+; <p> mag mag		<p> mag off		<p> mag tbl
+1					0				207
+; <p> mag ix mag		<p> mag ix off		<p> mag ix tbl
+0					0				207
+; <p> mag tbl off		<p> mag tbl wrap	<p> mag ix tbl scan period	<p> mag ix tbl bounce mode
+0					0				1						0
+;	
+; <p> off mag			<p> off off		<p> off tbl
+0					0				207
+; <p> off ix mag		<p> off ix off		<p> off ix tbl
+0					0				207
+; <p> off tbl off		<p> off tbl wrap	<p> off ix tbl scan period	<p> off ix tbl bounce mode
+0					0				1						0
+;	
+; <p> ixmag mag		<p> ixmag  off		<p> ixmag tbl
+0					0				207
+; <p> ixmag ix mag		<p> ixmag ix off	<p> ixmag ix tbl
+0					0				207
+; <p> ixmag tbl off		<p> ixmag tbl wrap	<p> ixmag ix tbl scan period	<p> ixmag ix tbl bounce mode
+0					0				1						0
+;
+; <p> ixoff mag		<p> ixoff ixoff		<p> ixoff tbl
+0					0				207
+; <p> ixoff ix mag		<p> ixoff ix ixoff	<p> ixoff ix tbl
+0					0				207
+; <p> ixoff tbl ixoff		<p> ixoff tbl wrap	<p> ixoff ix tbl scan period	<p> ixoff ix tbl bounce mode
+0					0				1						0
+;
+; <p> ixsp mag		<p> ixsp off		<p> ixsp tbl
+0					0				207
+; <p> ixsp ix mag		<p> ixsp ix off		<p> ixsp ix tbl
+0					0				207
+; <p> ixsp tbl off		<p> ixsp tbl wrap	<p> ix tbl scan period		<p> ixsp ix tbl bounce mode
+0					0				1						0
+;

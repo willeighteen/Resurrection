@@ -1,0 +1,9 @@
+; if we have a p-h table with sustain and reduce it to AD we get AD glitches
+; due to discontinuity. This can't easily be resolved by twiddling instr. setup
+; values for transition times since it's the actual data that's the problem
+; (variations in amplitude at any selected points unless you're wildly lucky)
+
+; have to superimpose some 'envelope' on the values but the p-h phase
+; durations ARE NOT phase durations, they describe table indexing ratios in
+; proportion to idur. not much you can do except don't expect to switch a user
+; env for defauklt AD without problems.

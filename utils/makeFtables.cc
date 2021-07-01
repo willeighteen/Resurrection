@@ -173,7 +173,7 @@ int main ( int argc, char *argv[] )
 
 	tblBase += harmonics*2;	// next free ftable number
 	hetcnv->outMode ( (char *) "w" );	// reset to write new file
-printf("next free %d\n", tblBase);
+
 	strcpy(dataFile, dstDir);
 	strncat(dataFile, instrName, strlen(instrName));
 	strncat(dataFile, "-hmag.data", 10);
@@ -256,6 +256,6 @@ printf("next free %d\n", tblBase);
 
 	delete out;
 	delete hetcnv;
-	printf("Last used ftable number %d\n", tblBase);
+	printf("Last used ftable number %d\n", tblBase+4);	// allow 4 cases
 	return 0;
 }

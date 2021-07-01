@@ -1,0 +1,12 @@
+This is develped from the Resurrection tree. Resurrection-rebirth is the 
+initial attempt at a gui-controlled version, abandoned due to code-base 
+problems afflciting every previous version.
+
+Note that at least one old version of Resurrection has 3-D array indexing: 
+it works in this, the casound demo I had fucked up. This is worth 
+ferreting out and saving. Don't know which version in the archive. Fairly 
+early on when I was experimenting with control methods.
+
+Speaking of which, see the new generic control system in 
+GeneralTableIndexMethod, reproduced here. This solves many of the problems 
+involved in controlling terrain surface paths.

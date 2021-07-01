@@ -1,4 +1,4 @@
-7; header.sco
+; header.sco
 ; Version 5: Resurrection-4.0
 ;
 ; <<< instrument wavetables >>>
@@ -24,27 +24,28 @@ f33 0 1024 19  1 3.2 0 0  2 0.37 75 0  3 0.01 90 0  4 0.003 0 0  5 0.001 0 0
 
 ; <<< attack phase tables >>>
 f201	0	257	7	0 256 1			; linear 0->1
-f202	0	257	5	.0001 256 1		; exp 0.0001->1
+f202	0	257	5	0.001 256 1		; exp 0.001->1
 f203	0	257	9	0.25 1 0			; sine 0->1
-f204 0 	257	19	.5 1 270 1 		; sigmoid 0->1
+f204 0 	257	19	0.5 1 270 1 		; sigmoid 0->1
 
 ; f205-210 unassigned, reserved
 
 ; <<< decline/release and decay phase tables >>>
 f211	0	257	7	1 256 0			; linear 1->0
-f212	0	257	5	1 256 .0001		; exp 1->0.0001
+f212	0	257	5	1 256 0.001		; exp 1->0.001
 f213	0	257	9	0.25 1 90			; cos 1->0
-f214 0 	257	19	.5 1 90 1  		; sigmoid 1->0
+f214 0 	257	19	0.5 1 90 1  		; sigmoid 1->0
 
 ; f215-219 unassigned, reserved
 
 f220	0	257	9	1 2 90	; cosine
 ; Table #1, a simple cosine waveform.(from the gbuzz opcode manual page)
-;f220 0 2048 11 1	; hires cosine
+f221 0 2048 11 1	; hires cosine
 f230	0	4	7	0 1 1 1 0	; triangle: extended contour
 f231	0	3	7	0 1 1 1 0	; triangle: interpolated wraparound
 f232	0	4	7	1 1 0 1 1	; inv. triangle extended contour
 f233	0	3	7	1 1 0 1 1	; inv. triangle: interpolated wraparound
+f234	0	257	3	0 1 0 1 1	; parabola
 
 ; <<< misc functions >>>
 ;f235	0	256	7	0	128	0	; sero-filled table: space for gioscs max. start/end h scl data
@@ -61,7 +62,7 @@ f241	0	257	7	1 128 1 0 -1 128 -1
 f242	0	257	10	0.8 0.9 0.95 0.96 1 0.91 0.8 0.75 0.6 0.42 0.33 0.28 0.2 0.15
 ; 243: phasor from -1 to 1
 f243    0   257    7   -1 256 1
-f244	0	33	8	0 15 1 18 0	; spline curve with hump
+f244	0	33	8	0.5 15 1 18 0.5	; spline curve with hump
 ; don't move these!
 f245	0	2049	10	1	; hires sine
 f246	0	2	7	0 2 0	; zero

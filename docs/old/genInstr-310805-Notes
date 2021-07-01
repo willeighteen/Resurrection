@@ -1,0 +1,134 @@
+; Musically the distinction seems to be between tremolo as effect applied to
+; medium, which is the source of vibrato. So here a modulation in amplitude
+; translates to modulation of freq. Interesting. But the only measure we have
+; of applied force is note amplitude, and this is constant.
+; anyway this doesn't apply to a string - there is tremolo of the bow, which is
+;separate from vibrato caused by finger-oscillation.
+; as the book says, tremolo is vol , vibrato is freq.
+; we have no means of note vol vhange; see 'Legato Instruments'
+; varies] ac to instrument; wind is mostyl tremolo, string vibrato
+; apparently vibrato may not be delayed - flute.
+;what modes can be used also instr-dependednt
+; string -fingering and vibrato same mechanism, can't apply vibrato to short
+; notes; wind - tremolo and vibrato independent.
+; what is the dependency for different _methods_?
+; 'realistic' inplemetation must include _randomness_
+; need a 'competency' indicator to give amount of randomness, which should
+; in any case be limited to avoid examples of hopeless playing
+; default competency 100%, ie no variation in tremolo or vibrato rate
+; tremolo needs to be applied additively to ampl env, then this scaled back
+; vibrato s/b applied by product with freq (?)
+
+; should we apply expression before tremolo? or is this naturally
+; increased/decreased with amplitude?
+
+
+
+
+; Meta-expression mode - instrument 2
+; changes default behaviour of i3
+
+; Note: frequency elision (forced maximum portamento)
+; A note may be made to slide from one frequency to another over its duration
+; by splitting it in two, tying the two notes together, setting i2->p7 to 1
+; and using the portamento feature of i3 before playing the notes:
+
+
+(scale is now p5??? - removed ampl, freq from meta-expression)
+;i2	0		0		0		0		0	45		; make lin. decline portamento
+												; over approx. tied note duration
+;i3 0		0.5		0		0		8.00	0	; 8.00->8.00 on 1st note
+;i3 +		1		0		0		8.00	0	; 8.00->7.00 on 2nd note
+
+;i99	0		-0.5	16384	8.00	0	; next two notes tied to first
+;i99	+		-1		.		7.00	0	;
+;i99	+		1		.		7.00	0	; next note after this is not tied
+
+; Note that the portamento is off on the third note. The effect is to start at
+; one frequency which is held until the decline phase of the first note, then
+; drops to the pitch specified for the second note; since the third tied note
+; is the same pitch, the note continues at the second frequency. Thus the
+; frequency slide occurs in the middle of two sustained pitches.
+
+; Expression mode - instrument 3
+; competency - see 'Notes' (note: this is a meta-expression, s/b in i2)
+
+; Instrument - instrument 99
+; Specifies note to be performed on instr defined by instr1 with (optional)
+; expression defined by instr3 (whose 'mood' is specified by (optional) instr2.
+; instr2 is a sort of meta-expression.
+
+
+
+; instr 1
+; note: it may be worth investigating a table from say 0.5 to 1 into which
+; the note is indexed by mass and freq to return a freq-dependent scalar 
+; which can be used on a mass basis to modify that instr's attack/decline
+; with frequency duration. So can be tightened or slackened with increasing
+; freq deviation.
+
+genInstr.orc notes
+; Notes
+
+; gimass - instrument inertia
+; depends on instrument type and the effective mass of its sound-generator
+; governs attack and decay phase duration
+
+; gires - instrument internal resonance
+; depends on instrument type
+; governs decay phase duration
+
+; instrument inertia and reosnance - typical values
+;	instr			inertia		resonance	method
+; old - invalid
+;	?echo			10.0		5.0			osc+fosc equal - 'musical drops' like water
+
+
+; decay time s/b related to mass and accel values
+; final level of sustain is both amplitude _and_ duration-dependent
+; if the sound lasts longer, the amplitude drops more
+; if the sound intensity is higher, the amplitude drops more
+; if the frequency rises the amplitude drops more
+; larger mass means longer decline
+; unless the instr is energised more, e.g. held note increasing in intensity
+; the sustain depends on the energy expects, performer-controlled but amplitude-
+; dependent. As note amplitudew increases, sustain slope becomes more -ve;
+; as frequency increases, less mass energised, slope tends to zero
+; note also that the performer may increase Ein  leading to a rising sustain
+; which may be greater than that cause by natural drop in sustain level
+; in fact the decay shape may be better retrieved from a stored fn table
+; referenced by instrument type (if common types can be distinguished)
+; this doesn't allow for variation in the steady-state condition, however,
+; e.g. a drooping sustain - or even an increase over the sustain period...
+
+
+
+Can't use global envelope instrument, damn, due to env construction being
+continually changed at note time and at same time as proposed other env times
+e.g. 'chiff' on wind instrs, also calling another instr via send-and-return
+introduces a delay which causes discontinuities, 'click', 'pop', grrrr.
+
+Probably means flags, gotos, more bloody if tests, etc., for every instance
+where we need the ampenv function. Dammit we _need_ an ampenv fn! BUt we've no
+mecahnism for a fn call...
+
+
+Wavetable filtering - considerations
+;print inotefreq, iocti
+; frequency bands? fixed vs. dynamic
+; fixed freq ease of implementation but perhaps bands too widely separated
+; for some instrs, lack of fine control (low freqs)
+; dynamic difficulty of computation and control
+
+; fixed
+;abpf    butterbp  asig, 2000, 100 ; passing only 1950 to 2050 Hz
+; dynamic
+;ar   reson     asig, kcf, kbw[, iscl, istor] ; scl default 0, 1 normalizes centre freq
+
+
+; trying to determine where to put the bands in the parametric eq (dynamic)
+; version is difficult, but if we implement this as bp filter with static
+; bw we can go for variable bw later. But if we use variable bw then we need
+; a variable number of bands to cover the frequency spectrum. How to determine
+; this number>
+
