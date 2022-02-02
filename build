@@ -1,0 +1,123 @@
+#!/bin/bash
+baseDir=`pwd`
+baseTblNum="400"
+
+# clean out previous instrument setups,, rebuild everything
+cd data
+for x in Viola.pizz.sulA Cello-arco-reference-1st Clarinet-Bb AltoFlute Cello.arco.sulC
+do
+rm -f $x/*header.sco $x/*data $x/*hmag.data
+done
+cd ../utils
+make clean
+
+if [ -z "$1" ]
+then
+make
+cd ../data
+
+# make the Viola instrument, MIDI number 41
+instr="Viola.pizz.sulA"
+inum="41"
+harmonics="10"
+tblSize="512"
+echo $instr $baseTblNum
+cd $instr
+for x in ppA4.het ppG6.het ffA4.het ffG6.het
+do
+../../utils/het2ftbl $x $harmonics $baseTblNum $tblSize
+baseTblNum=$((baseTblNum+2*$harmonics))
+done
+baseTblNum=$((baseTblNum+4))
+../../utils/makeFtables $instr ppA4 ppG6 ffA4 ffG6
+../../utils/makeInstrumentHeader $instr $inum
+rm ppA4 ppG6 ffA4 ffG6 *.hmag
+cd ..
+
+# make the Cello-arco-reference-1st instrument, MIDI number 43
+instr="Cello-arco-reference-1st"
+inum="43"
+harmonics="10"
+tblSize="128"
+echo $instr $baseTblNum
+cd $instr
+for x in arco-ppC2.het arco-ppG5.het arco-ffC2.het arco-ffG5.het
+do
+../../utils/het2ftbl $x $harmonics $baseTblNum $tblSize
+baseTblNum=$((baseTblNum+2*$harmonics))
+done
+baseTblNum=$((baseTblNum+4))
+../../utils/makeFtables $instr arco-ppC2 arco-ppG5 arco-ffC2 arco-ffG5
+../../utils/makeInstrumentHeader $instr $inum
+rm arco-ppC2 arco-ppG5 arco-ffC2 arco-ffG5 *.hmag
+cd ..
+
+# make the Bb clarinet instrument, MIDI number 71
+instr="Clarinet-Bb"
+inum="72"
+harmonics="15"
+tblSize="128"
+echo $instr $baseTblNum
+cd $instr
+for x in ppD3.het ppG6.het ffD3.het ffG6.het
+do
+../../utils/het2ftbl $x $harmonics $baseTblNum $tblSize
+baseTblNum=$((baseTblNum+2*$harmonics))
+done
+baseTblNum=$((baseTblNum+4))
+../../utils/makeFtables $instr ppD3 ppG6 ffD3 ffG6
+../../utils/makeInstrumentHeader $instr $inum
+rm ppD3 ppG6 ffD3 ffG6 *.hmag
+cd ..
+
+# make the Alto Flute instrument, MIDI number 73
+instr="AltoFlute"
+inum="73"
+harmonics="10"
+tblSize="128"
+echo $instr $baseTblNum
+cd $instr
+for x in ppA3.het ffA3.het
+do
+../../utils/het2ftbl $x $harmonics $baseTblNum $tblSize
+baseTblNum=$((baseTblNum+2*$harmonics))
+done
+tblSize="64"
+for x in ppG5.het ffF6.het
+do
+../../utils/het2ftbl $x $harmonics $baseTblNum $tblSize
+baseTblNum=$((baseTblNum+2*$harmonics))
+done
+baseTblNum=$((baseTblNum+4))
+../../utils/makeFtables $instr ppA3 ppG5 ffA3 ffF6
+../../utils/makeInstrumentHeader $instr $inum
+rm ppA3 ppG5 ffA3 ffF6 *.hmag
+cd ..
+
+# make the alternate Cello.arco.sulC instrument, MIDI number 143
+instr="Cello.arco.sulC"
+inum="143"
+harmonics="10"
+baseTblNum=$((baseTblNum+2*$harmonics))
+tblSize="128"
+echo $instr $baseTblNum
+cd $instr
+for x in ppC2.het ffC2.het
+do
+../../utils/het2ftbl $x $harmonics $baseTblNum $tblSize
+baseTblNum=$((baseTblNum+2*$harmonics))
+done
+tblSize="64"
+for x in ppD5.het ffB3.het
+do
+../../utils/het2ftbl $x $harmonics $baseTblNum $tblSize
+baseTblNum=$((baseTblNum+2*$harmonics))
+done
+baseTblNum=$((baseTblNum+4))
+../../utils/makeFtables $instr ppC2 ppD5 ffC2 ffB3
+../../utils/makeInstrumentHeader $instr $inum
+rm ppC2 ppD5 ffC2 ffB3 *.hmag
+
+fi
+cd $baseDir
+unset instr inum harmonics baseTblNum tblSize baseDir
