@@ -1,8 +1,0 @@
-; instrument 133 terrain parameter table declarations
-
-; Note: terrain tables must be numbered to avoid overlap with instrument
-; data tables. Find the highest-numbered instrument hmag.data table and
-; use the next table number after this to be certain!
-
-f1000	0	128	-23	"data/instr133/xparams"
-f1001	0	128	-23	"data/instr133/yparams"

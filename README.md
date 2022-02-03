@@ -1,7 +1,0 @@
-do '. build' in this directory. (without the quotes)
-
-Run scores in the scores directory with resurrection.orc:
-
-        csound -d -W -o sound/test.wav resurrection-<version>.orc scores/Cello-test.sco
-
-and so forth.

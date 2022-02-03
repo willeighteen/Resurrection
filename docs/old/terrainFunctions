@@ -1,5 +1,0 @@
-set hidden3d
-set isosamples 35
-set xrange [-10 : 10]
-set yrange [-10 : 10]
-splot sin(sqrt(x**2+y**2)) / sqrt(x**2+y**2)
