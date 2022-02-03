@@ -1,0 +1,2 @@
+All the terrain tables here are pre-17.5 and need additional variables
+and direct indexing flag: see 'loadTerrainTables' in the code.

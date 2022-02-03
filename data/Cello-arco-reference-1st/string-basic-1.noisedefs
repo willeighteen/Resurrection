@@ -1,0 +1,224 @@
+; experimental basic bowed string-type noise.
+; only uses type 1 noise and 2 noise processes, 3 (band-limited) and
+; 1 (pitched/fixed), successively
+; sine attack, exp. decline
+; format
+; (have to use table numbers since names not defined here)
+;
+; number of noise components in note
+1
+; first noise
+; <noise persistence>
+;	1 = through-note
+0
+; <envelope params.>
+;	attack t scalar (fraction of note attack)
+1
+;	dcl flag	; 0 = decline scalar of note attack, 1 = decline scalar of note decline
+1
+;	decline t scalar
+1
+;	attack function
+203
+;	decline function
+212
+; noise type
+1
+; for noise type 1 extra parameters are required - omit otherwise
+;
+; noise type 1 params
+; kbeta init
+-0.9
+; kbeta term
+-0.5
+; kbeta fn
+247
+;
+; noise level
+5
+; num _processes_ for this noise!
+2	;3	;inprocs
+; for each 1 of inprocs...
+;
+; process type
+;
+3
+; band-limited noise
+; bw function
+212
+;
+; CHECK THIS FLAG!
+; centre frq flag (0 = harmonic frq, 1 = partial frq)
+1	;1
+;
+; process type
+;
+;2
+; <2: flanged noise>
+; lfo rate init
+;1
+; lfo rate term
+;3
+; rate change fn
+;211
+; max delay (ms)
+;5
+; flanger function
+;201
+; <duration (internal - will be inatk+indcl)>
+; process type
+;
+1
+; <1: pitched/fixed noise>
+ ; cf, bw scalars: +ve: factor of f0, -ve: absolute value
+; cf init scalar
+0.5
+; cf term scalar
+1
+; note centre freq. transition function: cf = fn val*(cfterm-cfinit)+cfinit
+247
+; bw init scalar
+1
+; bw term scalar
+3
+; bw fn: bw = fn val*(bwterm-bwinit)+bwinit
+211
+;
+; process type
+;
+;3
+; band-limited noise
+; bw function
+;212
+;
+; centre frq (0 = harmonic frq, 1 = partial frq)
+;0	;1
+;
+; second noise
+; <noise persistence>
+;	1 = through-note
+0
+; <envelope params.>
+;	attack t scalar (fraction of note attack)
+1
+;	dcl flag	; 0 = decline scalar of note attack, 1 = decline scalar of note decline
+1
+;	decline t scalar
+1
+;	attack function
+202
+;	decline function
+212
+; noise type
+1
+; for noise type 1 extra parameters are required - omit otherwise
+;
+; noise type 1 params
+; kbeta init
+0.1
+; kbeta term
+0.9
+; kbeta fn
+201
+;
+; noise level
+0.5
+; num _processes_ for this noise!
+3	;inprocs
+; for each 1 of inprocs...
+;
+; process type
+;
+1
+; <1: pitched/fixed noise>
+; note centre freq. init scalar (positive: integer factor of f0, negative: absolute value)
+0
+; note centre freq. term scalar (+ve: factor of f0, -ve: absolute value)
+1
+; note centre freq. transition function: cf = fn val*(cfterm-cfinit)+cfinit
+201
+; bw init
+20
+; bw term
+20
+; bw fn: bw = fn val*(bwterm-bwinit)+bwinit
+247
+;
+; process type
+;
+3
+; band-limited noise
+; bw function
+201
+;
+; centre frq (0 = harmonic frq, 1 = partial frq)
+0
+;
+;
+; process type
+;
+2
+; <2: flanged noise>
+; lfo rate init
+1
+; lfo rate term
+3
+; rate change fn
+201
+; max delay (ms)
+5
+; flanger function
+201
+; <duration (internal - will be intak+indcl)>
+;
+; third noise
+;
+; <noise persistence>
+;	1 = through-note
+1
+; <envelope params.>
+;	attack t scalar (fraction of note attack)
+1
+;	dcl flag	; 0 = decline scalar of note attack, 1 = decline scalar of note decline
+1
+;	decline t scalar
+1
+;	attack function
+202
+;	decline function
+212
+; noise type
+3
+; noise level
+0.5
+; num _processes_ for this noise!
+2	;inprocs
+; for each 1 of inprocs...
+;
+; process type
+;
+3
+; band-limited noise
+; bw function
+247
+;
+; centre frq flag (0 = harmonic frq, 1 = partial frq)
+1
+;
+; process type
+;
+1
+; <1: pitched/fixed noise>
+; note centre freq. init scalar (positive: integer factor of f0, negative: absolute value)
+1
+; note centre freq. term scalar (positive: integer factor of f0, negative: absolute value)
+2
+; note centre freq. transition function: cf = fn val*(cfterm-cfinit)+cfinit
+201
+; bw init
+20000
+; bw term
+1000
+; bw fn: bw = fn val*(bwterm-bwinit)+bwinit
+211
+;

@@ -1,0 +1,335 @@
+212	247	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+1	-m	201
+0	u	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+p	q	s	r	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+
+In the above, p is the TDC (Terrain Dynamic Control) flag for group 3, range [1,5].
+It determines index type:
+
+1)	amplitude, range [0,1] from LF to FF
+2)	frequency, range [0,1] from LF to HF
+3)	composite amp/frq index, range nominally [0,1] but dependent on actual
+	instrument amplitude and frequency range specified in instr 1, inum<n>
+4)	1-amplitude
+5)	1-frequency
+
+If q is zero the AFTDC value is ignored and the TDC value returned is r*harmonic
+number.This allows for fixed indexing by harmonic into the relevant table, here 3aiii. Note the TDC value is scaled by u (3bii). The index into the table 3aii is thus
+
+	r*h<n>*u
+
+Indexing into the table is controllable by factors allocated to either u or r
+dependent on requirements. Note that the value of r should account for the
+number of oscs used in the intrument (gioscs=<n>) if the full extent of the table
+is to be indexed.
+
+For example, with 50 oscillators and full-scale (0>1) indexing, r=1/oscs or 0.02.
+Thus by the 50th harmonic (f49) the value returned is 1 and for the fundamental
+f0 is 0.02 since internally the harmonic number starts at zero and is offset by 1 so
+the indexing system doesn't fail for the fundamental. However it means the
+indexing is offset from zero so the f0 value returned is 0.02; this can be offset by
+using m=-0.02 (which is subtracted form the TDC value) so that the fundamental
+has index 0. This also means the final index value is not reached, but a simple
+recalculation of m, u and r can achieve this.
+
+This simple scheme can be used to emulate the behaviour of a low-pass filter,
+which is required if a match between the real-instrument-derived p-harmonics
+and purely synthetic s-harmonics, since the necessary harmonic amplitude
+modifications will be encoded in the p-harmonics, so we must arrange for the
+modifications applied to only affect the succeeding s-harmonics. For the cello
+example used, we have 10 derived p-harmonics (f0-f9) and we set gioscs=50 so
+that we have a reasonable harmonic range at LF (here, C2). We therefore need
+to set a harmonic decline pattern which is effective from f10 upwards, with those
+before unmodified.
+
+We can determine which harmonic triggers the decline represented by table 0a
+(the 'surface' table), here 212, a decline from 1 to 0.0001 over the index range
+[0,1], by using a negative offset m to the index to this table in 3aii. Until the value
+supplied by the TDC section exceeds this, the resultant negative index into the
+surface table means it returns the LH value in the table, or 1. After this point is
+reached, the table value returned at top-level begins to decrease with increasing
+harmonic number.
+
+Thus, if we choose m=0.25 and r=0.025 then since the TDC output value is
+h<n>*r; when n=10 the index into table 3aiii is zero and returns a smaller value
+as h<n> increases. The harmonic at which this occurs is m/r = 10 and thus f0-f9
+are passed unchanged.
+
+We cannot dynamically directly alter the m/r ratio to change the rolloff for a
+particular note frequency or amplitude. However, note that a negative index magnitude offset may achieve this (see Cello-arco-reference-1st.model in the data/Cello-arco-reference-1st directory).
+
+Note the 'rolloff rate' at which the amplitudes of the harmonics decline is governed by the ratio m/r. The product mr gives 'spectral width', the number of unaffected harmonics (i.e. whose magnitude is 1). As the product |m|r increases then the rolloff rate gets steeper; the higher harmonics are reduced in amplitude more rapidly (with the proviso that that ratio |m|/r
+remains at 10 if the number of harmonics in the 'passband' is to remain the same).
+
+Note that the rolloff rate approaches zero when u*h*r = |m|. If m is given the value
+-1 then since we have u=1 and choosing r=0.1 so that |m|/r = 10 then
+h=|m|/ru = 1/0.1 = 10, so the index returned from table 3aiii will be zero and the
+top surface table 0a returns a maximum. If the h value is less then the index table
+3aiii is forced to remain at its LH value and returns zero for any harmonic less than
+10, so harmonics below 10 are unaffected and returned full-magnitude from the
+surface table 0a (212).
+
+If the harmonic number is above 10, then the result is the same since the index
+into table 3aiii (201) is now forced to return its RH value, 1, as the table wrap 3cii
+s not set: the index into 0a is 0. Effectively there is a limit value of -1 for the index
+magnitude 3aii since at this point the surface table always returns its LH value as
+its index never exceeds 0. We are therefore constrained by this fact in selecting a
+suitable value of m.
+
+If for example m = 0.1 and r = -0.025 then m/r = 0.1/0.025 = 4 the max amp is on
+the same harmonic but the slope m*r (i.e. rolloff rate) has been reduced (from
+0.01 to 0.0025) so more harmonics are present at a higher level; as the ratio m/r
+decreases 'spectral width' increases.
+
+If m = 0.3 then the decline is shifted forward to a higher harmonic since the value
+returned by the control TDC must advance past this for harmonicdecline to
+commence. Here 0.3/0.025 = 12, i.e. f11, so f0-f11 are amplitude 1, then higher
+harmonics decline in amplitude exponentially.
+
+Noting that the Cello.arco.reference.1st samples ppG5 and ffG5 both have
+harmonics fairly well delineated up to about 10kHz, i.e. there appears some
+relatively significant colouration up to this frequency, we find values of m and r
+which satisfy this condition, since without modification the harmonics run at full 
+strength for the number of specified oscillators: with oscs=50 then at G5 the 
+frequency range extends to 38.4 kHz approx., far too high a frequency and
+outside the range of human hearing anyway.
+
+We require a fairly sharp rolloff so the harmonics above about 10 kHz are rapidly
+attenuated with increasing harmonic frequency, i.e we require a comparatively
+large |m|r product.
+
+By experiment and observation it is noted that the sharper the rolloff, the less the
+harmonics above the limit selected are reduced in magnitude, so a further
+constraint is introduced in that it is required that these be reduced in magnitude
+to a level at which their audible contribution is near-zero.
+
+A suitable value for m appears to be 0.5. If greater, although harmonics are
+reduced in magnitude more swiftly, their amplitude level is greater, being a
+significant fraction of the passband harmonic magniitudes. If less than 0.5.
+then the rate of reduction with increasing frequency is more shallow but the
+levels outside the passband are reduced drastically., assuming in all cases we set
+r appropriately to return the same ration |m|/r for any given m.
+
+The factor q  (6, 3ii) is a scalar of the index indicated by TDC flag p. A nonzero
+value for q, the AFTDC, will cause a link to made between the appropriate index
+specified and the value of r, the harmonic number scalar. The factor s (6, 3iii) is
+an offset to scalar q. In the following we assume s=0 and that the TDC operation type
+flag 6, 3v is zero (if it is 1 the combination of HTDC and AFTDC is multiplicative and
+not additive).
+
+For positive q,
+
+	q*<TDC index value>+h*r = |m|	(assuming group 6 flag, sec. 3v = 0)
+
+is the condition for the commencement of harmonic decline. With p=1 or p=2 the
+AFTDC value scales the TDC index value (either iampix or ifrqix here) whose range
+is [0,1]
+
+We consider the index extremes of 0 and 1. If the TDC index is zero (which it will be
+in the PP and LF cases) and we set q=0.1 (h = harmonic number, i = TDC index)
+
+	qi+hr = m
+	h = (m-qi)/r = 0.3/0.025 = 12
+
+and for the FF and HF cases (where the TDC index value is 1)
+
+	h = (0.3-0.1)/0.025 = 8
+
+thus we have the equivalent of an amplitude or frequency-dependent lp filter
+where the rolloff starts at h11 at PP or LF and at h7 for the FF or HF case (the
+fundamental is 'harmonic' 0)
+
+The cutoff harmonic number condition is thus
+
+	( TDCindex * q + s ) + (harmonic<n> * r ) - m = 0
+
+The AFTDC offset s can be used to govern the harmonic at which rolloff commences
+to allow for adjustment independent of the m and r values.
+
+given values of r and m chosen to achieve a suitable rolloff rate and limits for
+h<n> at the extremes required,if we use a multiplicative operation type for the
+TDC calculation (group 6, 3v = 1)
+
+ratio m/r controls spectral width since r is a scalar of harmonic number
+ for any given ratio of m to r their product is a measure of spectral width
+ the ratio is the harmonic number which starts the decline
+ if the product mr increases then spectral width is reduced and the decline in
+ amplitude  after the specified harmonic is greater (i.e. the rolloff rate is is larger)
+
+ suppose we choose to allow f0-f9 to pass unchanged and reduce the harmonic
+ amplitudes thereafter. Then h=10 and we require to choose m and r such that
+ m/r=10 and mr gives an acceptable rolloff rate.
+
+ if we choose a rapid rolloff then mr should be a larger value
+ note that the limit of mr is 1, at which point there is no effect at all and the
+ harmonics are not filtered (rolloff rate is zero).
+
+ hr = m so r = m/h if h = 10 and m = 0.5 then r = 0.05 and mr = 0.025
+ which givers a sharp rolloff over about the next succeeding 7 harmonics (i.e. to
+ f16).
+
+Final result for freq-dependent lp filter:
+
+212	247	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+1	-0.5	201
+0	1	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+2	0.75	0.25	0.05	1
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+This sets a base scalar of 0.25 (group 6, 3iii) when ifrqix is zero and 1 when
+ifrqix is 1, so the harmonic rolloff begins at h10 at HF. At LF, when ifrqix is zero,
+then the harmonics are scaled by the product of group 6, 3iii and 3iv, i.e.
+0.0125, and it is when the product of this value and the harmonic number
+equals the offset 3bii that rolloff begins. Therefore LF rolloff is from harmonic
+3bii/(3iii+3iv) = 0.5/0.0125 = 40.
+
+Realistically for the cello, since there are 10 basic p-harmonics it is probably
+better to go for an amplitude- and frequency-independent rolloff at h10 by
+simply setting group 6 section 3 values 3ii and 3iii to zero. In this case the
+TDC opType flag 3v should also be set to zero.
+
+However, we preserve the dynamic linking and allow extension of unmoderated
+harmonics at lower frequencies, since these are low amplitude by the time h10
+is reached. A further adjustment is in the harmonic dynamic scaling, where m
+and r are set to 0.25 and 0.025 respectively, to achiecve a more gentle rolloff.
+
+
+Dual-decline series
+we use an index of 1xharmonic to index a table with scalar 0.5 and the wrap set.
+the index cycles between 0.5 and 0 with increasing harmonic number. we return
+and index mag. offset scaled by some small amount which is added to the 
+index mag. so the latter index into surface table 212 is displace slightly on every ;call.
+this howver displace the initial offset into the table, resulting in more harmonics
+than wanted at HF so it is necessary to subtract a small amount from the
+index returned so as not to dis[place the number of harmonics unaffected
+from 10
+result is a dual series of harmonic decline.
+
+212	247	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+1	-0.25	201
+0	1	246	0
+0	0	0	0
+;
+0.1	-0.025	201
+0	0.5	246	0
+0	1	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+2	0.75	0.25	0.025	1
+;
+2	0	0	1	0
+;
+0	0	0	0	0
+
+we set group 1 values to achieve a constant magnitude output of 1 at LF rising
+to 4 at HF to approximately correct amplitude balance:
+
+212	247	0	0	0
+;
+3	1	201
+0	1	246	0
+0	0	0	0
+;
+1	0	246
+0	0	246	0
+0	0	0	0
+;
+1	-0.25	201
+0	1	246	0
+0	0	0	0
+;
+0.1	-0.025	201
+0	0.5	246	0
+0	1	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	0	0	0
+;
+2	1	0	0	0
+;
+0	0	0	0	0
+;
+2	0.75	0.25	0.05	1
+;
+2	0	0	1	0
+;
+0	0	0	0	0

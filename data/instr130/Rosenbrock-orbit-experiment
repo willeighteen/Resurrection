@@ -1,0 +1,98 @@
+Rosenbrock function orbit experiment
+
+1)
+
+x params
+
+220	201	0	0	0
+;
+0.15	0.05	211
+1	0	247	0
+0	0	0	0
+;
+0.5	0.5	211
+1	0	247	0
+0	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+-1	0	247
+0	0	246	0
+0	0	0	-1
+;
+0	0	0	0	0
+;
+1	1.5	0	0	0
+;
+1	1.5	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+
+y params
+
+239	201	0	0	0
+;
+0.15	0.05	201
+1	0	247	0
+0	0	0	0
+;
+0.5	0.5	201
+1	0	247	0
+0	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+-1	0	247
+0	0	246	0
+0	0	0	-1
+;
+0	0	0	0	0
+;
+2	20	0	0	0
+;
+2	20	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+An orbit whose x magnitude changes from 0.2 to 0.05 and x offset from 0.5 to 1
+as amplitude rises and y magnitude from 0.05 to 0,2 and y offset from 0.5 to 1 as
+frequency rises. The shape is nearer a sinewave at high amplitudes and low 
+frequencies and circles the major valley in a rapidly-changing shaped region at
+low amplitude and high frequency,
+
+The y component thus corresponds to a doubling of frequency hence f1 (= 2*f0)
+is dominant.
+
+
+2)
+
+An attempt to make the x orbit component offset increase in a parbaloic fashion
+rather than linear as above. Note only group 2 is shown.
+
+x params group 2
+
+-0.5	1	234
+1	0	247	0
+0	0	0	0
+

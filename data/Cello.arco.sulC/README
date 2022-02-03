@@ -1,0 +1,16 @@
+Parameters used in UIOWA EMS sample analysis; commands should be run in 
+this directory with sound samples in data/Cello.arco.sulC/notes.
+
+
+pplf:
+hetro -f65.406 -h30 -m0 -n128 notes/Cello.arco.pp.sulC.C2.wav ppC2.het
+
+pphf:
+hetro -f146.83 -h30 -m0 -n64 notes/Cello.arco.pp.sulC.D5.wav ppD5.het
+
+fflf:
+hetro -f65.406 -h30 -m0 -n128 notes/Cello.arco.ff.sulC.C2.wav ffC2.het
+
+ffhf:
+hetro -f175 -h30 -m0 -n64 notes/Cello.arco.ff.sulC.B3.wav ffB3.het
+

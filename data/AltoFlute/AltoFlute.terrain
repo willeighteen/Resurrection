@@ -1,0 +1,6 @@
+; Alto Flute terrain parameter table declarations
+f300    0       128      -23     "data/AltoFlute/AF-fflfEnhance-x.params"
+f301    0       128      -23     "data/AltoFlute/AF-fflfEnhance-y.params"
+
+;f305    0       128      -23     "data/AltoFlute/sin.params"
+;f306    0       128      -23     "data/AltoFlute/cos.params"

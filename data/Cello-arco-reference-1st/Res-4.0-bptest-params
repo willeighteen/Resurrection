@@ -1,0 +1,140 @@
+212	247	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+1	-m	201
+0	1	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+p	q	0	r	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+
+; characteristic eq
+; -q*iampix+r indexes tbl 201 which should return this value (scalar 3bi is 1)
+; this value indexes tbl 212
+;
+
+; if m == 0 then when -q*iampix+r == 0 index is 0 and tbl 212 returns 1
+; so in order to return a max at some h its index must be 0
+; we can control this with m which offsets the returned index
+; e.g. if q = 0 r = 0.05 and m = -0.2, then the index will not reach zero until
+; harmonic m/r, i.e. 4 (f3)
+; this is a crude lp filter
+; if m = -0.1 and r = -0.025 then m/r = 0.1/0.025 = 4 the max amp is on the same
+; harmonic but the slope has been reduced so more harmonics are presernt at a
+; higher level; the ratio thus controls 'spectral width'
+;
+; if m = -0.3 then the decline is shifted forward to a higher harmonic, here
+; 0.3/0.025 = 12, i.e. f11, so f0-f11 are amplitude 1, then higher harmonics
+; decline in amplitude exponentially.
+;
+; if q is positive then M/(q*iampix+r) = 0 is the condition for the harmonic decline
+; to begin. iampix is in the range [0,1]  and q is its scalar
+;
+; iampix = 0, m/(q+r) = 0.3/0.025 = 12 as before but
+; iampix = 1, m/(q+r) = 0.3/(0.1+0.025) = 2.4
+;
+; therefore, since group 6 section 3i = 1, this indicates amplitude linkage and
+; at LF the cutoff is about f1 and at FF, f11.
+; thus we have the equivalent of an amplitude-dependent lp filter.
+
+; cutoff harmonic number = (indexType ai * scalar q) + (harmonic number * r) = m
+; is condition for start decline harmonic number
+;
+; denoting the TDC flag as p,
+; p*q+h*r = m
+; where h = harmonic number
+; then
+; when pq+hr = m then the index is 0 and at this point harmonic decline begins
+; so for harmonic decline to begin we have pq+hr-m = 0
+
+; ratio m/r controls spectral width since r is a scalar of harmonic number
+; for any given ratio of m to r their product is a measure of spectral width
+; the ratio is the harmonic number which starts the decline
+; if the product mr increases then spectral width is reduced and the decline in
+; amplitude  after the specified harmonic is greater (i.e. the rolloff rate is is larger)
+;
+; suppose we choose to allow f0-f9 to pass unchanged and reduce the harmonic
+; amplitudes thereafter. Then h=10 and we require to choose m and r such that
+; m/r=10 and mr gives an acceptable rolloff rate.
+
+; if we choose a rapid rolloff then mr should be a larger value
+; note that the limit of mr is 1, at which point there is no effect at all and the
+; harmonics are not filtered (rolloff rate is zero).
+;
+; hr = m so r = m/h if h = 10 and m = 0.5 then r = 0.05 and mr = 0.025
+; which givers a sharp rolloff over about the next succeeding 7 harmonics (i.e. to
+; f16).
+;
+
+; final result for freq-dependent lp filter
+
+212	247	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+1	-0.5	201
+0	1	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+2	0.75	0.25	0.05	1
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+; this sets a base scalar of 0.25 (group 6, 3iii) when ifrqix is zero and 1 when
+; ifrqix is 1, so the harmonic rolloff begins at h10 at HF. At LF, when ifrqix is zero,
+; then the harmonics are scaled by the product of group 6, 3iii and 3iv, i.e.
+; 0.0125, and it is when the product of this value and the harmonic number
+; equals the offset 3bii that rolloff begins. Therefore LF rolloff is from harmonic
+; 3bii/(3iii+3iv) = 0.5/0.0125 = 40.
+
+; realistically for the cello, since there are 10 basic p-harmonics it is probably
+; better to go for an amplitude- and frequency-independent rolloff at h10 by
+; simply setting group 6 section 3 values 3ii and 3iii to zero. In this case the
+; TDC opType flag 3v should also be set to zero.

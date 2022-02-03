@@ -1,0 +1,146 @@
+sine/cosine orbit parameters: control values
+
+; 0
+220	201	0	0	0
+;
+; 1
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+; 2
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+; 3
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+; 4
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+; 5
+5ai	0	247
+0	0	246	0
+0	0	5ciii	5civ
+;
+; 0
+0	0	0	0	0
+;
+; 1
+0	0	0	0	0
+;
+; 2
+0	0	0	0	0
+;
+; 3
+0	0	0	0	0
+;
+; 4
+0	0	0	0	0
+;
+; 5
+0	0	0	0	0
+
+
+In the above example a cosine table f220 is indexed by linear increase f201.
+
+With the default values of 5ai = 1, 5ciii = 0 and 5civ = 0 the index table 0b is
+scanned once since the scan rate of table 5aiii - 247 is 1 (since it is a scalar of the
+default value of TDC0 = 1 which is the default given by the TDC controls in group
+5 (all zero)
+
+
+
+; 07.11.2020
+
+; x-axis cosine
+
+220	201	0	0	0
+;
+1.5	0	247
+0	0	246	0
+0	0	0	0
+;
+ ;0	0.95	246
+ ;0	0	246	0
+ ;0	0	0	0
+;
+-3	0	201
+1	0	247	0
+0	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+-1	0	247
+0	0	246	0
+0	0	0	1
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+2	50	-0.073	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+
+245	201	0	0	0
+;
+0.5	0	247
+0	0	246	0
+0	0	0	0
+;
+-0.4	-0.2	211
+1	0	247	0
+0	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0	0
+;
+-1	0	247
+0	0	246	0
+0	0	0	1
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+-1	1.35	-0.02	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+
+; group 6ii values make AFTDC 0 -> 1 over amplitude range 500-25000 and
+; frequency range 100-1100 Hz.; Spectral complexity increases as amplitude rises
+; and frequency falls.
+
+; scan frequency is determined by flag 5civ = 1 and is score-frequency-dependent
+; with -ve scalar 5ai = -1
+
+; to see indvidual wavetables make 5ai = 1 in both parameter files.
+
+; 14 Nov.
+top amp now 15000

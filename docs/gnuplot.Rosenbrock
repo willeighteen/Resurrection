@@ -1,0 +1,11 @@
+set xrange [-2*pi:2*pi]
+set yrange [-2*pi:2*pi]
+set isosamples 50,50
+set xlabel "X"
+set ylabel "Y"
+set zlabel "Z"
+
+# function 2: Rosenbrock
+splot log(((1-x)*(1-x))+(100*((y-(x*x))*(y-(x*x)))))
+pause -1
+reset

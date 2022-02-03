@@ -1,0 +1,41 @@
+; warning - old implementation needs checking before use
+; currently incompatible with Resurrection-4.0
+;
+; filter implementation
+; example 3: comb filter
+
+202     232     0       0       0       ; index s/b 247, TABLE not indexed!
+;
+1       0       247
+0       1       246     0
+0       0       0	0
+;
+0       0       246
+0       0       246     0
+0       0       0	0
+;
+1       0       201
+0       1       246     0
+0       1       0      0                 ; WRAP S/B OFF - table above not indexed
+;
+i       j       232
+0       1       246     0
+0       1       0	0
+;
+0       0       246
+0       0       246     0
+0       0       0	0
+;
+0       0       0	0	0
+;
+0       0       0	0	0
+;
+0       0       0	0	0
+;
+2       m       q	0	0
+;
+1       0       r	0	0
+;
+0       0       0	0	0
+;
+0

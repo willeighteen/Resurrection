@@ -1,0 +1,12 @@
+Resurrection-5.0
+Test and terrrain modelling instrument definitions
+
+Generate gioscs linear harmonics of amplitude 1 with no envelope
+
+giatktbl = $unity
+gisustbl = $unity
+gidcltbl = $unity
+gioscs = 1
+gisgenfn = $unity
+gitblbase = 0
+gihmagtblbase = 0

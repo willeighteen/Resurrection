@@ -1,0 +1,72 @@
+Basic settings for the UIOWA Cello.arco.sulC
+
+These settings allow reproduction of the basic samples encoded in the .het files. They use resurrection' default breakpoints for the end of the attack phase and start of the release phase. As a result they do not correspond well with the attack and release times of the note, being 0.15 and 0.85 respectively.
+
+See the global variables gi<pp/ff><lf/hf>t.
+
+	gioscs = 10	; allocate an oscillator to each amp set in *.data
+	giusrdclphs = 1; we have a non-default  (AR) ADSR envelope
+	gigain = 1
+	giphpplf = 10	; maximum value: number of ftable-prescribed harmonics
+	giphfflf = 10	; in note extreme cases. If less further harmonics are
+	giphpphf = 10	; synthesised rather than being table-derived but use the
+	giphffhf = 10	; magnitudes found in the *.hmag file
+	gitblbase = 800		; start of cello data fn tables (0=no tables)
+	gihmagtblbase = 880	; start of harmonic magnitude data (if present)
+
+These are sufficient to allow sound output (here to file sound/test.wav):
+	csound -d -W -o sound/test.wav resurrection.orc scores/Cello-test.sco
+	
+Although the note durations are specified in the score file, resurrection typically invents its own attack and decline scalings determined from instrument physical model specified as 'mass' and 'resonance'. 
+
+i90	0	5.919	3000	6.00
+i90	+	2.174	3000	9.02
+i90	+	6.222	5000	6.00
+i90	+	1.84		5000	7.11
+
+There is a lengthy sustain period, that part of the note not occupied by the attack and release.
+
+The note durations and attack/release phase durations are generated from the values of score amplitude abd frequency, using the score duration as a hint. These values are also affected by instrument 'mass' and resonance.
+
+The gi<pp/ff><lf/hf> variables, breakpoints for the end of attack and start of release for the four case extremes respectively, govern the proportion of the data ftables indexed by their values, suitable values being found by inspection of the relevant notes. They are somewhat arbitrary.
+
+Empirically we obtain
+
+	gipplft = 0.19
+	gipphft = 0.36
+	gifflft = 0.038
+	giffhft = 0.05
+	girlspplft = 0.94
+	girlspphft = 0.82
+	girlsfflft = 0.78
+	girlsffhft = 0.85
+	
+Since the original notes have no easily discernible attack or release phases it is impossible to make a precise match between these value and actual note phases. Some distortion of the original sound is inevitable.
+
+Further, the instrument as it stands will not produce a satisfactory tied-note sequence, since this would require that the variable be set to define a sustain portion starting and ending on xero-crossings and having approximately the same amplitude at start and end.
+
+The basic test score specifies the extremes of pitch and amplitude of the sample notes:
+
+i90	0	5.919	1500	6.00
+i90	+	2.174	1500	9.02
+i90	+	3.222	8000	6.00
+i90	+	1.84		12000	7.11
+
+It is usually the case that the note duration produced be the score-specified value. This can be achieved using the flag
+
+	giduradj = 1
+
+in the instrument definition in i1 in the orchestra file. Some scaling of note phases usually results, although the effect is minimised if the values of mass and resonance for the instrument are given values producing a satisfactory range of attack and decline durations for the extremes (this should be be determined with  giduradj = 0). The default mass and resonance (1) are changed to deduce the attack and release phase time (the latter phase is largely unused)
+
+	gimass = 0.5
+	gires = 0.5
+
+
+/*
+'The range of variation of attack and decline times for the instrument can be controlled by index scaling, separate for amplitude and frequency.
+
+An examination of resurrection' output shows the range of amplitude and frequency index values used (iampix, ifqix). In these it will be noted the value for ifrqix covers most of the range in [0,1], resulting in an anomalously small release value for the pphf case compared to the other three. The default index scaling (which produces indices in the range [0.1, 1]) is overriden by setting
+
+giudclscl = 0.1
+so the frequency index range is confined to [0, 0.5].
+*/

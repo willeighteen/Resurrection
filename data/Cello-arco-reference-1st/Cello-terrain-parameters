@@ -1,0 +1,209 @@
+Modelling the Cello.
+
+General features of the harmonic shape.
+
+Observation of the notes used as case extremes (ppC2, ffC2, ppG5, ffG5) indicates that, as might be expected , there is a general diminution of harmonic amplitude with frequency. In the samples studied this is best represented as an exponential decline in amplitude with increasing frequency.
+
+This pattern is more prevalent at lower amplitudes. As this latter rises there is a tendency for the lower harmonics to be raised and even exceed the fundamental magnitude. There is an exaggerated effect if the note is ffhf, when f1 becomes dominant. In the ffhf case, the first five (f0-f4) are roughly equal in amplitude.
+
+Furtrhermore, it seems as though there may be two different declines in operation, splitting the harmonic into two series, f0, f2, ... and f1, f3, ... in which the former set have higher initial amplitudes compared to the latter.
+
+The harmonic amplitudes decay slowly with frequencies higher than about f9. The harmonics persist for longer when the note is louder, this effect being greater at lf; the hf harmonics are not such a large fraction of the fundamental duration (f0, _not_ f1, since the fundamental is not, by definition, a harmonic of anything).
+
+The higher harmonic persistence is from about 1/2 note duration at pplf to 2/3 at fflf and  from about 1/3 at pphf to 1/2 at ffhf.
+
+There are thus several different patterns to model.
+
+1) Two series of exponential declines with magnitudes offset relative to each other for the two harmonic series.
+
+2) These declines should be less rapid as note frequency declines.
+
+3) The sections of the exponential decline tables needs changing so there is a less rapid decline as frequency rises.
+
+4) There is additionally a peak as frequency rises such that the f1, f2 harmonics are strengthened as both amplitude and frequency rise.
+
+5) The overall strenght of harmonics, hence persistence, is raised as amplitude rises but less at hf than lf.
+
+
+Harmonic decline.
+The following simple scheme achieves a decline in amplitude with increasing harmonic number (there are other ways to achieve this, this is simply one example): the parameter file contents are
+
+212	247	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0
+;
+1	-0.01	201
+0	1	246	0
+0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+1	0	0	0.01	0
+;
+0	0	0	0	0
+
+Here an exponential decline table 212 has 247, constant unity, as its index. We make use of this fact to allow group 4, the index offset, to control the index used to obtain an output from the surface table 212.
+
+The group 4 dynamic control flags are enabled to allow indexing as a multiple of harmonic number. Since the TDC4 flag (6ai) is set to 1 and the HTDC value is set to 1, then the product of these is used as a multiplier of harmonic number, thus giving an integer from 1 to the number of oscillators used (inoscs): the harmonic number itself, offset by 1 (since f0 is 'harmonic' 0).
+
+This value then scales the output from the index offset index table, which is zero (4biii), but has a constant 0.01 (4bii) added (which value, when scaled by the maximum 100 harmonics used in the program, runs an index the entire length of the index offset table 201 (4aiii). This returns the same number (!) which is then scaled by 1 and has 0.01 subtracted from it (4ai, 4aii) in order to achieve a starting index of zero into the surface table 212 (0a, exponential decline)
+
+Thus an index starting at zero and increasing with harmonic number produces a successively smaller value from the surface table.
+
+We now have a general harmonic decline. Note the various index tables referenced can be nonlinear.
+
+This approach is adequate for a purely synthesised instrument, where there are no table-presecribed (p-) harmonics derived from actual instrument samples, but will not suffice for an instrument with composite harmonics (with both p- and s-harmonics).
+
+giUseAllH1a = 0 (default) means the affect will only be applied to s-harmonics if p-harmonics are present (these being governed by the *-hmag.data table values).
+
+
+We could choose to achieve a split in magnitudes between two harmonic series by use of an offset to the magnitude output from the surface table:
+
+Group 2
+1	0	201
+0	0.5	246	0
+0	1	0
+
+Section 6 group 2
+1	0	0	1	0
+
+in which a fixed offset to the magnitude of either 0.5 or is added to the magnitude value output from the surface table. As harmonic number increases a scalar of 0.5 is applied and the resulting index is wrapped (2cii) on indexing a linear increasing table 201 (2aiii), scaled by 1 (2ai). Thus a fixed series of values 0.5, 0, 0.5, ... is generated and added to the surface table magnitude.
+
+A problem with this approach is that it alters the overall magnitude of the output since the f0, f2, ... series is scaled by factor 1.5 and f1, f3, ... by 1.0.
+
+
+Dual-series harmonic decline.
+We can user the above settings to achieve the harmonic decline series in a slightly different way which is more useful. Instead of an index to the surface table supplied directly by group 4, we can use group 3 to achieve the same result but by modifying the magnitude of the index instead of the index itself. The result is the same. However, since we are now scaling the magnitude of the index table 246 (0b) whose output is zero, we change this table to 247, constant unity, so the magnitude we generate is a scalar of this constant output.
+
+The advantage of this scheme is that the group 4 parameters, the offset to the index magnitude determined by group 3, can now be used to offset this magnitude. We now have the following parameter file:
+
+212	247	0	0	0
+;
+1	0	247
+0	0	246	0
+0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0
+;
+1	-0.01	201
+0	0.01	246	0
+0	0	0
+;
+-0.1	0.03	201
+0	0.5	246	0
+0	1	0
+;
+0	0	246
+0	0	246	0
+0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+0	0	0	0	0
+;
+1	0	0	1	0
+;
+1	0	0	1	0
+;
+0	0	0	0	0
+
+The group 4 constant 0.5 (4bii) is scaled by an multiple of the harmonic number, as before, by group 6 section 4c, this being used to index the index offset table 201, increasing linear (4aiii). This on its own would produce a series of output values 0.5, 1, 1.5, ... as harmonic number rises. We wrap the index so it remains within the table bounds, settting the wrap flag 4cii to 1. This provides an (unsuitable) offset to the magnitude calculated by group 3, since the index to the surface table oscillates between 0.5 and 0 for successive harmonics, so the f0, f2, ... values would be reduced by half and the f1, f3, ... series would vanish.
+
+We avoid this by setting a sensible magnitude scalar for the offset, -0.1 (4ai). The index offset outputs of 0.5 and 0 are scaled to -0.03, 0, -0.03, ... and we add a fixed offset to this value of 0.03 (4aii) so the output is now 0, 0.03, 0, ... since we require the initial offset for f0 to be zero, exed by the and thus there are two sets of harmonics with the second set having its magnitudes reduced since the index to the surface table is slightly advanced from its default position given by group 3 for each alternate harmonic. The result is a pair of harmonic declines whose relative magnitude  can be determined by the values of 4ai and 4aii.
+
+The disadvantage of this method is that it slightly reduces signal power; but this is far easier to cope with acoustically than the initial approach of simply scaling magnitudes, which increases output power considerably.
+
+
+Changing harmonic duration with harmonic number.
+The next step in the model is to achieve the progressively earlier truncation of harmonics as harmonic number rises. This is conveniently accomplished within the index magnitude control, group 3. Since this already allows production of two series of exponential declines whose magnitudes are fixed with respect to time, it is a simple matter to provide a further offset to the magnitude index which is related to the note duration. We can use an index table, currently unused (246, 3biii), and set this to be an exponential increase, table 202. Then by setting the index table scan period to 1 (3ciii) and the table output magnitude scalar to 1 (3bi), over the duration of the note this produces a value which increases from 0 to 1 through the note, progressively offsetting the previously obtained index magnitude so the magnitude produced by the surface table reduces with time. 
+
+The values of scale and table number (1 and 202, 3bi and 3biii) are chosen empirically for an output which resembles, broadly, the pattern of decline of the harmonics of the actual instrument. It fails somewhat in that the lower harmonics are not truncated fast enough and the sweep rate is too high, so that higher harmonics are reduced too soon. This is due to the inability to vary the scan rate with amplitude or frequency., it being a fixed duration or frequency.
+
+The final group 3 section is now
+
+1	-0.01	201
+1	0.01	202	0
+0	0	1
+
+As a further refinement, we scale the offset in 4bii (0.5) by the product of amplitude and harmonic number: the TDC operation type flag TDC 4v, is set to 1, indicating the HTDC and AFTDC values are multiplied and not added (which is the default). Thus the harmonics are not equally indexed into table 4aiii but offset by the scalar of amplitude index, TDC 4ii. This is zero at low frequencies, lessening the separation between the two exponential decline series, but increasing as does pitch. The group 6 section 4 values are now
+
+1	1	0	1	1
+
+
+Harmonic limitation with frequency
+It is necessary to control the number of harmonics present as pitch rises. At hf, the cello produces little above the 9th harmonic. We us group 1, magnitude, to control this. Using a decreasing linear function 211 (1aiii) and index scalar 1 (1bi), then scaling the latter by the product (TDC 3v is 1) of frequency index ifrqix and harmonic number (remembering this starts from 1) scaled by 0.1 (TDC 1iv) gives an output magnitude scalar which falls with increasing harmonic number but more rapidly as the frequency index rises. The values given ensure that at hf the output is near-zero after f9.
+
+group 1 is thus
+
+1	0	211
+0	1	246	0
+0	0	0
+
+and group 6 section 1 (the TDC control values) are
+
+2	1	0	0.1	1
+
+
+The complete Cello-arco-reference-1st terrain layer 1 x parameters are
+
+212	247	0	0	0
+;
+1	0	211
+0	1	246	0
+0	0	0
+;
+0	0	246
+0	0	246	0
+0	0	0
+;
+1	-0.01	201
+1	0.01	202	0
+0	0	1
+;
+-0.1	0.03	201
+0	0.5	246	0
+0	1	0
+;
+0	0	246
+0	0	246	0
+0	0	0
+;
+0	0	0	0	0
+;
+2	1	0	0.1	1
+;
+0	0	0	0	0
+;
+1	0	0	1	0
+;
+1	1	0	1	1
+;
+0	0	0	0	0
+
+This parameter file is in the Cello-arco-reference-1st directory, 'x1aOFparams'.
+
+Note that the harmonic shaping is independent of the (possibly) superimposed amplitude envelope. Functions and rate of indexing need attention...

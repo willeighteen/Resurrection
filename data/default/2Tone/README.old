@@ -1,0 +1,26 @@
+Hangover from resurrection-17.4.x and previous; needs rewrite for R5
+
+
+In instrument 43 set:
+
+	gi1aEnvPhase = 0
+	gi2aEnvPhase = 0
+	; nonzero terrainFn num overrides table shaping of terrain
+	giterrainFn1a = 1
+	giterrainFn2a = 0
+	giTerrainMode1a = 0
+	giTerrainMode2a = 1
+
+Copy the *Params files to the relevant data<instr> directory or set the path
+to these in the instrument <instr>.terrain file (or whatever it is named).
+
+Terrain layer 1 is produced by a mathematical expression, specified by 
+number; several types will be available and more can be specified.
+
+A pair of increasing linear indices with range [0,1] (table 201) are used 
+to construct the z plane directly, instead of referencing a table whose 
+values are then used in the z-plane calculation. The toplevel (surface) 
+function table specified in the orbit parameter files is ignored since a 
+nonzero function number is specified in the instrument setup. To emphasise 
+this, the toplevel x and y surface tables are specified as constant zero 
+(table 246).

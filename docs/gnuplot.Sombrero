@@ -1,0 +1,11 @@
+set xrange [-2*pi:2*pi]
+set yrange [-2*pi:2*pi]
+set isosamples 50,50
+set xlabel "X"
+set ylabel "Y"
+set zlabel "Z"
+
+# function 1: 'Sombrero'
+splot (sin(sqrt(x*x+y*y))/sqrt(x*x+y*y))
+pause -1
+reset

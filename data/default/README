@@ -1,0 +1,7 @@
+THESE ALL NEED MODIFYING PER NEW ONES IN CELLO! Default data in 
+xLayer1AmpOrbitFormParams-notes (fot god's sake..)
+
+Warning! old terrain tables will ot work post addition of extra direct
+index scan period control flag <0/1> in last value in files.
+
+0 = indirect indexing (default) , 1 - direct
