@@ -455,7 +455,6 @@ nchnls = 1
 #
 ; the indices don't change just durations (encoded in phases) - they reference the variables loaded from control file
 	khNumTDC = (iTDCOP$vName$baseName$axis$orbitType==0 ? i$HTDC$baseName$axis$orbitType*khNum+i$AFTDC$baseName$axis$orbitType : i$HTDC$baseName$axis$orbitType*khNum*i$AFTDC$baseName$axis$orbitType)
-printks "TDC %d\n", 0.1*idur, khNumTDC
 	kndx	oscili	i$v1$baseName$axis$orbitType, i$v2$baseName$axis$orbitType$eTime, i$v3$baseName$axis$orbitType, i$v4$baseName$axis$orbitType
 	kndx = (kndx+i$v5$baseName$axis$orbitType)*khNumTDC
 	k$vName$baseName$axis$orbitType	tablei	kndx, i$v6$baseName$axis$orbitType, 1, i$v7$baseName$axis$orbitType, i$v8$baseName$axis$orbitType
